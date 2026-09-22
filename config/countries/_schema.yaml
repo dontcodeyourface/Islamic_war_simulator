@@ -28,6 +28,7 @@ required_sections:
   - identity
   - population
   - demographic_dynamics
+  - demographic_differentials
   - religion
   - religious_infrastructure
   - violent_islamist_extremism
@@ -54,6 +55,7 @@ required_sections:
   - information_environment
   - health_emergency
   - external_social_finance
+  - migration_welfare_policy
   - geography
   - alliances
   - governance
@@ -97,6 +99,21 @@ demographic_dynamics:
   demographic_projection_2030: {}
   demographic_projection_2050: {}
   religion_specific_methodology: {}
+
+demographic_differentials:
+  native_national_tfr: {}
+  foreign_national_tfr: {}
+  foreign_born_mother_birth_share: {}
+  foreign_national_mother_birth_share: {}
+  muslim_non_muslim_tfr_gap_direct: {}
+  muslim_christian_tfr_gap_direct: {}
+  muslim_median_age: {}
+  non_muslim_median_age: {}
+  christian_median_age: {}
+  religious_switching_net_effect: {}
+  religious_demographic_momentum: {}
+  migration_demographic_momentum: {}
+  methodology: {}
 
 religion:
   christian_share: {}
@@ -565,6 +582,30 @@ external_social_finance:
   external_political_financing_pressure: {}
   methodological_note: {}
 
+migration_welfare_policy:
+  general_means_tested_benefit_access: {}
+  legal_residence_requirement: {}
+  asylum_reception_system: {}
+  asylum_reception_capacity: {}
+  asylum_reception_people_served_annual: {}
+  asylum_reception_budget_annual: {}
+  humanitarian_reception_program: {}
+  humanitarian_cash_assistance: {}
+  housing_support: {}
+  child_family_benefit_access: {}
+  healthcare_access: {}
+  education_access: {}
+  language_integration_support: {}
+  employment_integration_support: {}
+  migrant_specific_cash_transfers: {}
+  migrant_specific_in_kind_transfers: {}
+  migrant_benefit_take_up_rate: {}
+  migrant_social_transfer_cost: {}
+  migrant_net_fiscal_balance: {}
+  policy_generosity_index: {}
+  government_policy_attribution: {}
+  methodological_note: {}
+
 geography:
   land_area_km2: {}
   population_density: {}
@@ -619,7 +660,11 @@ snapshot_v1_freeze_policy:
   tactical_burn_rates_in_country_snapshot: false
   military_consumption_policy: "scenario_derived_from_force_mix_tempo_duration_and_logistics"
   religion_specific_fertility_requires_direct_evidence: true
+  demographic_proxy_must_preserve_original_category: true
+  foreign_nationality_must_not_proxy_muslim_identity: true
   nationality_or_origin_must_not_proxy_religion: true
   religious_demography_must_not_proxy_extremism: true
+  migration_welfare_policy_must_use_observable_eligibility_and_expenditure: true
+  government_ideology_must_not_be_used_as_unobserved_benefit_proxy: true
   adaptive_fractal_resolution: true
   normal_runtime_target_latent_variables_per_country: "30-60"
