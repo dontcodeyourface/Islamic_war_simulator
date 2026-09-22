@@ -293,34 +293,34 @@ violent_islamist_extremism:
     derived: false
     imputed: false
     notes: "No comparable population-wide prevalence estimate."
-  country_specific_proxy_percent_of_muslim_estimate: {value: null, unit: "percent", reference_date: null, source_ids: ["MA-UN-ISIL-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Cell arrests are a flow/event measure, not prevalence."}
+  country_specific_proxy_percent_of_muslim_estimate: {value: null, unit: "percent", reference_date: null, source_ids: ["MA-CT-REPORT-2024"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Cell arrests are a flow/event measure, not prevalence."}
   observed_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   violence_oriented_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   radicalization_registry_count: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   annual_jihadist_arrests:
-    value: 16
-    unit: "persons_minimum_documented_in_two_ISIL_linked_cells"
-    reference_date: "2025"
-    source_ids: ["MA-UN-ISIL-2025"]
-    quality: "medium"
+    value: 29
+    unit: "ISIS_inspired_persons_arrested_at_least"
+    reference_date: "2024"
+    source_ids: ["MA-CT-REPORT-2024"]
+    quality: "high"
     freshness_class: "recent"
     estimated: false
     derived: false
     imputed: false
-    notes: "UN monitoring report documents 16 arrests in two cells; not asserted to be Morocco's complete annual jihadist-arrest total."
-  disrupted_plots: {value: 2, unit: "cells_documented", reference_date: "2025", source_ids: ["MA-UN-ISIL-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Two ISIL-linked cells documented by UN report; not a full national annual total."}
+    notes: "U.S. State Department 2024 terrorism report states at least 29 ISIS-inspired terrorists were arrested; eight lone actors and the remainder associated with cells. Flow measure, not prevalence."
+  disrupted_plots: {value: null, unit: "plots", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No single directly comparable full-year plot count imported in v0.3."}
   terrorism_caseload_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   extremist_network_assessment:
-    value: "documented_ISIL_linked_cell_activity_and_Sahel_linkage"
+    value: "documented_ISIL_inspired_arrests_and_Sahel_linked_cell_activity"
     unit: "categorical"
-    reference_date: "2025"
-    source_ids: ["MA-UN-ISIL-2025"]
-    quality: "medium"
+    reference_date: "2024-2025"
+    source_ids: ["MA-CT-REPORT-2024", "MA-SNRT-ISIL-CELL-2025"]
+    quality: "high"
     estimated: false
     derived: false
     imputed: false
-    notes: "UN report notes coordination with an ISIL operative in the Mali/Sahel theatre."
-  external_network_linkage: {value: "Sahel_ISIL_linkage_documented", unit: "categorical", reference_date: "2025", source_ids: ["MA-UN-ISIL-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+    notes: "The 2025 BCIJ operation documented a 12-person cell acting under direct incitement from an ISIL leader in the Sahel."
+  external_network_linkage: {value: "Sahel_ISIL_linkage_documented", unit: "categorical", reference_date: "2025-02-19", source_ids: ["MA-SNRT-ISIL-CELL-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "No percentage of Moroccan Muslims is labeled radical from cell/arrest data.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
