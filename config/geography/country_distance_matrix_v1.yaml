@@ -1,0 +1,28 @@
+schema_version: "1.0"
+snapshot_date: "2026-09-23"
+metric: "capital_to_capital_great_circle_km"
+earth_radius_km: 6371.0088
+method: "Haversine"
+notes:
+  - "Distances are strategic reference distances between national capitals, not minimum territorial separation."
+  - "Direct land-border status is stored separately because it can matter more than capital distance."
+  - "Spain-Morocco has a direct land border through Ceuta and Melilla."
+
+capitals:
+  Spain: {name: "Madrid", lat: 40.4168, lon: -3.7038}
+  Morocco: {name: "Rabat", lat: 34.0209, lon: -6.8416}
+  France: {name: "Paris", lat: 48.8566, lon: 2.3522}
+  United_Kingdom: {name: "London", lat: 51.5074, lon: -0.1278}
+  Germany: {name: "Berlin", lat: 52.5200, lon: 13.4050}
+
+pairs:
+  - {a: "Spain", b: "Morocco", distance_km: 763, direct_land_border: true}
+  - {a: "Spain", b: "France", distance_km: 1053, direct_land_border: true}
+  - {a: "Spain", b: "United_Kingdom", distance_km: 1263, direct_land_border: false}
+  - {a: "Spain", b: "Germany", distance_km: 1869, direct_land_border: false}
+  - {a: "Morocco", b: "France", distance_km: 1816, direct_land_border: false}
+  - {a: "Morocco", b: "United_Kingdom", distance_km: 2018, direct_land_border: false}
+  - {a: "Morocco", b: "Germany", distance_km: 2611, direct_land_border: false}
+  - {a: "France", b: "United_Kingdom", distance_km: 344, direct_land_border: false}
+  - {a: "France", b: "Germany", distance_km: 877, direct_land_border: true}
+  - {a: "United_Kingdom", b: "Germany", distance_km: 932, direct_land_border: false}
