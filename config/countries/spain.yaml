@@ -221,6 +221,104 @@ demographic_dynamics:
     imputed: false
     notes: "Christian/Muslim fertility or growth cannot be inferred from nationality, immigrant generation or country of origin."
 
+demographic_differentials:
+  native_national_tfr:
+    value: 1.07
+    unit: "children_per_woman_spanish_nationality"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Nationality category, not religion."
+  foreign_national_tfr:
+    value: 1.27
+    unit: "children_per_woman_foreign_nationality"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Foreign nationality is heterogeneous and must not be used as a Muslim proxy."
+  foreign_born_mother_birth_share:
+    value: 33.3
+    unit: "percent_of_births"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "105,814 births were to mothers born abroad."
+  foreign_national_mother_birth_share:
+    value: 25.6
+    unit: "percent_of_births"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "81,339 births were to mothers with foreign nationality."
+  muslim_non_muslim_tfr_gap_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No Spain-specific direct religious TFR series located."
+  muslim_christian_tfr_gap_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No Spain-specific direct Muslim-versus-Christian fertility series located."
+  muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  non_muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  christian_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_switching_net_effect: {value: null, unit: "persons_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Must be measured separately from fertility and migration."}
+  religious_demographic_momentum:
+    value: "muslim_population_younger_and_higher_fertility_at_European_aggregate_but_Spain_specific_direct_gap_unavailable"
+    unit: "categorical"
+    reference_date: "2015-2020_Europe_reference"
+    source_ids: ["PEW-EU-MUSLIM-FERTILITY-2017"]
+    quality: "low"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Context only. Europe-wide Pew estimate was 2.6 Muslim vs 1.6 non-Muslim TFR; this is not assigned as Spain's rate."
+  migration_demographic_momentum:
+    value: "positive"
+    unit: "categorical"
+    reference_date: "2024-2026"
+    source_ids: ["ES-INE-FERTILITY-2024","ES-INE-POP-2026"]
+    quality: "high"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Population growth is occurring despite negative natural increase, and 33.3% of births were to foreign-born mothers in 2024."
+  methodology:
+    value: "Separate direct religion, nationality, country-of-birth and migration effects. Never substitute one for another."
+    unit: "text"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 religion:
   christian_share:
     value: 69.5
@@ -1274,6 +1372,122 @@ external_social_finance:
   cross_border_family_networks: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   external_political_financing_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "External social/financial ties are resilience/influence channels; no diaspora is assigned automatically to a faction.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+migration_welfare_policy:
+  general_means_tested_benefit_access:
+    value: "eligible_under_general_rules_if_legal_residence_and_economic_requirements_are_met"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-IMV-LAW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Ingreso Minimo Vital is not an immigrant-only benefit."
+  legal_residence_requirement:
+    value: "IMV_normally_requires_legal_effective_continuous_residence_for_at_least_one_year"
+    unit: "legal_rule"
+    reference_date: "2026-04-10"
+    source_ids: ["ES-IMV-LAW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Statutory exceptions exist, including trafficking and gender-violence victims."
+  asylum_reception_system:
+    value: "Sistema_de_Acogida_de_Proteccion_Internacional"
+    unit: "program"
+    reference_date: "2025-2026"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Covers basic needs for applicants/beneficiaries lacking sufficient resources."
+  asylum_reception_capacity:
+    value: 33936
+    unit: "places_available"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "SAPI only."
+  asylum_reception_people_served_annual:
+    value: 69573
+    unit: "persons"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "International-protection reception system."
+  asylum_reception_budget_annual:
+    value: 558857239.38
+    unit: "EUR_budget"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-BUDGET-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Annual SAPI budget; budget may finance costs incurred across more than one allocation period."
+  humanitarian_reception_program:
+    value: "available_for_vulnerable_irregular_arrivals_without_resources"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes accommodation, food, basic healthcare, orientation and transfers subject to program eligibility."
+  humanitarian_cash_assistance:
+    value: "basic_cash_assistance_available_within_program"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No universal fixed amount is stored."
+  housing_support: {value: "reception_accommodation_available_for_eligible_asylum_and_humanitarian_cases", unit: "categorical", reference_date: "2025-2026", source_ids: ["ES-SAPI-2025","ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  child_family_benefit_access: {value: "general_system_subject_to_program_specific_eligibility", unit: "categorical", reference_date: "2026", source_ids: ["ES-IMV-LAW-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Do not treat family benefits as immigrant-specific without beneficiary data."}
+  healthcare_access: {value: null, unit: "legal_or_program_access", reference_date: null, source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Basic healthcare is included in humanitarian reception; broader healthcare entitlement is not summarized here."}
+  education_access: {value: null, unit: "legal_access", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  language_integration_support: {value: "available_in_reception_programs", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026","ES-SAPI-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  employment_integration_support: {value: "available_in_international_protection_integration_pathways", unit: "categorical", reference_date: "2026", source_ids: ["ES-SAPI-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  migrant_specific_cash_transfers: {value: "program_specific_not_universal", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Basic economic aid exists in humanitarian reception, conditional on eligibility."}
+  migrant_specific_in_kind_transfers: {value: "accommodation_food_hygiene_clothing_basic_health_and_support_services", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  migrant_benefit_take_up_rate: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Needs beneficiary microdata or official disaggregation."}
+  migrant_social_transfer_cost: {value: null, unit: "EUR_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Do not equate SAPI budget with all transfers to immigrants."}
+  migrant_net_fiscal_balance: {value: null, unit: "EUR_or_percent_GDP", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires taxes/contributions and public expenditure by comparable population definitions."}
+  policy_generosity_index: {value: null, unit: "normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Future normalization must be based on eligibility, cash/in-kind value, duration and coverage, not party labels."}
+  government_policy_attribution:
+    value: "measure_program_rules_and_expenditure_directly"
+    unit: "methodology"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Government ideology is not used as a proxy for an unmeasured benefit level."
+  methodological_note:
+    value: "Separate migrant-specific reception programs from general means-tested welfare available to residents. Use legal eligibility, expenditure and uptake rather than political labels."
+    unit: "text"
+    reference_date: "v1"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
 
 geography:
   capital_coordinates: {value: {name: "Madrid", lat: 40.4168, lon: -3.7038}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
