@@ -1,0 +1,628 @@
+identity:
+  country_name: "Spain"
+  iso2: "ES"
+  iso3: "ESP"
+  snapshot_version: "0.1"
+  snapshot_date: "2026-09-22"
+
+population:
+  total:
+    value: 49801559
+    unit: "persons"
+    reference_date: "2026-07-01"
+    source_ids: ["ES-INE-ECP-2026-07"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "INE provisional continuous population statistic."
+  male:
+    value: 24462607
+    unit: "persons"
+    reference_date: "2026-07-01"
+    source_ids: ["ES-INE-ECP-2026-07"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  female:
+    value: 25338952
+    unit: "persons"
+    reference_date: "2026-07-01"
+    source_ids: ["ES-INE-ECP-2026-07"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  foreign_residents:
+    value: 7437543
+    unit: "persons"
+    reference_date: "2026-07-01"
+    source_ids: ["ES-INE-ECP-2026-07"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  citizens:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not populated in v0.1."
+  urban_share:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  rural_share:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  age:
+    under_15:
+      value: 6312120
+      unit: "persons"
+      reference_date: "2024"
+      source_ids: ["WB-ES-AGE-2024"]
+      quality: "high"
+      estimated: true
+      derived: false
+      imputed: false
+      notes: "World Bank/UN WPP age-distribution estimate."
+    age_15_59:
+      value: null
+      unit: "persons"
+      reference_date: null
+      source_ids: []
+      quality: "unavailable"
+      estimated: false
+      derived: false
+      imputed: false
+      notes: null
+    age_15_64:
+      value: 32207416
+      unit: "persons"
+      reference_date: "2024"
+      source_ids: ["WB-ES-POP-2024", "WB-ES-AGE-2024"]
+      quality: "high"
+      estimated: true
+      derived: true
+      imputed: false
+      notes: "Derived as 2024 total population minus World Bank/UN WPP 0-14 and 65+ totals; retained separately from military manpower."
+    age_60_plus:
+      value: null
+      unit: "persons"
+      reference_date: null
+      source_ids: []
+      quality: "unavailable"
+      estimated: false
+      derived: false
+      imputed: false
+      notes: null
+    age_65_plus:
+      value: 10329304
+      unit: "persons"
+      reference_date: "2024"
+      source_ids: ["WB-ES-AGE-2024"]
+      quality: "high"
+      estimated: true
+      derived: false
+      imputed: false
+      notes: "World Bank/UN WPP age-distribution estimate."
+
+religion:
+  christian_share:
+    value: 69.5
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Pew cross-country religious-composition estimate; not a 2026 figure."
+  muslim_share:
+    value: 3.6
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Pew cross-country estimate; retained separately from UCIDE's later count."
+  jewish_share:
+    value: "<0.1"
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  unaffiliated_share:
+    value: 26.4
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  other_share:
+    value: 0.4
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Pew category 'other religions'."
+  muslim_population_estimate:
+    value: 2542498
+    unit: "persons"
+    reference_date: "2024"
+    source_ids: ["UCIDE-MUSLIM-DEMOGRAPHY-2024"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "UCIDE demographic study estimate; methodology differs from Pew and official census statistics."
+  muslim_citizenship_local_estimate:
+    value: 1147308
+    unit: "persons_with_spanish_nationality"
+    reference_date: "2024"
+    source_ids: ["UCIDE-MUSLIM-DEMOGRAPHY-2024"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Spanish nationality is not equivalent to second/third generation."
+  muslim_first_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No reliable religion-by-generation cross-tab located."
+  muslim_second_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Must not be inferred from nationality or ancestry."
+  muslim_third_plus_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Must not be inferred."
+  christian_first_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  christian_second_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  christian_third_plus_generation:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+manpower:
+  legally_eligible:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Do not substitute age 15-64 population."
+  medically_fit_estimate:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  trained_or_prior_service:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  immediately_available:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  mobilizable_30d: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_180d: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  sustainable_365d: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  essential_civilian_workforce: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  dependent_population: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+armed_forces:
+  active_total:
+    value: 120000
+    unit: "persons"
+    reference_date: "2026"
+    source_ids: ["ES-MOD-PERSONNEL-2026"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Approximate baseline implied by Ministry statement that the 2029 target is 127,500 active personnel, an increase of 7,500."
+  active_land: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Await branch-strength source."}
+  active_naval: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Await branch-strength source."}
+  active_air: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Await branch-strength source."}
+  active_joint_support: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  active_cyber_space: {value: null, unit: "persons", reference_date: null, source_ids: ["ES-EMAD-MCCE"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "MCCE exists; headcount not populated."}
+  reserve_total: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Do not confuse annual activation ceiling with total reserve pool."}
+  reserve_ready:
+    value: 5100
+    unit: "maximum_activations"
+    reference_date: "2025"
+    source_ids: ["ES-RESERVE-ACTIVATION-2025"]
+    quality: "high"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "Sum of maximum voluntary-reservist activations authorized for Army, Navy, Air/Space and joint bodies in 2025; NOT total reserve strength."
+  gendarmerie: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Guardia Civil is not counted here as Armed Forces personnel."}
+  national_guard: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  paramilitary: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  conscription:
+    enabled: {value: false, unit: "boolean", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Professional force; legal-detail source to be added."}
+    age_range: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    service_length_months: {value: null, unit: "months", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  readiness:
+    deployable_share: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    training_level: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    personnel_fill_rate: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    fatigue: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    morale: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    command_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+military_domains:
+  land:
+    presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-MOD-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    mechanized_capacity: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+    armored_capacity: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+    indirect_fire: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    long_range_fires: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    engineering: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed evidence deferred."}
+    ground_air_defence: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed inventory deferred."}
+    logistics: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  air:
+    presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-MOD-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    combat_air: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Spain hosts Eurofighter final assembly/testing for Spanish deliveries."}
+    transport: {value: "present_and_domestic_final_assembly", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "A400M and C295 final assembly in Seville."}
+    aerial_refuelling: {value: "industrial_conversion_capacity_present", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "A330 MRTT conversion capability in Getafe; operational fleet quantity not populated."}
+    airborne_early_warning: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    rotary_wing: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+    airbase_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    maintenance: {value: "significant_domestic_MRO_capacity", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Includes A400M MRO capability."}
+  naval:
+    presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-MOD-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    surface_combatants: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Exact inventory deferred."}
+    submarines: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Exact inventory deferred."}
+    amphibious: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+    maritime_patrol: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+    mine_warfare: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    sealift: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    port_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  isr_c4isr:
+    satellite_access: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "SpainSat-NG secure military communications capability documented."}
+    commercial_satellite_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    persistent_surveillance: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    secure_communications: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "SpainSat-NG evidence."}
+    allied_isr_access: {value: "NATO_EU_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Capability magnitude not yet scored."}
+  electronic_warfare:
+    presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Industry includes electronic/sensor companies; detailed military capacity deferred."}
+    jamming: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    spectrum_awareness: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    navigation_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    communications_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  drones:
+    presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Domestic industrial program evidence; operational inventory not quantified."}
+    cheap_uas_production_rate: {value: null, unit: "systems_per_year", reference_date: null, source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Production rate not public in cited source."}
+    import_access: {value: "high_allied_market_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "To be quantified later."}
+    reconnaissance_uas: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    loitering_munitions: {value: "domestic_production_program_established", unit: "categorical", reference_date: "2026-01-13", source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "JV announced for development, production and sustainment in Spain."}
+    operator_training: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    replacement_rate: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    commercial_component_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  counter_uas:
+    presence: {value: null, unit: "boolean", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not yet researched sufficiently for v0.1."}
+    detection: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    electronic: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    kinetic: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    cost_exchange_sustainability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+weapon_categories:
+  INFANTRY_SYSTEMS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "No quantity in v0.1."}
+  PROTECTED_MOBILITY: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ARMORED_SYSTEMS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  INDIRECT_FIRE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed source deferred."}
+  LONG_RANGE_FIRES: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  GROUND_AIR_DEFENCE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  COMBAT_AIR: {value: "present", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  AIR_SUPPORT: {value: "present_and_industrially_supported", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ROTARY_WING: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  SURFACE_NAVAL: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  SUBMARINE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  AMPHIBIOUS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  MARITIME_PATROL: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  UNCREWED_AERIAL_SYSTEMS: {value: "present_and_domestic_industrial_program", unit: "categorical", reference_date: "2026", source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  UNCREWED_GROUND_SYSTEMS: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  UNCREWED_MARITIME_SYSTEMS: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  COUNTER_UAS: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ELECTRONIC_WARFARE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed score deferred."}
+  CYBER_CAPABILITY: {value: "military_cyber_command_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-EMAD-MCCE"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ISR_C4ISR: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CIFAS", "ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ENGINEERING: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  LOGISTICS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Performance not yet quantified."}
+  PRECISION_MUNITIONS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Inventory depth not yet quantified."}
+  MASS_MUNITIONS: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Stock depth and production to research."}
+
+defence_industry:
+  military_expenditure_usd:
+    value: 40200000000
+    unit: "USD"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "SIPRI estimate; expenditure increased 50% year-on-year."
+  military_expenditure_gdp_share:
+    value: ">2.0"
+    unit: "percent_GDP"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "SIPRI states Spain moved above 2% of GDP in 2025."
+  defence_turnover_local_currency:
+    value: 9364000000
+    unit: "EUR"
+    reference_date: "2024"
+    source_ids: ["ES-DEFENCE-INDUSTRY-2024"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Consolidated defence and security turnover reported by Spain's Ministry of Defence magazine citing PwC/TEDAE."
+  direct_defence_employment:
+    value: 43190
+    unit: "persons"
+    reference_date: "2024"
+    source_ids: ["ES-DEFENCE-INDUSTRY-2024"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  defence_exports_local_currency:
+    value: 4672000000
+    unit: "EUR"
+    reference_date: "2024"
+    source_ids: ["ES-DEFENCE-INDUSTRY-2024"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  ammunition_capacity: {value: "domestic_industry_present", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Production rate not yet populated."}
+  drone_capacity: {value: "expanding_domestic_capacity", unit: "categorical", reference_date: "2026", source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Loitering-munition and intelligent-system production/sustainment JV."}
+  vehicle_capacity: {value: "established", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative surge rate not yet researched."}
+  aerospace_capacity: {value: "major_final_assembly_and_MRO", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "A400M/C295 FAL, Eurofighter final assembly/testing, A330 MRTT conversion and A400M MRO documented."}
+  naval_shipbuilding_capacity: {value: "established", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Navantia included among principal national defence companies; quantitative throughput deferred."}
+  electronics_capacity: {value: "established", unit: "categorical", reference_date: "2025", source_ids: ["ES-DEFENCE-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Indra, GMV, Oesia and other electronics/digital firms included in defence industrial base."}
+  repair_capacity: {value: "significant", unit: "categorical", reference_date: "2025", source_ids: ["ES-AIRBUS-DEFENCE-INDUSTRY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Air-domain MRO explicitly documented; full cross-domain score deferred."}
+  surge_multiplier_90d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_365d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  local_content_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Sector-wide comparable local-content metric not yet sourced."}
+  import_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  critical_component_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  semiconductor_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  energy_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+intelligence:
+  national_service_names:
+    - "Centro Nacional de Inteligencia (CNI)"
+  military_intelligence_services:
+    - "Centro de Inteligencia de las Fuerzas Armadas (CIFAS)"
+  counterterrorism_fusion_centres:
+    - "Centro de Inteligencia contra el Terrorismo y el Crimen Organizado (CITCO)"
+  humint: {value: "institutional_capability_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CNI"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No quantitative operational score assigned."}
+  sigint: {value: null, unit: "index", reference_date: null, source_ids: ["ES-CNI"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Public mission evidence does not support a numeric score."}
+  geoint_imint: {value: "military_geospatial_and_ISR_coordination_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CIFAS"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  osint: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cyber_intelligence: {value: "institutional_cyber_capability_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-EMAD-MCCE"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  counterintelligence: {value: "military_and_national_capability_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CIFAS", "ES-CNI"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_threat_detection: {value: "integrated_counterterrorism_fusion_present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CITCO"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  allied_intelligence_sharing: {value: "extensive_EU_NATO_and_bilateral_frameworks", unit: "categorical", reference_date: "2026", source_ids: ["ES-CNI", "ES-CITCO"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Magnitude not quantified."}
+  analytic_fusion: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["ES-CITCO", "ES-CIFAS"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+cyber:
+  military_cyber_command: {value: "Mando Conjunto del Ciberespacio", unit: "organization", reference_date: "2026", source_ids: ["ES-EMAD-MCCE"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  offensive_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Public-source quantification deferred."}
+  defensive_maturity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  critical_infrastructure_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  military_network_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+ai:
+  national_strategy:
+    value: "Estrategia de Inteligencia Artificial 2024"
+    unit: "policy"
+    reference_date: "2024-05-14"
+    source_ids: ["ES-AI-STRATEGY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "EUR 1.5bn additional program for 2024-2025, plus EUR 600m previously mobilized."
+  defence_ai_policy:
+    value: "active_responsible_military_AI_policy_engagement"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-REAIM-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Spain hosted the third REAIM summit in February 2026; this is policy evidence, not a capability score."
+  frontier_model_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_model_capability: {value: "public_foundational_model_program_ALIA", unit: "categorical", reference_date: "2024", source_ids: ["ES-AI-STRATEGY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Capability benchmark score deferred."}
+  compute_capacity: {value: "MareNostrum_5_and_national_supercomputing_network", unit: "categorical", reference_date: "2024", source_ids: ["ES-AI-STRATEGY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Strategy assigned EUR 90m to specialized clusters and strengthening supercomputing."}
+  data_center_capacity: {value: "national_strategy_supports_sustainable_data_center_expansion", unit: "categorical", reference_date: "2024", source_ids: ["ES-AI-STRATEGY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No MW/GPU quantitative value yet."}
+  semiconductor_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_for_compute: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ai_talent: {value: "national_talent_investment_program", unit: "categorical", reference_date: "2024", source_ids: ["ES-AI-STRATEGY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "EUR 160m additional scholarships/training cited; talent count not yet populated."}
+  ai_research_strength: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  open_model_access: {value: "ALIA_open_public_model_program", unit: "categorical", reference_date: "2024", source_ids: ["ES-AI-STRATEGY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  cloud_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defence_ai_integration: {value: null, unit: "index", reference_date: null, source_ids: ["ES-REAIM-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Policy engagement does not quantify operational integration."}
+  autonomous_systems_maturity: {value: null, unit: "index", reference_date: null, source_ids: ["ES-INDRA-EDGE-UAS-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ai_enabled_isr: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ai_enabled_logistics: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ai_enabled_ew: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cyber_ai_capability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  model_security: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  allied_ai_access: {value: "EU_NATO_ecosystem_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Access pathway exists; capability impact not scored."}
+
+economy:
+  gdp_current_usd: {value: 1906453310000, unit: "USD", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "World Bank current-US-dollar GDP."}
+  gdp_per_capita_usd: {value: 38627.2, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  real_gdp_growth: {value: 2.8, unit: "percent", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  unemployment_rate: {value: 10.4, unit: "percent", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: true, derived: false, imputed: false, notes: "Modeled ILO estimate in World Bank profile."}
+  inflation_rate: {value: 2.7, unit: "percent", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  remittances_gdp_share: {value: 0.4, unit: "percent_GDP", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  fiscal_war_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  borrowing_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_reserves: {value: null, unit: "USD", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  energy_security: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  trade_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  sanctions_vulnerability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+geography:
+  land_area_km2: {value: null, unit: "km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "To populate from canonical geography dataset."}
+  population_density: {value: null, unit: "persons_per_km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  coastline_km: {value: null, unit: "km", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  strategic_depth: {value: "peninsular_state_with_atlantic_and_mediterranean_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative score deferred."}
+  major_ports: {value: null, unit: "count", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  airbase_dispersion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  transport_redundancy: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  chokepoint_exposure: {value: "Strait_of_Gibraltar", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative sensitivity deferred."}
+  atlantic_access: {value: true, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  mediterranean_access: {value: true, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  territorial_exclaves:
+    - "Ceuta"
+    - "Melilla"
+
+alliances:
+  memberships:
+    - "European Union"
+    - "NATO"
+  major_security_partnerships:
+    - "EU Common Security and Defence Policy"
+    - "Bilateral and multilateral NATO partnerships"
+  interoperability:
+    common_standards: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    intelligence_sharing: {value: "NATO_EU_bilateral", unit: "categorical", reference_date: "2026", source_ids: ["ES-CNI", "ES-CITCO"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    cross_border_logistics: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    command_integration: {value: "NATO_integrated_command_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    maintenance_compatibility: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+governance:
+  political_stability: {value: null, unit: "WGI_or_normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Will be populated from WGI/V-Dem snapshot."}
+  government_effectiveness: {value: null, unit: "WGI_or_normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  rule_of_law: {value: null, unit: "WGI_or_normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  control_of_corruption: {value: null, unit: "WGI_or_normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  elite_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No unsupported inference."}
+  civil_military_alignment: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  security_service_loyalty: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+provenance_notes:
+  unresolved_conflicts:
+    - "Pew 2020 and UCIDE 2024 religion estimates use different methods and dates; both are retained rather than merged."
+  known_data_gaps:
+    - "No reliable public religion-by-generation cross-tab found."
+    - "Branch-level active military personnel not yet populated."
+    - "Mobilization, trained reserve and deployability values not yet populated."
+    - "Counter-UAS, EW and munitions-stock depth require dedicated research."
+    - "AI operational military integration is not yet quantified."
+  methodological_warnings:
+    - "Age 15-64 is not military manpower."
+    - "Spanish nationality among estimated Muslims is not equivalent to second/third generation."
+    - "Presence of a military capability category does not imply readiness or sufficient stock depth."
