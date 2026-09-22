@@ -145,10 +145,32 @@ religion:
     reference_date: "2023"
     source_ids: ["MA-STATE-RELIGION-2023"]
     quality: "medium"
+    freshness_class: "recent"
     estimated: true
     derived: false
     imputed: false
     notes: "U.S. State Department religious-freedom estimate; overwhelmingly Sunni Muslim."
+  muslim_share_best_current_approx:
+    value: ">99"
+    unit: "percent"
+    reference_date: "2023"
+    source_ids: ["MA-STATE-RELIGION-2023"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Best current public estimate retained in v0.3."
+  muslim_share_comparable_pew_2020:
+    value: null
+    unit: "percent"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Exact Pew table value not imported in this snapshot; do not infer."
   jewish_share:
     value: null
     unit: "percent"
@@ -259,6 +281,47 @@ religion:
     derived: false
     imputed: false
     notes: null
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No comparable population-wide prevalence estimate."
+  country_specific_proxy_percent_of_muslim_estimate: {value: null, unit: "percent", reference_date: null, source_ids: ["MA-UN-ISIL-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Cell arrests are a flow/event measure, not prevalence."}
+  observed_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  violence_oriented_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  radicalization_registry_count: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  annual_jihadist_arrests:
+    value: 16
+    unit: "persons_minimum_documented_in_two_ISIL_linked_cells"
+    reference_date: "2025"
+    source_ids: ["MA-UN-ISIL-2025"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "UN monitoring report documents 16 arrests in two cells; not asserted to be Morocco's complete annual jihadist-arrest total."
+  disrupted_plots: {value: 2, unit: "cells_documented", reference_date: "2025", source_ids: ["MA-UN-ISIL-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Two ISIL-linked cells documented by UN report; not a full national annual total."}
+  terrorism_caseload_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  extremist_network_assessment:
+    value: "documented_ISIL_linked_cell_activity_and_Sahel_linkage"
+    unit: "categorical"
+    reference_date: "2025"
+    source_ids: ["MA-UN-ISIL-2025"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "UN report notes coordination with an ISIL operative in the Mali/Sahel theatre."
+  external_network_linkage: {value: "Sahel_ISIL_linkage_documented", unit: "categorical", reference_date: "2025", source_ids: ["MA-UN-ISIL-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "No percentage of Moroccan Muslims is labeled radical from cell/arrest data.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible:
@@ -597,6 +660,39 @@ ai:
 
 economy:
   gdp_current_usd: {value: 182374250000, unit: "USD", reference_date: "2025", source_ids: ["WB-MA-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "World Bank current-US-dollar GDP."}
+  official_gold_reserves_tonnes:
+    value: 22.12
+    unit: "tonnes"
+    reference_date: "2026-Q1"
+    source_ids: ["WGC-GOLD-2026", "MA-OFFICIAL-RESERVES-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "World Gold Council/IMF series; Moroccan official reserve template separately reports the market value of gold."
+  official_gold_reserves_market_value:
+    value: 29443000000
+    unit: "MAD"
+    reference_date: "2026-08"
+    source_ids: ["MA-OFFICIAL-RESERVES-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Moroccan Ministry of Economy and Finance international-reserves table."
+  total_official_reserve_assets:
+    value: 499813000000
+    unit: "MAD"
+    reference_date: "2026-08"
+    source_ids: ["MA-OFFICIAL-RESERVES-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
   gdp_per_capita_usd: {value: 4672.5, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-MA-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   real_gdp_growth: {value: 4.6, unit: "percent", reference_date: "2025", source_ids: ["WB-MA-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   unemployment_rate: {value: 9.0, unit: "percent", reference_date: "2025", source_ids: ["WB-MA-ECON-2025"], quality: "high", estimated: true, derived: false, imputed: false, notes: "World Bank profile value."}
