@@ -96,6 +96,30 @@ religion:
     derived: false
     imputed: false
     notes: "5.3-5.6 million Muslims with migration background from predominantly Muslim countries in the BAMF methodology."
+  muslim_share_best_current_approx:
+    value: "6.4-6.7"
+    unit: "percent_approx"
+    geographic_scope: "Germany"
+    reference_date: "2019"
+    source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Best detailed official German estimate currently imported."
+  muslim_share_comparable_pew_2020:
+    value: 7.0
+    unit: "percent_approx"
+    geographic_scope: "Germany"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Pew describes Muslims as about 7% of Germany's population in 2020."
   muslim_population_estimate:
     value: "5300000-5600000"
     unit: "persons"
@@ -111,6 +135,58 @@ religion:
   muslim_first_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Study includes migration-background structure, but generation-by-religion counts are not inserted until directly extracted."}
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: ["DE-BFV-EXTREMISM-2025", "DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Even Germany's strong data are not cross-country comparable enough to define a universal 'radical share'."
+  country_specific_proxy_percent_of_muslim_estimate:
+    value: "0.16-0.17"
+    unit: "percent_of_BAMF_estimated_Muslim_population"
+    reference_date: "numerator_2025_denominator_2019"
+    source_ids: ["DE-BFV-EXTREMISM-2025", "DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "medium"
+    freshness_class: "mixed"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "9,110 violence-oriented Islamist person-potential divided by BAMF's 5.3-5.6m Muslim estimate. Not a survey of beliefs; denominator and numerator use different years and concepts."
+  observed_person_potential:
+    value: 28645
+    unit: "persons_islamism_or_islamist_terrorism_person_potential"
+    reference_date: "2025"
+    source_ids: ["DE-BFV-EXTREMISM-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "BfV person-potential; includes nonviolent Islamist organizations and should not be labeled terrorist population."
+  violence_oriented_person_potential:
+    value: 9110
+    unit: "violence_oriented_islamist_person_potential"
+    reference_date: "2025"
+    source_ids: ["DE-BFV-EXTREMISM-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Best current country-specific violent-extremism numerator among the five pilot countries."
+  radicalization_registry_count: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Germany uses a different security-statistics architecture from France's FSPRT."}
+  annual_jihadist_arrests: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  disrupted_plots: {value: null, unit: "plots", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  terrorism_caseload_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  extremist_network_assessment: {value: "28645_islamist_person_potential_of_which_9110_violence_oriented", unit: "categorical", reference_date: "2025", source_ids: ["DE-BFV-EXTREMISM-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Right-wing and left-wing violent extremism are also material and are modeled separately later."}
+  external_network_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "The 0.16-0.17% value is a country-specific security-statistics proxy, not a general estimate of the proportion of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
@@ -324,6 +400,29 @@ ai:
 
 economy:
   gdp_current_usd: {value: 5050000000000, unit: "USD", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD, rounded from profile."}
+  official_gold_reserves_tonnes:
+    value: 3350.25
+    unit: "tonnes"
+    reference_date: "2026-Q1"
+    source_ids: ["DE-BUNDESBANK-GOLD-2025", "WGC-GOLD-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Bundesbank year-end 2025 physical fine-gold holdings were 3,350.285 tonnes; WGC series reports 3,350.25 tonnes in Q1 2026."
+  official_gold_reserves_market_value:
+    value: 395215000000
+    unit: "EUR"
+    reference_date: "2025-12-31"
+    source_ids: ["DE-BUNDESBANK-GOLD-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Bundesbank annual accounts."
+  total_official_reserve_assets: {value: null, unit: "EUR_or_USD", reference_date: null, source_ids: ["DE-BUNDESBANK-RESERVES-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Series exists; not imported in v0.3."}
   gdp_per_capita_usd: {value: 60496.4, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   real_gdp_growth: {value: 0.2, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   unemployment_rate: {value: 3.7, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}
