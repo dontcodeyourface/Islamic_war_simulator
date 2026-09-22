@@ -140,15 +140,38 @@ religion:
     imputed: false
     notes: "Pew cross-country religious-composition estimate; not a 2026 figure."
   muslim_share:
+    value: 5.0
+    unit: "percent_approx"
+    reference_date: "2024"
+    source_ids: ["UCIDE-MUSLIM-DEMOGRAPHY-2024"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Best recent approximate national share from UCIDE/Observatorio Andalusí. Pew's comparable 2020 estimate is stored separately."
+  muslim_share_best_current_approx:
+    value: 5.0
+    unit: "percent_approx"
+    reference_date: "2024"
+    source_ids: ["UCIDE-MUSLIM-DEMOGRAPHY-2024"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Approximately 2.54 million Muslims at end-2024; association estimate, not an official religion census."
+  muslim_share_comparable_pew_2020:
     value: 3.6
     unit: "percent"
     reference_date: "2020"
     source_ids: ["PEW-RELIGION-2020"]
     quality: "high"
+    freshness_class: "aging"
     estimated: true
     derived: false
     imputed: false
-    notes: "Pew cross-country estimate; retained separately from UCIDE's later count."
+    notes: "Use for cross-country Pew-comparable analyses, not as the most recent Spain-specific estimate."
   jewish_share:
     value: "<0.1"
     unit: "percent"
@@ -255,6 +278,65 @@ religion:
     reference_date: null
     source_ids: []
     quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Spain publishes arrests and operations, not a comparable census of violent Islamist extremists."
+  country_specific_proxy_percent_of_muslim_estimate:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: ["ES-JIHADIST-ARRESTS-2025"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Annual arrest incidence must not be converted into prevalence."
+  observed_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No directly comparable person-potential count published."}
+  violence_oriented_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  radicalization_registry_count: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  annual_jihadist_arrests:
+    value: 100
+    unit: "persons_arrested_in_Spain"
+    reference_date: "2025"
+    source_ids: ["ES-JIHADIST-ARRESTS-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Flow measure, not prevalence. Fiscalía/Interior reports 64 operations and 100 arrests in Spain in 2025."
+  disrupted_plots: {value: null, unit: "plots", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  terrorism_caseload_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  extremist_network_assessment:
+    value: "persistent_jihadist_counterterrorism_caseflow"
+    unit: "categorical"
+    reference_date: "2025-2026"
+    source_ids: ["ES-JIHADIST-ARRESTS-2025", "ES-JIHADIST-MAP-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "458 operations and 816 detainees recorded since 2012 as of 23 June 2026; cumulative enforcement data, not population prevalence."
+  external_network_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note:
+    value: "Do not derive a percentage of radical Muslims from arrest totals."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
     estimated: false
     derived: false
     imputed: false
@@ -563,6 +645,29 @@ ai:
 
 economy:
   gdp_current_usd: {value: 1906453310000, unit: "USD", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "World Bank current-US-dollar GDP."}
+  official_gold_reserves_tonnes:
+    value: 281.58
+    unit: "tonnes_fine_gold"
+    reference_date: "2026-Q1"
+    source_ids: ["ES-BDE-GOLD-2025", "WGC-GOLD-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Banco de España held 9.054 million fine troy ounces at end-2025; WGC series reports 281.58 tonnes in Q1 2026."
+  official_gold_reserves_market_value:
+    value: 33219170000
+    unit: "EUR"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-BDE-GOLD-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Year-end market value reported by Banco de España."
+  total_official_reserve_assets: {value: null, unit: "EUR_or_USD", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not required for v0.3."}
   gdp_per_capita_usd: {value: 38627.2, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   real_gdp_growth: {value: 2.8, unit: "percent", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   unemployment_rate: {value: 10.4, unit: "percent", reference_date: "2025", source_ids: ["WB-ES-ECON-2025"], quality: "high", estimated: true, derived: false, imputed: false, notes: "Modeled ILO estimate in World Bank profile."}
