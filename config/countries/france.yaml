@@ -1,0 +1,343 @@
+identity:
+  country_name: "France"
+  iso2: "FR"
+  iso3: "FRA"
+  snapshot_version: "0.2"
+  snapshot_date: "2026-09-22"
+
+population:
+  total:
+    value: 69082000
+    unit: "persons"
+    geographic_scope: "France"
+    reference_date: "2026-01-01"
+    source_ids: ["FR-INSEE-POP-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "INSEE provisional population estimate, including overseas departments."
+  foreign_residents:
+    value: null
+    unit: "persons"
+    geographic_scope: "France"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not populated in v0.2."
+  age:
+    under_15: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+    age_15_64: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "To populate from INSEE age tables."}
+    age_65_plus: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+
+religion:
+  christian_share:
+    value: 46.5
+    unit: "percent"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Pew comparable country estimate."
+  muslim_share:
+    value: 9.1
+    unit: "percent"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  unaffiliated_share:
+    value: 42.6
+    unit: "percent"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  jewish_share:
+    value: 0.7
+    unit: "percent"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  muslim_first_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "No reliable religion-by-generation cross-tab populated."}
+  muslim_second_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Must not be inferred from ancestry."}
+  muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+
+manpower:
+  legally_eligible: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Age bands are not substituted for military eligibility."}
+  medically_fit_estimate: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+  trained_or_prior_service: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+  immediately_available: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_30d: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_180d: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+  sustainable_365d: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+
+armed_forces:
+  active_total:
+    value: 200000
+    unit: "persons_approx"
+    geographic_scope: "Ministry of Armed Forces"
+    reference_date: "2025"
+    source_ids: ["FR-LPM-UPDATE-2026"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Official 2026 LPM update states nearly 200,000 military personnel in 2025."
+  active_land:
+    value: 112000
+    unit: "persons_approx"
+    geographic_scope: "Army personnel within Ministry of Armed Forces"
+    reference_date: "2025"
+    source_ids: ["FR-ARMY-KEY-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Army page also notes 16,000 Army personnel serving outside the ministry; do not double count."
+  active_air:
+    value: 40542
+    unit: "persons"
+    geographic_scope: "Air and Space Force"
+    reference_date: "2026-01-01"
+    source_ids: ["FR-AIR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  active_naval:
+    value: null
+    unit: "persons"
+    geographic_scope: "French Navy"
+    reference_date: null
+    source_ids: ["FR-NAVY-RESERVE"]
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Public source states nearly 40,000 sailors including more than 5,000 operational reservists; active-only count not derived here."
+  reserve_total:
+    value: 43794
+    unit: "operational_reservists"
+    geographic_scope: "Ministry of Armed Forces"
+    reference_date: "2024-12-31"
+    source_ids: ["FR-RESERVE-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Target is 105,000 by 2035."
+  reserve_ready:
+    value: 43794
+    unit: "operational_reservists"
+    geographic_scope: "Ministry of Armed Forces"
+    reference_date: "2024-12-31"
+    source_ids: ["FR-RESERVE-2025"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Operational reserve headcount is not equivalent to immediately deployable strength."
+  conscription:
+    enabled: {value: false, unit: "boolean", geographic_scope: "France", reference_date: "2026", source_ids: ["FR-SERVICE-NATIONAL-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "No compulsory mass conscription; a voluntary/selective national service exists."}
+    age_range: {value: "18-25", unit: "years", geographic_scope: "France", reference_date: "2026", source_ids: ["FR-SERVICE-NATIONAL-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Voluntary/selective national service."}
+    service_length_months: {value: 10, unit: "months", geographic_scope: "France", reference_date: "2026", source_ids: ["FR-SERVICE-NATIONAL-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Voluntary/selective national service."}
+  readiness:
+    deployable_share: {value: null, unit: "ratio", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+    command_cohesion: {value: null, unit: "index", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+
+military_domains:
+  land: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["FR-ARMY-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  air: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["FR-AIR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  naval: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["FR-NAVY-RESERVE"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  isr_c4isr:
+    satellite_access: {value: "national_and_allied", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative index deferred."}
+    secure_communications: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  electronic_warfare:
+    presence: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+  drones:
+    presence: {value: "rapidly_expanding", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-DGA-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "DGA reports drone industrial acceleration including a national drone pact."}
+  counter_uas:
+    presence: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-AIR-CUAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Air Force exercises and layered defence activity documented; score deferred."}
+  strategic_deterrence:
+    nuclear_weapon_state: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["FR-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    national_nuclear_deterrent: {value: "sovereign_airborne_and_sea_based", unit: "categorical", reference_date: "2026", source_ids: ["FR-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Strategic deterrence only; no tactical employment model."}
+    allied_extended_deterrence: {value: "contributes_to_European_and_NATO_security", unit: "categorical", reference_date: "2026", source_ids: ["FR-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    nuclear_sharing_role: {value: false, unit: "boolean", reference_date: "2026", source_ids: ["FR-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "France maintains an independent deterrent."}
+
+weapon_categories:
+  INFANTRY_SYSTEMS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ARMORED_SYSTEMS: {value: "present_and_domestically_supported", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  INDIRECT_FIRE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  GROUND_AIR_DEFENCE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  COMBAT_AIR: {value: "present_and_domestically_supported", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SURFACE_NAVAL: {value: "present_and_domestically_supported", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SUBMARINE: {value: "present_nuclear_and_conventional_missions", unit: "categorical", reference_date: "2026", source_ids: ["FR-NUCLEAR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  UNCREWED_AERIAL_SYSTEMS: {value: "present_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["FR-DGA-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  COUNTER_UAS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-AIR-CUAS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ELECTRONIC_WARFARE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+  CYBER_CAPABILITY: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ISR_C4ISR: {value: "present_and_nationally_supported", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  LOGISTICS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Performance index deferred."}
+
+defence_industry:
+  military_expenditure_usd:
+    value: 68000000000
+    unit: "USD"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "SIPRI estimate."
+  direct_defence_employment:
+    value: 220000
+    unit: "jobs_generated_by_BITD"
+    reference_date: "2025"
+    source_ids: ["FR-LPM-UPDATE-2026"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Official statement on jobs generated by the defence industrial and technological base."
+  defence_exports_local_currency:
+    value: 20000000000
+    unit: "EUR_orders"
+    reference_date: "2025"
+    source_ids: ["FR-DGA-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "DGA reported nearly EUR20bn export orders."
+  ammunition_capacity: {value: "established_and_expanding", unit: "categorical", reference_date: "2025", source_ids: ["FR-DGA-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Production rate deferred."}
+  drone_capacity: {value: "expanding", unit: "categorical", reference_date: "2025", source_ids: ["FR-DGA-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  vehicle_capacity: {value: "established", unit: "categorical", reference_date: "2025", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  aerospace_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2025", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  naval_shipbuilding_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2025", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electronics_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2026", source_ids: ["FR-AMIAD-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Includes defence electronics/AI ecosystem; quantitative score deferred."}
+  surge_multiplier_90d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_365d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+intelligence:
+  national_service_names:
+    - "Direction générale de la sécurité extérieure (DGSE)"
+  military_intelligence_services:
+    - "Direction du renseignement militaire (DRM)"
+    - "Direction du renseignement et de la sécurité de la défense (DRSD)"
+  counterterrorism_fusion_centres: []
+  humint: {value: "national_external_service_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  sigint: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No operational score."}
+  geoint_imint: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DRM-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  counterintelligence: {value: "DRSD_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DRSD-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  allied_intelligence_sharing: {value: "NATO_EU_bilateral", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  analytic_fusion: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DRM-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "DRM has about 2,100 civilian and military personnel; this is not a performance score."}
+
+cyber:
+  military_cyber_command: {value: "national_military_cyber_structure_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-DEFENCE-KEY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Detailed score deferred."}
+  offensive_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defensive_maturity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+ai:
+  national_strategy: {value: "national_AI_ecosystem_and_sovereignty_policy", unit: "categorical", reference_date: "2026", source_ids: ["FR-AMIAD-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "National civilian layer to be expanded separately."}
+  defence_ai_policy:
+    value: "AMIAD_defence_AI_scale_up"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-AMIAD-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "AMIAD coordinates defence AI projects."
+  defence_ai_integration:
+    value: "institutional_scale_up"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-AMIAD-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "AMIAD reports 400 identified AI use cases and 300 planned recruits by end-2026; no aggregate effectiveness score assigned."
+  frontier_model_access: {value: "domestic_and_allied_ecosystem_access", unit: "categorical", reference_date: "2026", source_ids: ["FR-AMIAD-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Quantification deferred."}
+  compute_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  model_security: {value: "explicit_defence_AI_governance", unit: "categorical", reference_date: "2026", source_ids: ["FR-AMIAD-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+economy:
+  gdp_current_usd: {value: 3370000000000, unit: "USD", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD."}
+  gdp_per_capita_usd: {value: 48985.7, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  real_gdp_growth: {value: 0.8, unit: "percent", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  unemployment_rate: {value: 7.5, unit: "percent", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}
+  inflation_rate: {value: 0.9, unit: "percent", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  fiscal_war_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  energy_security: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+geography:
+  strategic_depth: {value: "continental_state_with_metropolitan_and_overseas_territories", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative score deferred."}
+  atlantic_access: {value: true, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  mediterranean_access: {value: true, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  territorial_exclaves: []
+
+alliances:
+  memberships: ["NATO", "European Union"]
+  major_security_partnerships: ["EU Common Security and Defence Policy", "bilateral nuclear and defence partnerships"]
+  interoperability:
+    common_standards: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    command_integration: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    intelligence_sharing: {value: "NATO_EU_bilateral", unit: "categorical", reference_date: "2026", source_ids: ["FR-INTELLIGENCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+governance:
+  political_stability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "WGI/V-Dem layer deferred."}
+  government_effectiveness: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  elite_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No political inference at raw-data stage."}
+
+provenance_notes:
+  unresolved_conflicts:
+    - "Army personnel publications distinguish personnel inside and outside the Ministry; raw totals must not be combined without scope control."
+  known_data_gaps:
+    - "Navy active-only personnel count."
+    - "Mobilization throughput and deployability."
+    - "Munitions depth and quantified drone/EW production."
+    - "Comparable operational AI score."
+  methodological_warnings:
+    - "Religion is a civilian demographic attribute, not combatant alignment."
+    - "Nuclear deterrence is modeled only as a strategic state variable."
