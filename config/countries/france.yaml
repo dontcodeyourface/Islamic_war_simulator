@@ -154,6 +154,199 @@ violent_islamist_extremism:
   external_network_linkage: {value: "international_jihadist_network_risk_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-JIHADIST-THREAT-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "Do not interpret FSPRT entries as a percentage of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
+prisons:
+  total_prison_population:
+    value: 89500
+    unit: "persons"
+    geographic_scope: "France_including_COM"
+    reference_date: "2026-07-01"
+    source_ids: ["FR-PRISON-POP-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "88,000 outside COM plus 1,500 in COM."
+  terrorism_related_prisoners:
+    value: 258
+    unit: "persons_convicted_for_islamist_terrorism_TIS"
+    reference_date: "2023-12-31"
+    source_ids: ["FR-TIS-2023"]
+    quality: "high"
+    freshness_class: "stale"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Official parliamentary figure; retained with freshness penalty."
+  islamist_extremist_terrorism_prisoners:
+    value: 258
+    unit: "TIS_convicted_persons"
+    reference_date: "2023-12-31"
+    source_ids: ["FR-TIS-2023"]
+    quality: "high"
+    freshness_class: "stale"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Do not extrapolate to 2026."
+  islamist_extremist_share_of_total_prison_population:
+    value: 0.29
+    unit: "percent_approx"
+    reference_date: "mixed_2023_numerator_2026_denominator"
+    source_ids: ["FR-TIS-2023","FR-PRISON-POP-2026"]
+    quality: "low"
+    freshness_class: "mixed"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "258 / 89,500; scale-only proxy with mixed dates."
+  radicalized_common_law_prisoners:
+    value: 540
+    unit: "RAD_common_law_prisoners_suspected_of_radicalization"
+    reference_date: "2023"
+    source_ids: ["FR-RAD-2023"]
+    quality: "high"
+    freshness_class: "stale"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Official parliamentary series; security category, not religion."
+  annual_terrorism_prisoner_releases:
+    value: 35
+    unit: "projected_TIS_releases"
+    reference_date: "2026"
+    source_ids: ["FR-TIS-RELEASES-2026"]
+    quality: "medium"
+    freshness_class: "current"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Projection reported from PNAT; projected, not realized."
+  prison_radicalization_monitoring_strength:
+    value: "specialized_TIS_RAD_monitoring_and_assessment"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-TIS-2023","FR-RAD-2023"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Effectiveness not quantified."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future state-collapse/security-pressure variable; never automatic combatant manpower."
+  methodological_note:
+    value: "TIS and RAD are penitentiary/security categories; they are not equivalent to Muslim prisoner counts."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name:
+    value: "Vigipirate 2026"
+    unit: "scale"
+    reference_date: "2026-06-22"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_level:
+    value: 2
+    unit: "level"
+    reference_date: "2026-06-22"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "vigilance renforcée"
+  domestic_public_level_max:
+    value: 3
+    unit: "level"
+    reference_date: "2026"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_interpretation:
+    value: "vigilance_renforcee"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Middle of three stages."
+  domestic_public_scope:
+    value: "national_terrorism_prevention_and_protection_posture"
+    unit: "text"
+    reference_date: "2026"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not Islamist-only."
+  official_qualitative_assessment:
+    value: "reinforced_vigilance"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-VIGIPIRATE-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  normalized_cross_country_level:
+    value: null
+    unit: "0_1"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Do not map 2/3 mechanically to another country's scale."
+  cross_country_comparability:
+    value: "low_without_mapping"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  methodological_note:
+    value: "Vigipirate is a protective posture, not a direct attack probability."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Age bands are not substituted for military eligibility."}
   medically_fit_estimate: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
