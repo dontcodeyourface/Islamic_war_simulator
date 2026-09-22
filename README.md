@@ -2,7 +2,8 @@
 
 ## Canonical Scenario Specification
 
-**Status:** Canonical baseline v0.2  
+**Scenario status:** Canonical baseline v0.2  
+**Country data contract:** Snapshot v1.0 FROZEN (2026-09-23)  
 **Baseline date:** 2026-09-22  
 **Purpose:** Strategic simulation / stress testing  
 **Scope:** Europe, North Africa, Sahel, Middle East and external great-power intervention  
@@ -40,6 +41,8 @@ The simulator must distinguish rigorously between:
 No generated outcome may later be presented as though it were a baseline fact.
 
 Detailed pre-engine capability specification: [docs/FACTOR_MODEL.md](docs/FACTOR_MODEL.md).
+
+Canonical frozen country-data contract: [docs/SNAPSHOT_V1_SPEC.md](docs/SNAPSHOT_V1_SPEC.md). New countries must start from [`config/countries/_snapshot_v1_template.yaml`](config/countries/_snapshot_v1_template.yaml).
 
 ---
 
