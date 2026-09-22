@@ -1,4 +1,4 @@
-schema_version: "0.4"
+schema_version: "0.5"
 schema_name: "country_snapshot"
 status: "canonical-pre-engine"
 
@@ -28,6 +28,13 @@ required_sections:
   - identity
   - population
   - religion
+  - religious_infrastructure
+  - violent_islamist_extremism
+  - organized_crime
+  - prisons
+  - terrorism_threat_posture
+  - law_enforcement
+  - security_force_cohesion
   - manpower
   - armed_forces
   - military_domains
@@ -82,6 +89,21 @@ religion:
   christian_second_generation: {}
   christian_third_plus_generation: {}
 
+religious_infrastructure:
+  muslim_worship_sites_count: {}
+  count_definition: {}
+  count_reference_date: {}
+  worship_sites_per_100k_muslims: {}
+  dominant_islamic_branch: {}
+  branch_distribution: {}
+  predominant_fiqh_school: {}
+  theological_tradition: {}
+  religious_governance_centralization: {}
+  state_supervision: {}
+  imam_training_model: {}
+  foreign_religious_network_exposure: {}
+  methodological_note: {}
+
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population: {}
   country_specific_proxy_percent_of_muslim_estimate: {}
@@ -93,6 +115,49 @@ violent_islamist_extremism:
   terrorism_caseload_share: {}
   extremist_network_assessment: {}
   external_network_linkage: {}
+  methodological_note: {}
+
+organized_crime:
+  markets:
+    cocaine:
+      presence: {}
+      national_role: {}
+      market_scale_proxy: {}
+      wholesale_control_structure: {}
+      retail_control_structure: {}
+    cannabis_hashish:
+      presence: {}
+      national_role: {}
+      market_scale_proxy: {}
+      wholesale_control_structure: {}
+      retail_control_structure: {}
+    illicit_firearms:
+      presence: {}
+      drug_market_linkage: {}
+      availability: {}
+      market_scale_proxy: {}
+  network_types:
+    mocro_maffia_linked_presence: {}
+    latin_american_street_gang_presence: {}
+    western_balkan_ocg_presence: {}
+    clan_based_ocg_presence: {}
+    other_transnational_ocg_presence: {}
+  criminal_capacity:
+    national_market_structure: {}
+    market_concentration: {}
+    territorial_control: {}
+    logistics_infiltration: {}
+    corruption_infiltration: {}
+    money_laundering_capacity: {}
+    firearms_access: {}
+    violence_capacity: {}
+    prison_linkage: {}
+    international_reach: {}
+    leadership_centralization: {}
+    succession_resilience: {}
+    network_fragmentation: {}
+    ideological_alignment: {}
+    likely_conflict_alignment: {}
   methodological_note: {}
 
 prisons:
@@ -127,6 +192,44 @@ terrorism_threat_posture:
   external_travel_advisory_source: {}
   normalized_cross_country_level: {}
   cross_country_comparability: {}
+  methodological_note: {}
+
+law_enforcement:
+  total_officers: {}
+  total_workforce: {}
+  national_police: {}
+  gendarmerie: {}
+  federal_police: {}
+  regional_state_police: {}
+  local_police: {}
+  reserve_auxiliary: {}
+  frontline_share: {}
+  armed_policing_capacity: {}
+  public_order_capacity: {}
+  counterterrorism_capacity: {}
+  organized_crime_capacity: {}
+  border_coast_capacity: {}
+  territorial_density: {}
+  recruitment_trend: {}
+  military_status_component: {}
+  methodological_note: {}
+
+security_force_cohesion:
+  constitutional_loyalty: {}
+  command_cohesion: {}
+  professional_identity: {}
+  political_heterogeneity: {}
+  partisan_preference_evidence: {}
+  union_or_association_fragmentation: {}
+  regional_identity_pressure: {}
+  extremist_infiltration_cases: {}
+  disciplinary_stress: {}
+  public_order_fatigue: {}
+  government_force_relations: {}
+  pay_working_conditions_pressure: {}
+  defection_hazard: {}
+  insubordination_hazard: {}
+  institutional_split_risk: {}
   methodological_note: {}
 
 manpower:
