@@ -210,6 +210,21 @@ demographic_dynamics:
     imputed: false
     notes: "Proxy remains tagged and uncertain; it does not transform ordinary Muslims into Islamist actors."
 
+demographic_differentials:
+  native_national_tfr: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Nationality differential not needed as religion proxy in an overwhelmingly Muslim population."}
+  foreign_national_tfr: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_born_mother_birth_share: {value: null, unit: "percent_of_births", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_national_mother_birth_share: {value: null, unit: "percent_of_births", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_non_muslim_tfr_gap_direct: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Minority populations are too small and no direct comparable religious TFR series is used."}
+  muslim_christian_tfr_gap_direct: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  non_muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  christian_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_switching_net_effect: {value: null, unit: "persons_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_demographic_momentum: {value: "national_demographic_momentum_approximately_matches_Muslim_majority_population", unit: "categorical", reference_date: "2024", source_ids: ["MA-HCP-FERTILITY-2024","MA-STATE-RELIGION-2023"], quality: "medium", estimated: true, derived: true, imputed: false, notes: "This does not distinguish Islamist ideology; it only reflects overwhelming Muslim religious demography."}
+  migration_demographic_momentum: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodology: {value: "Keep religion, migration and ideology analytically separate.", unit: "text", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+
 religion:
   christian_share:
     value: null
@@ -1406,6 +1421,8 @@ external_social_finance:
   cross_border_family_networks: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   external_political_financing_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "External social/financial ties are modeled as resilience/influence channels, never automatic political or armed alignment.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+migration_welfare_policy: {}
 
 geography:
   capital_coordinates: {value: {name: "Rabat", lat: 34.0209, lon: -6.8416}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
