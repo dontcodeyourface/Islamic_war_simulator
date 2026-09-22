@@ -170,6 +170,12 @@ military_domains:
     electronic: {}
     kinetic: {}
     cost_exchange_sustainability: {}
+  strategic_deterrence:
+    nuclear_weapon_state: {}
+    national_nuclear_deterrent: {}
+    allied_extended_deterrence: {}
+    nuclear_sharing_role: {}
+    strategic_warning_resilience: {}
 
 weapon_categories:
   INFANTRY_SYSTEMS: {}
