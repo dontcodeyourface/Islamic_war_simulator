@@ -1,4 +1,4 @@
-schema_version: "0.2"
+schema_version: "0.3"
 schema_name: "country_snapshot"
 status: "canonical-pre-engine"
 
@@ -67,6 +67,8 @@ population:
 religion:
   christian_share: {}
   muslim_share: {}
+  muslim_share_best_current_approx: {}
+  muslim_share_comparable_pew_2020: {}
   jewish_share: {}
   unaffiliated_share: {}
   other_share: {}
@@ -79,6 +81,18 @@ religion:
   christian_first_generation: {}
   christian_second_generation: {}
   christian_third_plus_generation: {}
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population: {}
+  observed_person_potential: {}
+  violence_oriented_person_potential: {}
+  radicalization_registry_count: {}
+  annual_jihadist_arrests: {}
+  disrupted_plots: {}
+  terrorism_caseload_share: {}
+  extremist_network_assessment: {}
+  external_network_linkage: {}
+  methodological_note: {}
 
 manpower:
   legally_eligible: {}
@@ -269,6 +283,9 @@ ai:
 
 economy:
   gdp_current_usd: {}
+  official_gold_reserves_tonnes: {}
+  official_gold_reserves_market_value: {}
+  total_official_reserve_assets: {}
   gdp_per_capita_usd: {}
   real_gdp_growth: {}
   unemployment_rate: {}
