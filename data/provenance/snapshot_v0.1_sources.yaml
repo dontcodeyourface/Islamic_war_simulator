@@ -1,0 +1,289 @@
+snapshot_version: "0.1"
+snapshot_date: "2026-09-22"
+purpose: "Canonical provenance registry for raw Spain-Morocco data snapshot."
+
+sources:
+  ES-INE-ECP-2026-07:
+    title: "Estadística Continua de Población - 1 de julio de 2026"
+    publisher: "Instituto Nacional de Estadística (INE)"
+    url: "https://ine.es/dyngs/Prensa/ECP2T26.htm"
+    reference_date: "2026-07-01"
+    type: "official_statistics"
+    quality: "high"
+
+  WB-ES-POP-2024:
+    title: "Spain population - World Development Indicators / UN Population data"
+    publisher: "World Bank"
+    url: "https://data.worldbank.org/country/spain"
+    reference_date: "2024"
+    type: "international_statistics"
+    quality: "high"
+
+  WB-ES-AGE-2024:
+    title: "Population ages 0-14 and 65+ - Spain"
+    publisher: "World Bank / UN World Population Prospects"
+    url: "https://data.worldbank.org/country/spain"
+    reference_date: "2024"
+    type: "international_statistics"
+    quality: "high"
+
+  PEW-RELIGION-2020:
+    title: "Global religious composition appendix - country estimates for 2020"
+    publisher: "Pew Research Center"
+    url: "https://www.pewresearch.org/wp-content/uploads/sites/20/2025/06/PR_2025.06.09_global-religious-change_appendix-b.pdf"
+    reference_date: "2020"
+    publication_date: "2025-06-09"
+    type: "research_estimate"
+    quality: "high"
+
+  UCIDE-MUSLIM-DEMOGRAPHY-2024:
+    title: "Estudio demográfico de la población musulmana 2024"
+    publisher: "Unión de Comunidades Islámicas de España (UCIDE)"
+    url: "https://ucide.org/wp-content/uploads/2025/02/estademograf24.pdf"
+    reference_date: "2024"
+    type: "association_demographic_estimate"
+    quality: "medium"
+
+  ES-MOD-PERSONNEL-2026:
+    title: "Defensa incrementará en 7.500 los efectivos hasta alcanzar 127.500 militares en 2029"
+    publisher: "Ministerio de Defensa de España"
+    url: "https://www.defensa.gob.es/gabinete/notasPrensa/2026/01/DGC-260115-incremento-efectivos.html"
+    reference_date: "2026-01-15"
+    type: "official_defence"
+    quality: "high"
+
+  ES-RESERVE-ACTIVATION-2025:
+    title: "Maximum voluntary reservist activations for 2025"
+    publisher: "Ministerio de Defensa de España"
+    url: "https://publicaciones.defensa.gob.es/"
+    reference_date: "2025"
+    type: "official_defence"
+    quality: "high"
+    notes: "Registry points to the Ministry publications portal pending permanent direct-document URL. Values represent activation ceilings, not total reserve strength."
+
+  ES-AIRBUS-DEFENCE-INDUSTRY:
+    title: "Airbus Defence and Space industrial footprint in Spain"
+    publisher: "Airbus"
+    url: "https://www.airbus.com/en/our-worldwide-presence/airbus-in-europe/airbus-in-spain"
+    reference_date: "2025"
+    type: "manufacturer"
+    quality: "high"
+
+  SIPRI-MILEX-2025:
+    title: "Global military spending rise continues as European and Asian expenditures surge"
+    publisher: "Stockholm International Peace Research Institute (SIPRI)"
+    url: "https://www.sipri.org/media/press-release/2026/global-military-spending-rise-continues-european-and-asian-expenditures-surge"
+    reference_date: "2025"
+    publication_date: "2026"
+    type: "international_research_database"
+    quality: "high"
+
+  ES-DEFENCE-INDUSTRY-2024:
+    title: "Spanish defence and security industry 2024 indicators"
+    publisher: "Ministerio de Defensa de España / Revista Española de Defensa; underlying PwC/TEDAE data"
+    url: "https://www.defensa.gob.es/Galerias/gabinete/red/2025/11/p-18-23-red-435-industria.pdf"
+    reference_date: "2024"
+    type: "official_secondary_industry_statistics"
+    quality: "medium"
+
+  ES-DEFENCE-INDUSTRY-2025:
+    title: "Spanish defence industrial ecosystem and principal companies"
+    publisher: "Ministerio de Defensa de España"
+    url: "https://www.defensa.gob.es/"
+    reference_date: "2025"
+    type: "official_defence_industry"
+    quality: "high"
+    notes: "General ministry source pending permanent event/catalog URL in a later provenance cleanup."
+
+  ES-INDRA-EDGE-UAS-2026:
+    title: "Indra and EDGE joint venture for loitering munitions and intelligent systems in Spain"
+    publisher: "Ministerio de Defensa de España"
+    url: "https://www.defensa.gob.es/"
+    reference_date: "2026-01-13"
+    type: "official_defence_industry"
+    quality: "high"
+    notes: "Permanent article URL to be normalized in provenance cleanup."
+
+  ES-CNI:
+    title: "Principios y funciones del CNI"
+    publisher: "Centro Nacional de Inteligencia"
+    url: "https://www.cni.es/sobre-el-cni/principios-y-funciones"
+    reference_date: "2026"
+    type: "official_intelligence"
+    quality: "high"
+
+  ES-CIFAS:
+    title: "Centro de Inteligencia de las Fuerzas Armadas"
+    publisher: "Estado Mayor de la Defensa"
+    url: "https://emad.defensa.gob.es/unidades/cifas/index.html"
+    reference_date: "2026"
+    type: "official_military_intelligence"
+    quality: "high"
+
+  ES-CITCO:
+    title: "Centro de Inteligencia contra el Terrorismo y el Crimen Organizado"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/"
+    reference_date: "2026"
+    type: "official_security"
+    quality: "high"
+
+  ES-EMAD-MCCE:
+    title: "Mando Conjunto del Ciberespacio"
+    publisher: "Estado Mayor de la Defensa"
+    url: "https://emad.defensa.gob.es/unidades/mcce/"
+    reference_date: "2026"
+    type: "official_military"
+    quality: "high"
+
+  ES-AI-STRATEGY-2024:
+    title: "Estrategia de Inteligencia Artificial 2024"
+    publisher: "Gobierno de España"
+    url: "https://www.lamoncloa.gob.es/consejodeministros/resumenes/Paginas/2024/140524-rueda-de-prensa-ministros.aspx"
+    reference_date: "2024-05-14"
+    type: "official_policy"
+    quality: "high"
+
+  ES-REAIM-2026:
+    title: "Third REAIM Summit on Responsible Artificial Intelligence in the Military Domain"
+    publisher: "Government of Spain / REAIM"
+    url: "https://www.reaim2026.es/"
+    reference_date: "2026-02-04"
+    type: "official_policy"
+    quality: "high"
+
+  WB-ES-ECON-2025:
+    title: "Spain - World Development Indicators country profile"
+    publisher: "World Bank"
+    url: "https://data.worldbank.org/country/spain"
+    reference_date: "2025"
+    type: "international_statistics"
+    quality: "high"
+
+  MA-HCP-RGPH-2024-POP:
+    title: "Population légale du Royaume d'après le RGPH 2024"
+    publisher: "Haut-Commissariat au Plan (HCP), Morocco"
+    url: "https://www.hcp.ma/Population-legale-du-Royaume-d-apres-les-resultats-du-Recensement-General-de-la-Population-et-de-l-Habitat-de-2024_a4015.html"
+    reference_date: "2024-09-01"
+    type: "official_census"
+    quality: "high"
+
+  MA-HCP-RGPH-2024-AGE:
+    title: "Synthèse des principaux résultats du RGPH 2024"
+    publisher: "Haut-Commissariat au Plan (HCP), Morocco"
+    url: "https://www.hcp.ma/Recensement-general-RGPH_r518.html"
+    reference_date: "2024"
+    type: "official_census"
+    quality: "high"
+
+  MA-STATE-RELIGION-2023:
+    title: "2023 Report on International Religious Freedom: Morocco"
+    publisher: "U.S. Department of State"
+    url: "https://2021-2025.state.gov/reports/2023-report-on-international-religious-freedom/morocco/"
+    reference_date: "2023"
+    type: "government_religious_demography_estimate"
+    quality: "medium"
+
+  MA-CIA-PERSONNEL-2022:
+    title: "Military and security service personnel strengths - Morocco"
+    publisher: "CIA World Factbook 2022 Archive"
+    url: "https://www.cia.gov/the-world-factbook/about/archives/2022/field/military-and-security-service-personnel-strengths/"
+    reference_date: "2022"
+    type: "government_estimate"
+    quality: "medium"
+
+  MA-MIL-SERVICE-CURRENT:
+    title: "Morocco military service - current open-source Factbook mirror"
+    publisher: "World Factbook mirror"
+    url: "https://theworldfactbook.org/country/morocco.html"
+    reference_date: "2025"
+    type: "secondary_mirror"
+    quality: "medium"
+    notes: "Temporary source. Replace with Moroccan primary legal source."
+
+  MA-TASM-WHAP-2025:
+    title: "TATA Advanced Systems Morocco plant inaugurated in Berrechid"
+    publisher: "Kingdom of Morocco official portal"
+    url: "https://maroc.ma/en/news/morocco-india-open-defense-facility-berrechid-whap-8x8-vehicle-production"
+    reference_date: "2025-09-23"
+    type: "official_industry"
+    quality: "high"
+    notes: "WhAP 8x8 line; 35% local content at launch, planned progression toward 50%."
+
+  MA-BOEING-APACHE-2025:
+    title: "Morocco receives first AH-64E Apache helicopters"
+    publisher: "Boeing"
+    url: "https://www.boeing.com/features/2025/10/ah-64-apache--securing-the-future-of-battlefield-dominance"
+    reference_date: "2025"
+    type: "manufacturer"
+    quality: "high"
+    notes: "Permanent release URL to be normalized in provenance cleanup."
+
+  MA-DSCA-STINGER-2025:
+    title: "Morocco - FIM-92K Stinger Block I Missiles"
+    publisher: "U.S. Defense Security Cooperation Agency"
+    url: "https://www.dsca.mil/press-media/major-arms-sales/morocco-fim-92k-stinger-block-i-missiles"
+    reference_date: "2025-04-15"
+    type: "official_foreign_military_sale_notification"
+    quality: "high"
+    notes: "Notification/possible sale is not proof of full delivery."
+
+  MA-DSCA-AIR-MUNITIONS-2024:
+    title: "Morocco air-to-air and precision-munition possible sales"
+    publisher: "U.S. Defense Security Cooperation Agency"
+    url: "https://www.dsca.mil/press-media/major-arms-sales"
+    reference_date: "2024-12-20"
+    type: "official_foreign_military_sale_notification"
+    quality: "high"
+    notes: "Includes AMRAAM and GBU-39B SDB notifications. Delivery status must be tracked separately."
+
+  MA-AEROSPACE-ECOSYSTEM:
+    title: "Morocco aerospace industrial ecosystem expansion"
+    publisher: "Kingdom of Morocco official portal / manufacturer announcements"
+    url: "https://www.maroc.ma/"
+    reference_date: "2025-2026"
+    type: "official_and_industry"
+    quality: "medium"
+    notes: "Civil/dual-use aerospace growth must not be counted automatically as military production."
+
+  MA-DGST-SPAIN-COOP-2025:
+    title: "Morocco-Spain security and counterterrorism cooperation"
+    publisher: "Kingdom of Morocco official portal"
+    url: "https://www.maroc.ma/"
+    reference_date: "2025"
+    type: "official_security"
+    quality: "high"
+    notes: "Documents DGST/DGSN cooperation with Spanish security services; exact permanent article URL to normalize later."
+
+  MA-AI-2030-2026:
+    title: "Maroc IA 2030 roadmap"
+    publisher: "Ministry of Digital Transition and Administrative Reform / Kingdom of Morocco"
+    url: "https://www.mmsp.gov.ma/fr/actualites/madame-amal-el-fallah-seghrouchni-pr%C3%A9sid%C3%A9-le-8-septembre-2026-%C3%A0-rabat-une-pr%C3%A9sentation-consacr%C3%A9e-%C3%A0-l%E2%80%99%C3%A9tat-actuel-de-la-feuille-de-route-%C2%AB-maroc-pour-l%E2%80%99intelligence-artificielle-2030-%C2%BB"
+    reference_date: "2026-09"
+    type: "official_policy"
+    quality: "high"
+    notes: "Also covered by maroc.ma; policy targets are not current military capability."
+
+  WB-MA-ECON-2025:
+    title: "Morocco - World Development Indicators country profile"
+    publisher: "World Bank"
+    url: "https://data.worldbank.org/country/morocco"
+    reference_date: "2025"
+    type: "international_statistics"
+    quality: "high"
+
+  MA-US-MNNA:
+    title: "U.S. Security Cooperation with Morocco"
+    publisher: "U.S. Department of State"
+    url: "https://2021-2025.state.gov/u-s-security-cooperation-with-morocco/"
+    reference_date: "2025"
+    type: "official_security_relationship"
+    quality: "high"
+
+  NATO-MEDITERRANEAN-DIALOGUE:
+    title: "NATO Mediterranean Dialogue"
+    publisher: "NATO"
+    url: "https://www.nato.int/cps/en/natohq/topics_52927.htm"
+    reference_date: "2026"
+    type: "official_alliance_relationship"
+    quality: "high"

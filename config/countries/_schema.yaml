@@ -1,0 +1,303 @@
+schema_version: "0.1"
+schema_name: "country_snapshot"
+status: "canonical-pre-engine"
+
+# Every empirical field should use this record shape unless the field is structural.
+datum_template:
+  value: null
+  unit: null
+  reference_date: null
+  source_ids: []
+  quality: "unavailable"   # high | medium | low | unavailable
+  estimated: false
+  derived: false
+  imputed: false
+  notes: null
+
+required_sections:
+  - identity
+  - population
+  - religion
+  - manpower
+  - armed_forces
+  - military_domains
+  - weapon_categories
+  - defence_industry
+  - intelligence
+  - cyber
+  - ai
+  - economy
+  - geography
+  - alliances
+  - governance
+  - provenance_notes
+
+identity:
+  country_name: null
+  iso2: null
+  iso3: null
+  snapshot_version: null
+  snapshot_date: null
+
+population:
+  total: {}
+  male: {}
+  female: {}
+  foreign_residents: {}
+  citizens: {}
+  urban_share: {}
+  rural_share: {}
+  age:
+    under_15: {}
+    age_15_59: {}
+    age_15_64: {}
+    age_60_plus: {}
+    age_65_plus: {}
+
+religion:
+  christian_share: {}
+  muslim_share: {}
+  jewish_share: {}
+  unaffiliated_share: {}
+  other_share: {}
+  muslim_population_estimate: {}
+  muslim_citizenship_local_estimate: {}
+  # Cross-tabs below MUST remain null unless a public source directly reports them.
+  muslim_first_generation: {}
+  muslim_second_generation: {}
+  muslim_third_plus_generation: {}
+  christian_first_generation: {}
+  christian_second_generation: {}
+  christian_third_plus_generation: {}
+
+manpower:
+  legally_eligible: {}
+  medically_fit_estimate: {}
+  trained_or_prior_service: {}
+  immediately_available: {}
+  mobilizable_30d: {}
+  mobilizable_180d: {}
+  sustainable_365d: {}
+  essential_civilian_workforce: {}
+  dependent_population: {}
+
+armed_forces:
+  active_total: {}
+  active_land: {}
+  active_naval: {}
+  active_air: {}
+  active_joint_support: {}
+  active_cyber_space: {}
+  reserve_total: {}
+  reserve_ready: {}
+  gendarmerie: {}
+  national_guard: {}
+  paramilitary: {}
+  conscription:
+    enabled: {}
+    age_range: {}
+    service_length_months: {}
+  readiness:
+    deployable_share: {}
+    training_level: {}
+    personnel_fill_rate: {}
+    fatigue: {}
+    morale: {}
+    command_cohesion: {}
+
+military_domains:
+  land:
+    presence: {}
+    mechanized_capacity: {}
+    armored_capacity: {}
+    indirect_fire: {}
+    long_range_fires: {}
+    engineering: {}
+    ground_air_defence: {}
+    logistics: {}
+  air:
+    presence: {}
+    combat_air: {}
+    transport: {}
+    aerial_refuelling: {}
+    airborne_early_warning: {}
+    rotary_wing: {}
+    airbase_resilience: {}
+    maintenance: {}
+  naval:
+    presence: {}
+    surface_combatants: {}
+    submarines: {}
+    amphibious: {}
+    maritime_patrol: {}
+    mine_warfare: {}
+    sealift: {}
+    port_resilience: {}
+  isr_c4isr:
+    satellite_access: {}
+    commercial_satellite_access: {}
+    persistent_surveillance: {}
+    secure_communications: {}
+    allied_isr_access: {}
+  electronic_warfare:
+    presence: {}
+    jamming: {}
+    spectrum_awareness: {}
+    navigation_resilience: {}
+    communications_resilience: {}
+  drones:
+    presence: {}
+    cheap_uas_production_rate: {}
+    import_access: {}
+    reconnaissance_uas: {}
+    loitering_munitions: {}
+    operator_training: {}
+    replacement_rate: {}
+    commercial_component_dependency: {}
+  counter_uas:
+    presence: {}
+    detection: {}
+    electronic: {}
+    kinetic: {}
+    cost_exchange_sustainability: {}
+
+weapon_categories:
+  INFANTRY_SYSTEMS: {}
+  PROTECTED_MOBILITY: {}
+  ARMORED_SYSTEMS: {}
+  INDIRECT_FIRE: {}
+  LONG_RANGE_FIRES: {}
+  GROUND_AIR_DEFENCE: {}
+  COMBAT_AIR: {}
+  AIR_SUPPORT: {}
+  ROTARY_WING: {}
+  SURFACE_NAVAL: {}
+  SUBMARINE: {}
+  AMPHIBIOUS: {}
+  MARITIME_PATROL: {}
+  UNCREWED_AERIAL_SYSTEMS: {}
+  UNCREWED_GROUND_SYSTEMS: {}
+  UNCREWED_MARITIME_SYSTEMS: {}
+  COUNTER_UAS: {}
+  ELECTRONIC_WARFARE: {}
+  CYBER_CAPABILITY: {}
+  ISR_C4ISR: {}
+  ENGINEERING: {}
+  LOGISTICS: {}
+  PRECISION_MUNITIONS: {}
+  MASS_MUNITIONS: {}
+
+defence_industry:
+  military_expenditure_usd: {}
+  military_expenditure_gdp_share: {}
+  defence_turnover_local_currency: {}
+  direct_defence_employment: {}
+  defence_exports_local_currency: {}
+  ammunition_capacity: {}
+  drone_capacity: {}
+  vehicle_capacity: {}
+  aerospace_capacity: {}
+  naval_shipbuilding_capacity: {}
+  electronics_capacity: {}
+  repair_capacity: {}
+  surge_multiplier_90d: {}
+  surge_multiplier_365d: {}
+  local_content_share: {}
+  import_dependency: {}
+  critical_component_dependency: {}
+  semiconductor_access: {}
+  energy_dependency: {}
+
+intelligence:
+  national_service_names: []
+  military_intelligence_services: []
+  counterterrorism_fusion_centres: []
+  humint: {}
+  sigint: {}
+  geoint_imint: {}
+  osint: {}
+  cyber_intelligence: {}
+  counterintelligence: {}
+  domestic_threat_detection: {}
+  allied_intelligence_sharing: {}
+  analytic_fusion: {}
+
+cyber:
+  military_cyber_command: {}
+  offensive_capacity: {}
+  defensive_maturity: {}
+  critical_infrastructure_resilience: {}
+  military_network_resilience: {}
+
+ai:
+  national_strategy: {}
+  defence_ai_policy: {}
+  frontier_model_access: {}
+  domestic_model_capability: {}
+  compute_capacity: {}
+  data_center_capacity: {}
+  semiconductor_access: {}
+  electricity_for_compute: {}
+  ai_talent: {}
+  ai_research_strength: {}
+  open_model_access: {}
+  cloud_access: {}
+  defence_ai_integration: {}
+  autonomous_systems_maturity: {}
+  ai_enabled_isr: {}
+  ai_enabled_logistics: {}
+  ai_enabled_ew: {}
+  cyber_ai_capability: {}
+  model_security: {}
+  allied_ai_access: {}
+
+economy:
+  gdp_current_usd: {}
+  gdp_per_capita_usd: {}
+  real_gdp_growth: {}
+  unemployment_rate: {}
+  inflation_rate: {}
+  remittances_gdp_share: {}
+  fiscal_war_capacity: {}
+  borrowing_capacity: {}
+  foreign_reserves: {}
+  energy_security: {}
+  trade_dependency: {}
+  sanctions_vulnerability: {}
+
+geography:
+  land_area_km2: {}
+  population_density: {}
+  coastline_km: {}
+  strategic_depth: {}
+  major_ports: {}
+  airbase_dispersion: {}
+  transport_redundancy: {}
+  chokepoint_exposure: {}
+  atlantic_access: {}
+  mediterranean_access: {}
+  territorial_exclaves: []
+
+alliances:
+  memberships: []
+  major_security_partnerships: []
+  interoperability:
+    common_standards: {}
+    intelligence_sharing: {}
+    cross_border_logistics: {}
+    command_integration: {}
+    maintenance_compatibility: {}
+
+governance:
+  political_stability: {}
+  government_effectiveness: {}
+  rule_of_law: {}
+  control_of_corruption: {}
+  elite_cohesion: {}
+  civil_military_alignment: {}
+  security_service_loyalty: {}
+
+provenance_notes:
+  unresolved_conflicts: []
+  known_data_gaps: []
+  methodological_warnings: []
