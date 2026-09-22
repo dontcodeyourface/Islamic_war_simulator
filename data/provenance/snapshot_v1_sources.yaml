@@ -11,6 +11,15 @@ sources:
     quality: "high"
     notes: "Distances use Earth radius 6371.0088 km and are capital-to-capital great-circle distances, not minimum territorial separation."
 
+  ES-INE-POP-2026:
+    title: "Estadística Continua de Población - 1 de julio de 2026"
+    publisher: "Instituto Nacional de Estadística"
+    url: "https://ine.es/dyngs/Prensa/ECP2T26.htm"
+    reference_date: "2026-07-01"
+    publication_date: "2026-08-06"
+    type: "official_demography"
+    quality: "high"
+
   ES-INE-POP-2025:
     title: "Censo Anual de Población 2025 - primeros resultados"
     publisher: "Instituto Nacional de Estadística"
