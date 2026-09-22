@@ -1,0 +1,215 @@
+snapshot_version: "0.4"
+snapshot_date: "2026-09-23"
+purpose: "Prison-security and terrorism-threat-posture provenance for active country snapshots."
+
+sources:
+  ES-PRISON-POP-2025:
+    title: "Memoria 2026 - Población reclusa a 31 de diciembre de 2025"
+    publisher: "Fiscalía General del Estado / Secretaría General de Instituciones Penitenciarias data"
+    url: "https://www.fiscal.es/memorias/memoria2026/FISCALIA_SITE/capitulo_III/cap_III_6_2.html"
+    reference_date: "2025-12-31"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  ES-JIHADIST-PRISONERS-2024:
+    title: "Instituciones Penitenciarias reports jihadist prisoners and inmates susceptible to recruitment"
+    publisher: "EFE, citing Secretaría General de Instituciones Penitenciarias"
+    url: "https://efe.com/espana/2024-10-03/presos-yihadistas-carceles-espana/"
+    reference_date: "2024-10-03"
+    type: "official_figures_reported_by_news_agency"
+    quality: "medium"
+    notes: "Reports 82 prisoners for jihadist terrorism, including 28 convicted and 54 pre-trial, plus 70 other inmates identified as susceptible to recruitment."
+
+  ES-DALIL:
+    title: "Programa DALIL - prevención y desradicalización del extremismo violento yihadista en prisión"
+    publisher: "Ministerio del Interior / Secretaría General de Instituciones Penitenciarias"
+    url: "https://www.interior.gob.es/"
+    reference_date: "2025"
+    type: "official_prison_program"
+    quality: "high"
+
+  ES-NAA-2026:
+    title: "Nivel 4 de Alerta Antiterrorista reforzado"
+    publisher: "Gobierno de España / Ministerio del Interior"
+    url: "https://www.lamoncloa.gob.es/serviciosdeprensa/notasprensa/interior/Paginas/2026/050626-nivel-alerta-antiterrorista.aspx"
+    reference_date: "2026-06"
+    type: "official_threat_posture"
+    quality: "high"
+
+  ES-NAA-SCALE:
+    title: "Niveles de Alerta Antiterrorista"
+    publisher: "Centro Nacional de Protección de Infraestructuras Críticas / Ministerio del Interior"
+    url: "https://www.cnpic.interior.gob.es/opencms/es/que-hacemos/nivel-alerta-antiterrorista/"
+    reference_date: "2026"
+    type: "official_threat_scale"
+    quality: "high"
+
+  FR-PRISON-POP-2026:
+    title: "Mesure de l'incarcération au 1er juillet 2026"
+    publisher: "Ministère de la Justice, France"
+    url: "https://www.justice.gouv.fr/documentation/etudes-et-statistiques/statistiques-mensuelles-population-detenue-ecrouee"
+    reference_date: "2026-07-01"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  FR-TIS-2023:
+    title: "Prisoners convicted for Islamist terrorism (TIS)"
+    publisher: "Sénat français"
+    url: "https://www.senat.fr/rap/r23-659/r23-659_mono.html"
+    reference_date: "2023-12-31"
+    type: "official_parliamentary_prison_statistics"
+    quality: "high"
+    notes: "Reports 258 persons convicted for Islamist terrorism incarcerated at end-2023."
+
+  FR-RAD-2023:
+    title: "TIS and RAD prisoner series"
+    publisher: "Assemblée nationale / Ministère de la Justice response"
+    url: "https://questions.assemblee-nationale.fr/q16/16-8486QE.htm"
+    reference_date: "2023"
+    type: "official_parliamentary_prison_statistics"
+    quality: "high"
+    notes: "Reports 540 common-law prisoners suspected of radicalisation in the 2023 RAD series."
+
+  FR-TIS-RELEASES-2026:
+    title: "Projected releases of Islamist-terrorism prisoners in 2026"
+    publisher: "Le Monde, reporting PNAT figures"
+    url: "https://www.lemonde.fr/societe/article/2026/02/17/terrorisme-islamiste-la-question-sensible-des-sorties-de-prison_6662955_3224.html"
+    reference_date: "2026"
+    type: "authoritative_news_reporting_official_figures"
+    quality: "medium"
+    notes: "Projection, not realized releases."
+
+  FR-VIGIPIRATE-2026:
+    title: "Vigipirate - posture été-automne 2026"
+    publisher: "Secrétariat général de la défense et de la sécurité nationale"
+    url: "https://www.sgdsn.gouv.fr/vigipirate"
+    reference_date: "2026-06-22"
+    type: "official_threat_posture"
+    quality: "high"
+
+  UK-EW-PRISON-2026:
+    title: "Offender management statistics quarterly: April to June 2026"
+    publisher: "UK Ministry of Justice"
+    url: "https://www.gov.uk/government/statistics/offender-management-statistics-quarterly-april-to-june-2026"
+    reference_date: "2026-06-30"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  UK-SCOT-PRISON-2026:
+    title: "Scottish Prison Population Statistics - July 2026"
+    publisher: "Scottish Prison Service / Scottish Government"
+    url: "https://www.sps.gov.uk/about-us/transparency/statistics"
+    reference_date: "2026-07-01"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  UK-NI-PRISON-2026:
+    title: "Northern Ireland weekly prison population"
+    publisher: "Department of Justice Northern Ireland"
+    url: "https://www.justice-ni.gov.uk/publications/weekly-prison-population"
+    reference_date: "2026-07-03"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  UK-TERRORIST-PRISONERS-2026:
+    title: "Operation of police powers under the Terrorism Act 2000 and subsequent legislation: year ending March 2026"
+    publisher: "UK Home Office"
+    url: "https://www.gov.uk/government/statistics/operation-of-police-powers-under-the-terrorism-act-2000-year-ending-march-2026"
+    reference_date: "2026-03-31"
+    type: "official_counterterrorism_prison_statistics"
+    quality: "high"
+    notes: "273 terrorism/terrorism-connected prisoners in Great Britain; 58% Islamist extremist; 41 terrorist prisoners released in year ending Dec 2025."
+
+  UK-EW-PRISON-2026-MAR:
+    title: "England and Wales prison population at 31 March 2026"
+    publisher: "UK Ministry of Justice"
+    url: "https://www.gov.uk/government/statistics/offender-management-statistics-quarterly-january-to-march-2026"
+    reference_date: "2026-03-31"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  UK-SCOT-PRISON-2026-APR:
+    title: "Scottish prison population at 1 April 2026"
+    publisher: "Scottish Prison Service / Scottish Government"
+    url: "https://www.sps.gov.uk/about-us/transparency/statistics"
+    reference_date: "2026-04-01"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  UK-THREAT-LEVEL-2026:
+    title: "UK national terrorism threat level raised to SEVERE"
+    publisher: "MI5 / Joint Terrorism Analysis Centre"
+    url: "https://www.mi5.gov.uk/uk-national-terrorism-threat-level-raised-to-severe"
+    reference_date: "2026-04-30"
+    type: "official_threat_posture"
+    quality: "high"
+    notes: "SEVERE means an attack is highly likely."
+
+  DE-PRISON-POP-2025:
+    title: "Germany prison population"
+    publisher: "World Prison Brief, using Council of Europe data"
+    url: "https://www.prisonstudies.org/country/germany"
+    reference_date: "2025-01-31"
+    type: "international_prison_statistics"
+    quality: "medium"
+
+  DE-DESTATIS-PRISON-2025:
+    title: "Strafvollzug - Strafgefangene und Sicherungsverwahrte 2025"
+    publisher: "Statistisches Bundesamt (Destatis)"
+    url: "https://www.destatis.de/DE/Themen/Staat/Justiz-Rechtspflege/Publikationen/Downloads-Strafverfolgung-Strafvollzug/statistischer-bericht-strafvollzug-2100410257005.html"
+    reference_date: "2025-03-31"
+    type: "official_prison_statistics"
+    quality: "high"
+
+  DE-THREAT-LEVEL-2026:
+    title: "Federal assessment of Germany's current security threat"
+    publisher: "Bundesregierung"
+    url: "https://www.bundesregierung.de/"
+    reference_date: "2026-08-05"
+    type: "official_security_assessment"
+    quality: "high"
+    notes: "Government described the threat situation as high and stated attacks could be expected at any time while no specific concrete public threat was identified."
+
+  DE-ISLAMIST-THREAT-2026:
+    title: "Ten-point plan against Islamist terrorism"
+    publisher: "Bundesregierung"
+    url: "https://www.bundesregierung.de/"
+    reference_date: "2026-09-16"
+    type: "official_counterterrorism_assessment"
+    quality: "high"
+    notes: "Describes a persistently high threat from Islamist terrorism."
+
+  MA-PRISON-POP-2025:
+    title: "Morocco prison population and capacity at end-2025"
+    publisher: "DGAPR annual-report figures / World Prison Brief"
+    url: "https://www.prisonstudies.org/country/morocco"
+    reference_date: "2025-12-31"
+    type: "official_report_and_international_prison_statistics"
+    quality: "high"
+    notes: "99,366 prisoners and approximately 64,812 places; DGAPR reporting gives 8,785 pre-trial detainees at year-end."
+
+  MA-MOUSSALAHA-2025:
+    title: "19th Moussalaha rehabilitation-program cohort"
+    publisher: "Kingdom of Morocco official/authorized reporting"
+    url: "https://www.maroc.ma/"
+    reference_date: "2025-12-26"
+    type: "official_rehabilitation_program"
+    quality: "high"
+    notes: "24 participants in the 19th edition; 436 cumulative participants since 2017 at that date."
+
+  MA-PRISON-PREVENTION-2026:
+    title: "Peer-education prison programme against violent extremism"
+    publisher: "DGAPR / Kingdom of Morocco reporting"
+    url: "https://www.maroc.ma/"
+    reference_date: "2026"
+    type: "official_prison_prevention_program"
+    quality: "high"
+
+  MA-US-TRAVEL-ADVISORY-2026:
+    title: "Morocco Travel Advisory"
+    publisher: "U.S. Department of State"
+    url: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/morocco-travel-advisory.html"
+    reference_date: "2026-09-04"
+    type: "external_travel_advisory"
+    quality: "high"
+    notes: "Level 2: Exercise Increased Caution due to terrorism. This is not a Moroccan domestic alert level."
