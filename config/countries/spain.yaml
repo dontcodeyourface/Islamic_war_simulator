@@ -486,6 +486,187 @@ terrorism_threat_posture:
   cross_country_comparability: {value: "low_without_mapping", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "NAA level is a state threat posture, not an Islamist-specific probability.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
+prisons:
+  total_prison_population:
+    value: 62398
+    unit: "persons"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "National prison population."
+  terrorism_related_prisoners:
+    value: 82
+    unit: "persons_imprisoned_for_jihadist_terrorism_offences"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "28 convicted and 54 held pre-trial at the reference date."
+  islamist_extremist_terrorism_prisoners:
+    value: 82
+    unit: "persons"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Offence-based count; not a count of Muslim prisoners."
+  islamist_extremist_share_of_total_prison_population:
+    value: 0.13
+    unit: "percent_approx"
+    reference_date: "mixed_2024-10_numerator_2025-12_denominator"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024","ES-PRISON-POP-2025"]
+    quality: "low"
+    freshness_class: "mixed"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "82 / 62,398; scale proxy only because dates differ."
+  at_risk_of_radicalization_prisoners:
+    value: 70
+    unit: "persons_identified_as_susceptible_to_jihadist_recruitment"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Risk category; not equivalent to extremists."
+  prison_radicalization_monitoring_strength:
+    value: "specialized_monitoring_and_DALIL_program_present"
+    unit: "categorical"
+    reference_date: "2025"
+    source_ids: ["ES-DALIL"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Effectiveness not yet scored."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future state-collapse variable based on prison control, extremist-prisoner stock, releases and recruitment pressure; never direct combatant conversion."
+  methodological_note:
+    value: "Prisoners are not automatically combatants; this layer models security/recruitment pressure if prison control degrades."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name:
+    value: "Nivel de Alerta Antiterrorista (NAA)"
+    unit: "scale"
+    reference_date: "2026"
+    source_ids: ["ES-NAA-SCALE"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_level:
+    value: 4
+    unit: "level"
+    reference_date: "2026-06-12"
+    source_ids: ["ES-NAA-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Level 4 remained active with reinforcement measures."
+  domestic_public_level_max:
+    value: 5
+    unit: "level"
+    reference_date: "2026"
+    source_ids: ["ES-NAA-SCALE"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_interpretation:
+    value: "alto"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-NAA-SCALE"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_scope:
+    value: "national_all_terrorism"
+    unit: "text"
+    reference_date: "2026"
+    source_ids: ["ES-NAA-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not an Islamist-only alert."
+  official_qualitative_assessment:
+    value: "high"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-NAA-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  normalized_cross_country_level:
+    value: null
+    unit: "0_1"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Deferred until national alert systems are semantically calibrated."
+  cross_country_comparability:
+    value: "low_without_mapping"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  methodological_note:
+    value: "NAA is a state threat posture, not a direct probability of an attack."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 manpower:
   legally_eligible:
     value: null
