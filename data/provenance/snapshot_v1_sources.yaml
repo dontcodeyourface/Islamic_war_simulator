@@ -155,3 +155,49 @@ sources:
     type: "secondary_energy_compilation"
     quality: "medium"
     notes: "Used only where a current primary national proved-oil-reserve series was not found. Strategic fuel-stock sources are kept separate and higher quality."
+
+  PEW-EU-MUSLIM-FERTILITY-2017:
+    title: "Europe's Growing Muslim Population"
+    publisher: "Pew Research Center"
+    url: "https://www.pewresearch.org/religion/2017/11/29/europes-growing-muslim-population/"
+    reference_date: "2015-2020_projection_window"
+    publication_date: "2017-11-29"
+    type: "religious_demography_projection"
+    quality: "high"
+    notes: "Europe-wide estimate: Muslim TFR 2.6 versus non-Muslim TFR 1.6 for 2015-2020. Country-specific gaps vary; do not assign this rate directly to Spain."
+
+  ES-IMV-LAW-2026:
+    title: "Ley 19/2021 por la que se establece el ingreso mínimo vital - consolidated 2026"
+    publisher: "Boletín Oficial del Estado"
+    url: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-21007"
+    reference_date: "2026-04-10"
+    type: "official_social_protection_law"
+    quality: "high"
+    notes: "Normally requires legal and effective residence in Spain continuously for at least one year plus economic vulnerability, with statutory exceptions."
+
+  ES-SAPI-2025:
+    title: "Sistema de Acogida Estatal 2025"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/documents/20121/0/Informe-Balance-SistemaAcogidaEstatal-2025.pdf/"
+    reference_date: "2025"
+    type: "official_reception_statistics"
+    quality: "high"
+    notes: "SAPI reports 33,936 available places and 69,573 persons served in 2025."
+
+  ES-SAPI-BUDGET-2025:
+    title: "Informe Sistema de Protección Internacional Español - presupuesto anual del sistema de acogida"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/documents/d/migraciones/200625-informe-sistema-proteccion-internacional-espanol-jun25.pdf"
+    reference_date: "2025"
+    type: "official_reception_budget"
+    quality: "high"
+    notes: "2025 annual SAPI budget: EUR 558,857,239.38."
+
+  ES-HUMANITARIAN-RECEPTION-2026:
+    title: "Programa de Atención Humanitaria"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/es/web/migraciones/atencion-humanitaria"
+    reference_date: "2026"
+    type: "official_humanitarian_reception_program"
+    quality: "high"
+    notes: "For eligible vulnerable irregular arrivals lacking resources; includes accommodation, food, basic healthcare, language support, material assistance and basic economic aid."
