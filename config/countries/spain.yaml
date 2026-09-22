@@ -130,16 +130,16 @@ population:
 
 demographic_dynamics:
   annual_population_growth_rate:
-    value: 1.05
+    value: 0.90
     unit: "percent"
-    reference_date: "2024-01-01_to_2025-01-01"
-    source_ids: ["ES-INE-POP-2025"]
+    reference_date: "2025-07-01_to_2026-07-01"
+    source_ids: ["ES-INE-POP-2026"]
     quality: "high"
-    freshness_class: "recent"
+    freshness_class: "current"
     estimated: false
     derived: false
     imputed: false
-    notes: "Resident population increased by 508,602 to 49,128,297."
+    notes: "Resident population reached 49,801,559 on 2026-07-01; year-on-year increase 444,205 persons / 0.90%."
   natural_increase:
     value: -116056
     unit: "persons"
