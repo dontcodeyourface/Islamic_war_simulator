@@ -37,6 +37,7 @@ population:
 
 demographic_dynamics: {}
 
+demographic_differentials: {}
 religion:
   christian_share:
     value: 46.5
@@ -742,6 +743,8 @@ administrative_continuity: {}
 information_environment: {}
 health_emergency: {}
 external_social_finance: {}
+
+migration_welfare_policy: {}
 
 geography:
   capital_coordinates: {value: {name: "Paris", lat: 48.8566, lon: 2.3522}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
