@@ -2,8 +2,8 @@ identity:
   country_name: "Morocco"
   iso2: "MA"
   iso3: "MAR"
-  snapshot_version: "0.1"
-  snapshot_date: "2026-09-22"
+  snapshot_version: "0.5"
+  snapshot_date: "2026-09-23"
 
 population:
   total:
@@ -282,6 +282,79 @@ religion:
     imputed: false
     notes: null
 
+religious_infrastructure:
+  muslim_worship_sites_count:
+    value: 51854
+    unit: "mosques"
+    reference_date: "2020_published_inventory"
+    source_ids: ["MA-MOSQUES-INVENTORY"]
+    quality: "high"
+    freshness_class: "stale"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "24,106 Friday mosques + 27,748 five-daily-prayer mosques; ministry states total exceeds 51,000."
+  count_definition: {value: "ministry_supervised_mosques", unit: "categorical", reference_date: "2020", source_ids: ["MA-MOSQUES-INVENTORY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  count_reference_date: {value: "2020", unit: "year", reference_date: "2020", source_ids: ["MA-MOSQUES-INVENTORY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Inventory needs future freshness update."}
+  worship_sites_per_100k_muslims: {value: null, unit: "per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Can be derived later with synchronized population date."}
+  dominant_islamic_branch:
+    value: "Sunni"
+    unit: "categorical"
+    reference_date: "structural"
+    source_ids: ["MA-RELIGIOUS-DOCTRINE"]
+    quality: "high"
+    freshness_class: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Official religious framework."
+  branch_distribution: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Population is overwhelmingly Sunni but exact sect distribution not needed in v0.5."}
+  predominant_fiqh_school:
+    value: "Maliki"
+    unit: "categorical"
+    reference_date: "structural"
+    source_ids: ["MA-RELIGIOUS-DOCTRINE"]
+    quality: "high"
+    freshness_class: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  theological_tradition:
+    value: "Ashari_with_state_supported_Sufi_tradition"
+    unit: "categorical"
+    reference_date: "structural"
+    source_ids: ["MA-RELIGIOUS-DOCTRINE"]
+    quality: "high"
+    freshness_class: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  religious_governance_centralization:
+    value: "high_state_centralization"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["MA-MOSQUES-INVENTORY","MA-RELIGIOUS-DOCTRINE"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Ministry of Habous supervises mosque administration and religious framework."
+  state_supervision:
+    value: "high"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["MA-MOSQUES-INVENTORY","MA-RELIGIOUS-DOCTRINE"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  imam_training_model: {value: "state_supervised_religious_training", unit: "categorical", reference_date: "2026", source_ids: ["MA-RELIGIOUS-DOCTRINE"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed headcount/training throughput deferred."}
+  foreign_religious_network_exposure: {value: "outbound_soft_power_and_inbound_exposure_bounded_by_state_supervision", unit: "categorical", reference_date: "2026", source_ids: ["MA-RELIGIOUS-DOCTRINE"], quality: "low", estimated: true, derived: false, imputed: false, notes: "No numerical influence index."}
+  methodological_note: {value: "Morocco is the strongest case in current dataset for centralized official religious governance; this is institution structure, not an extremism score.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population:
     value: null
@@ -322,6 +395,58 @@ violent_islamist_extremism:
     notes: "The 2025 BCIJ operation documented a 12-person cell acting under direct incitement from an ISIL leader in the Sahel."
   external_network_linkage: {value: "Sahel_ISIL_linkage_documented", unit: "categorical", reference_date: "2025-02-19", source_ids: ["MA-SNRT-ISIL-CELL-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "No percentage of Moroccan Muslims is labeled radical from cell/arrest data.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+organized_crime:
+  markets:
+    cocaine:
+      presence: {value: "growing_transit_and_domestic_presence", unit: "categorical", reference_date: "2023-2026", source_ids: ["MA-COCAINE-UNODC"], quality: "high", freshness_class: "aging", estimated: false, derived: false, imputed: false, notes: "UNODC documents development of cocaine routes into and through Morocco."}
+      national_role: {value: "transit_interface_between_Atlantic_Africa_and_Europe_plus_domestic_market", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Operational route details are not encoded."}
+      market_scale_proxy: {value: null, unit: "tonnes_or_revenue", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No current nationally comparable market-size proxy populated."}
+      wholesale_control_structure: {value: "transnational_networks_with_European_and_Latin_American_links", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      retail_control_structure: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    cannabis_hashish:
+      presence: {value: "very_high_source_and_transit_role", unit: "categorical", reference_date: "2023-2026", source_ids: ["MA-COCAINE-UNODC","DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Moroccan cannabis-resin routes are longstanding and feed European markets."}
+      national_role: {value: "major_source_transit_and_domestic_market", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Legal medical/industrial cannabis sector is separate from illicit resin market."}
+      market_scale_proxy: {value: null, unit: "tonnes_or_revenue", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Historical production estimates are too stale for v0.5."}
+      wholesale_control_structure: {value: "multiple_domestic_and_transnational_networks", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No single national controller."}
+      retail_control_structure: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    illicit_firearms:
+      presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No sufficiently strong current national illicit-firearms market dataset imported."}
+      drug_market_linkage: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+      availability: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: null, unit: "weapons_or_cases", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  network_types:
+    mocro_maffia_linked_presence:
+      value: "transnational_diaspora_network_linkage_relevant_not_domestic_islamist_actor"
+      unit: "categorical"
+      reference_date: "2023-2026"
+      source_ids: ["MA-COCAINE-UNODC","ES-MOCRO-2026"]
+      quality: "medium"
+      estimated: true
+      derived: false
+      imputed: false
+      notes: "The term describes criminal networks associated especially with the Netherlands/Belgium and Moroccan-diaspora links; it is not an Islamist organization and not treated as a Moroccan political faction."
+    latin_american_street_gang_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not a principal documented national crime structure."}
+    western_balkan_ocg_presence: {value: "documented_in_European_cocaine_network_ecosystem", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Transnational linkage, not domestic market control."}
+    clan_based_ocg_presence: {value: "likely_but_not_nationally_quantified", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+    other_transnational_ocg_presence: {value: "high", unit: "categorical", reference_date: "2023-2026", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  criminal_capacity:
+    national_market_structure: {value: "source_transit_ecosystem_with_multiple_transnational_networks", unit: "categorical", reference_date: "2023-2026", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    market_concentration: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    territorial_control: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No national territorial-control score."}
+    logistics_infiltration: {value: "high_transnational_logistics_relevance", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No route-level operational detail."}
+    corruption_infiltration: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No unsupported prevalence inference."}
+    money_laundering_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    firearms_access: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    violence_capacity: {value: "network_specific_unknown", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+    prison_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    international_reach: {value: "high", unit: "categorical", reference_date: "2023", source_ids: ["MA-COCAINE-UNODC"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    leadership_centralization: {value: "mixed_networks", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: "No individual leader names in canonical model."}
+    succession_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    network_fragmentation: {value: "multiple_networks", unit: "categorical", reference_date: "2026", source_ids: ["MA-COCAINE-UNODC"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    ideological_alignment: {value: "predominantly_profit_seeking_nonideological", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: true, derived: false, imputed: false, notes: "Moroccan identity or Muslim background does not imply Islamist ideology."}
+    likely_conflict_alignment: {value: "opportunistic_unknown", unit: "categorical", reference_date: "future_scenario", source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Mocro-Maffia is stored only as transnational criminal-network linkage and never as an Islamist faction.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 prisons:
   total_prison_population:
@@ -534,6 +659,82 @@ terrorism_threat_posture:
     derived: false
     imputed: false
     notes: null
+
+law_enforcement:
+  total_officers:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No reliable current total DGSN + Royal Gendarmerie + auxiliary/security aggregate found."
+  total_workforce: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  national_police:
+    value: null
+    unit: "DGSN_personnel"
+    reference_date: null
+    source_ids: ["MA-DGSN-2025"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "2025 recruitment/assignment flow is available but not total stock."
+  gendarmerie:
+    value: 20000
+    unit: "persons_approx_historical"
+    reference_date: "2022"
+    source_ids: ["MA-CIA-PERSONNEL-2022"]
+    quality: "medium"
+    freshness_class: "stale"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Royal Gendarmerie historical estimate already present in armed-forces snapshot."
+  federal_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not applicable."}
+  regional_state_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  local_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Auxiliary/local structures require separate source pass."}
+  reserve_auxiliary: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  frontline_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  armed_policing_capacity: {value: "high_in_national_security_forces", unit: "categorical", reference_date: "2026", source_ids: ["MA-CIA-PERSONNEL-2022"], quality: "low", estimated: true, derived: false, imputed: false, notes: "Needs contemporary source."}
+  public_order_capacity: {value: "national_police_and_gendarmerie_present", unit: "categorical", reference_date: "2026", source_ids: ["MA-DGSN-2025","MA-CIA-PERSONNEL-2022"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  counterterrorism_capacity: {value: "specialized_DGST_DGSN_BCIJ_and_gendarmerie_ecosystem", unit: "categorical", reference_date: "2026", source_ids: ["MA-DGST-SPAIN-COOP-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  organized_crime_capacity: {value: "national_and_international_cooperation_active", unit: "categorical", reference_date: "2025-2026", source_ids: ["MA-DGSN-2025"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  border_coast_capacity: {value: "police_gendarmerie_customs_multiagency", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  territorial_density: {value: null, unit: "officers_per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  recruitment_trend:
+    value: "expanding"
+    unit: "categorical"
+    reference_date: "2025"
+    source_ids: ["MA-DGSN-2025"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "DGSN reporting: 4,693 recruits entered training; 6,733 competition positions; 6,450 newly trained officers assigned to central/regional services."
+  military_status_component: {value: "Royal_Gendarmerie", unit: "categorical", reference_date: "2026", source_ids: ["MA-CIA-PERSONNEL-2022"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Current total law-enforcement stock remains a major Morocco data gap; recruitment flows must not be mistaken for total force size.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+security_force_cohesion:
+  constitutional_loyalty: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No speculative loyalty score."}
+  command_cohesion: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  professional_identity: {value: "centralized_national_security_institutions", unit: "categorical", reference_date: "2026", source_ids: ["MA-DGST-SPAIN-COOP-2025"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  political_heterogeneity: {value: "unknown", unit: "categorical", reference_date: "2026", source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No partisan inference."}
+  partisan_preference_evidence: {value: null, unit: "representative_force_survey", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  union_or_association_fragmentation: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  regional_identity_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Needs region-specific political/institutional data."}
+  extremist_infiltration_cases: {value: null, unit: "cases_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  disciplinary_stress: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_order_fatigue: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_force_relations: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  pay_working_conditions_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defection_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  insubordination_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  institutional_split_risk: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Future variable must be conditional on a real institutional crisis."}
+  methodological_note: {value: "Centralization is not synonymous with loyalty; no defection probability is assigned without crisis-specific evidence.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible:
