@@ -2,7 +2,7 @@ identity:
   country_name: "Germany"
   iso2: "DE"
   iso3: "DEU"
-  snapshot_version: "0.5"
+  snapshot_version: "1.0"
   snapshot_date: "2026-09-23"
 
 population:
@@ -70,6 +70,8 @@ population:
     under_15: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
     age_15_64: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
     age_65_plus: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+demographic_dynamics: {}
 
 religion:
   christian_share:
@@ -817,7 +819,21 @@ economy:
   inflation_rate: {value: 2.2, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   fiscal_war_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Large 2026 defence expansion should be modeled from budgets separately."}
 
+energy_security: {}
+food_water_security: {}
+sustainment:
+  military_sustainment_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+  munitions_burn_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+critical_infrastructure: {}
+regional_government_topology: {}
+administrative_continuity: {}
+information_environment: {}
+health_emergency: {}
+external_social_finance: {}
+
 geography:
+  capital_coordinates: {value: {name: "Berlin", lat: 52.52, lon: 13.405}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  distance_matrix_reference: {value: "config/geography/country_distance_matrix_v1.yaml", unit: "path", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
   strategic_depth: {value: "central_continental_European_state", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative score deferred."}
   atlantic_access: {value: true, unit: "boolean_via_North_Sea", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   mediterranean_access: {value: false, unit: "boolean_direct", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
