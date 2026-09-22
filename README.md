@@ -2,7 +2,7 @@
 
 ## Canonical Scenario Specification
 
-**Status:** Canonical baseline v0.1  
+**Status:** Canonical baseline v0.2  
 **Baseline date:** 2026-09-22  
 **Purpose:** Strategic simulation / stress testing  
 **Scope:** Europe, North Africa, Sahel, Middle East and external great-power intervention  
@@ -38,6 +38,8 @@ The simulator must distinguish rigorously between:
 - **simulation-generated outcomes**.
 
 No generated outcome may later be presented as though it were a baseline fact.
+
+Detailed pre-engine capability specification: [docs/FACTOR_MODEL.md](docs/FACTOR_MODEL.md).
 
 ---
 
@@ -728,6 +730,71 @@ Normalized variables use `[0,1]` unless otherwise defined.
 
 ---
 
+# PART VII-A — NATIONAL CAPABILITY AND MODERN WARFARE
+
+## 16A. Population and mobilization
+
+Every country must store a dated population snapshot and a manpower pipeline separating total population, legally eligible population, medically fit population, trained/prior-service personnel, immediately available personnel, 30-day mobilizable personnel, 180-day mobilizable personnel and a sustainable 365-day force.
+
+The World Bank/UN 15–64 population is only a broad demographic input and must never be interpreted directly as usable military manpower. Children, elderly people and other non-direct military populations remain relevant to humanitarian demand, industrial labor, public administration, dependency ratios, displacement and social resilience.
+
+Religion and migration generation may be stored only when directly supported by a published dataset. If a country does not publish reliable second-/third-generation Muslim or Christian cross-tabulations, those fields remain unknown rather than being inferred from surnames, neighborhoods, nationality, ancestry or language.
+
+## 16B. Force structure
+
+Country nodes must distinguish active forces, land forces, naval forces, air forces, joint/support personnel, cyber/space personnel where identifiable, reserves, ready reserves, gendarmerie/national guard/paramilitary forces, deployable share, training, personnel fill rate, command cohesion, fatigue and morale.
+
+Personnel data must retain a reference year. As a fallback historical baseline, the CIA World Factbook 2022 archive estimated about 120,000 active-duty personnel for Spain, 200,000 for Morocco, 205,000 for France, 184,000 for Germany, 170,000 for Italy and 153,000 regular forces for the United Kingdom. These values are provisional historical inputs, not claims about exact 2026 strength.
+
+## 16C. Military domains and weapon categories
+
+Military capability is decomposed into land, air, naval, air/missile defence, drones/uncrewed systems, counter-UAS, electronic warfare, cyber, ISR/C4ISR, intelligence, engineering, logistics, mobilization, defence industry and AI-enabled capability.
+
+Version 1 tracks weapon categories rather than individual systems: infantry systems, protected mobility, armored systems, indirect fire, long-range fires, ground air defence, combat air, air support/transport/refuelling, rotary wing, surface naval, submarines, amphibious capability, maritime patrol, uncrewed aerial/ground/maritime systems, counter-UAS, electronic warfare, cyber, ISR/C4ISR, engineering, logistics, precision munitions and mass munitions.
+
+Raw inventory is never equal to effective power. Readiness, maintenance, trained crews, ammunition depth, sensors, communications and logistics modify the usable capability.
+
+## 16D. Scenario-dependent weights
+
+There is no universal military-power score. Capability weights must be configurable by theatre. Canonical profiles will include Iberian Strait interstate conflict, continental high-intensity conflict, urban internal-security crisis, Mediterranean maritime conflict, Sahel insurgency and prolonged attrition. All weights must be versioned and sum to 1.0.
+
+## 16E. Modern warfare factors
+
+The model must include structural lessons visible in the Russia–Ukraine war: mass low-cost drones, rapid drone replacement, counter-UAS, electronic warfare, navigation and communications denial/resilience, distributed sensing, commercial satellite access, contested logistics, air-defence interceptor depth, repair capacity, industrial replacement, dispersed command-and-control, civil-military innovation and rapid adaptation cycles.
+
+Low-cost drones are represented as an ecosystem: production, imports, critical components, operator training, losses, EW conditions, replacement rate and adaptation all affect value.
+
+## 16F. Rearmament and war economy
+
+Initial arsenal and regenerative capacity are separate. Required variables include military expenditure, domestic defence industry, ammunition capacity, drone production, vehicle/aerospace/naval/electronics capacity, repair capacity, 90-day and 365-day industrial surge, import dependency, critical-component dependency, semiconductor access, energy dependency, fiscal war capacity and financing constraints.
+
+NATO's Industrial Capacity Expansion Pledge explicitly identifies defence-industrial capacity, critical munitions, air/missile defence, joint procurement, technological adoption and resilient supply chains as strategic requirements. SIPRI military-expenditure, arms-transfer and arms-industry datasets are canonical data sources for this layer.
+
+## 16G. Intelligence
+
+Aggregate intelligence capability includes HUMINT, SIGINT, GEOINT/IMINT, OSINT, cyber intelligence, counterintelligence, domestic threat detection, analytic fusion, strategic warning, allied intelligence sharing and regional/language expertise. The simulator models intelligence quality and sharing, not covert operational instructions.
+
+## 16H. Artificial intelligence
+
+AI is dynamic rather than a fixed national bonus. Required dimensions include frontier-model access, domestic model capability, compute, data centres, semiconductor/fabrication access, electricity, AI talent, research strength, open-model access, cloud access, defence integration, autonomous-systems maturity, AI-enabled ISR/logistics/EW, cyber AI, information operations, model security and allied AI access.
+
+NATO's revised AI strategy treats AI as a rapidly evolving general-purpose defence technology and emphasizes data readiness, interoperability, responsible adoption, testing and protection against adversarial AI use.
+
+Stanford AI Index 2026 reports that U.S.-based institutions produced 59 notable AI models in 2025 and Chinese institutions 35; it also reports global AI compute capacity growing about 3.3x per year since 2022. AI power must therefore be represented as a dated multi-dimensional capability, not a binary 'controls AI' flag. Growth will use bounded adoption/diffusion models rather than an unlimited exponential.
+
+## 16I. Political leadership, elites and high-level interests
+
+Political and elite interests are modeled through explicit incentives and observable proxies rather than unsupported conspiracy assumptions. Variables include government/regime survival, territorial integrity, alliance credibility, economic continuity, ideological commitments, public support, elite cohesion/fragmentation, civil-military alignment, bureaucratic cohesion, security-service loyalty, defence-industry influence, major-business exposure, energy/financial exposure, foreign-asset exposure, sanctions vulnerability and corruption/state-capture proxies.
+
+World Bank WGI, OECD trust data and V-Dem are canonical sources for institutional and governance baselines where applicable.
+
+## 16J. Geography, logistics and alliance interoperability
+
+Country capability must also include strategic depth, population density, borders, coastline, ports, airbase dispersion, road/rail redundancy, chokepoint exposure, energy routes and proximity to allies/adversaries. Allied strength is not simply additive: common standards, compatible munitions, command integration, political authorization latency, cross-border logistics, intelligence sharing and maintenance compatibility all affect usable coalition strength.
+
+Detailed field definitions and provenance requirements are in [docs/FACTOR_MODEL.md](docs/FACTOR_MODEL.md).
+
+---
 # PART VIII — DEMOGRAPHICS
 
 ## 17. Demographic inputs
@@ -1528,7 +1595,7 @@ Islamic_war_simulator/
 
 # PART XXIX — CANONICAL SOURCE SNAPSHOT
 
-## 48. Baseline v0.1
+## 48. Baseline v0.2
 
 1. Pew Research Center — *Religion in Europe* (2025)  
    https://www.pewresearch.org/2025/06/09/religion-in-europe/
@@ -1565,6 +1632,39 @@ Islamic_war_simulator/
 
 12. USCIRF — Nonstate Violators of Religious Freedom in Nigeria: Fulani Militants (2026)  
     https://www.uscirf.gov/news-room/releases-statements/nonstate-violators-religious-freedom-nigeria-fulani-militants
+
+13. World Bank — Population ages 15–64 / World Development Indicators  
+    https://databank.worldbank.org/metadataglossary/world-development-indicators/series/SP.POP.1564.TO.ZS
+
+14. CIA World Factbook 2022 Archive — Military and security service personnel strengths  
+    https://www.cia.gov/the-world-factbook/about/archives/2022/field/military-and-security-service-personnel-strengths/
+
+15. SIPRI — Military Expenditure Database  
+    https://www.sipri.org/databases/milex
+
+16. SIPRI — Arms Transfers Database  
+    https://www.sipri.org/databases/armstransfers
+
+17. SIPRI — Arms Industry Database  
+    https://www.sipri.org/databases/armsindustry
+
+18. NATO — Industrial Capacity Expansion Pledge  
+    https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2024/07/10/nato-industrial-capacity-expansion-pledge
+
+19. NATO — Revised Artificial Intelligence Strategy  
+    https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2024/07/10/summary-of-natos-revised-artificial-intelligence-ai-strategy
+
+20. Stanford HAI — AI Index Report 2026  
+    https://hai.stanford.edu/ai-index/2026-ai-index-report
+
+21. World Bank — Worldwide Governance Indicators 2025 revision  
+    https://www.worldbank.org/en/publication/worldwide-governance-indicators
+
+22. V-Dem — Dataset v16 (2026)  
+    https://v-dem.net/data/the-v-dem-dataset/
+
+23. OECD — Trust Survey data  
+    https://www.oecd.org/en/data/datasets/oecd-trust-survey-data.html
 
 ---
 
@@ -1624,4 +1724,4 @@ The first serious simulator is complete when:
 
 ---
 
-**End of canonical specification v0.1.**
+**End of canonical specification v0.2.**
