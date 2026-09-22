@@ -84,6 +84,7 @@ religion:
 
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population: {}
+  country_specific_proxy_percent_of_muslim_estimate: {}
   observed_person_potential: {}
   violence_oriented_person_potential: {}
   radicalization_registry_count: {}
