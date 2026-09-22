@@ -112,6 +112,7 @@ prisons:
   annual_terrorism_prisoner_releases: {}
   prison_radicalization_monitoring_strength: {}
   prison_security_release_risk: {}
+  prison_extremism_security_pressure: {}
   methodological_note: {}
 
 terrorism_threat_posture:
