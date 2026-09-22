@@ -24,28 +24,30 @@ The canonical country snapshot covers:
 
 1. identity and population;
 2. demographic dynamics;
-3. religion and religious infrastructure;
-4. violent-extremist pressure;
-5. organized crime;
-6. prisons and terrorism threat posture;
-7. law enforcement and security-force cohesion;
-8. manpower and armed forces;
-9. military-domain capability categories;
-10. defence industry and replenishment;
-11. intelligence, cyber and AI;
-12. economy and financial reserves;
-13. energy security;
-14. food and water security;
-15. sustainment inputs;
-16. critical infrastructure;
-17. regional-government topology;
-18. administrative continuity;
-19. information environment;
-20. emergency-health resilience;
-21. diaspora/remittance/external-social-finance channels;
-22. geography and inter-country distances;
-23. alliances and governance;
-24. provenance and uncertainty.
+3. demographic differentials;
+4. religion and religious infrastructure;
+5. violent-extremist pressure;
+6. organized crime;
+7. prisons and terrorism threat posture;
+8. law enforcement and security-force cohesion;
+9. manpower and armed forces;
+10. military-domain capability categories;
+11. defence industry and replenishment;
+12. intelligence, cyber and AI;
+13. economy and financial reserves;
+14. energy security;
+15. food and water security;
+16. sustainment inputs;
+17. critical infrastructure;
+18. regional-government topology;
+19. administrative continuity;
+20. information environment;
+21. emergency-health resilience;
+22. diaspora/remittance/external-social-finance channels;
+23. migration-welfare policy and reception systems;
+24. geography and inter-country distances;
+25. alliances and governance;
+26. provenance and uncertainty.
 
 The future runtime engine should not ingest every raw field directly. Raw snapshots are evidence stores from which a smaller set of engine-facing latent variables will be normalized.
 
@@ -76,10 +78,13 @@ muslim_population_growth_rate_direct:
 
 but the values remain null unless a source directly measures religion.
 
+Snapshot v1 also stores directly observed demographic differentials such as nationality-specific fertility, foreign-born-mother birth share, religious age structure and religion-specific fertility gaps where a source actually measures them.
+
 The following substitutions are forbidden:
 
 ```text
 foreign mother -> Muslim
+foreign nationality -> Muslim
 Moroccan origin -> Muslim
 Muslim -> Islamist
 Christian -> political faction
@@ -369,7 +374,50 @@ Data refreshes and filling null fields do not.
 
 ---
 
-## 16. Snapshot maturity
+
+## 16. Migration-welfare policy
+
+The final v1 schema includes a compact migration/social-policy layer because reception systems and transfer rules can affect:
+
+- fiscal pressure;
+- integration capacity;
+- housing demand;
+- social-service load;
+- migration incentives and persistence;
+- political polarization.
+
+The canonical variables distinguish:
+
+```yaml
+general_means_tested_benefit_access:
+legal_residence_requirement:
+asylum_reception_system:
+asylum_reception_capacity:
+asylum_reception_people_served_annual:
+asylum_reception_budget_annual:
+humanitarian_reception_program:
+humanitarian_cash_assistance:
+housing_support:
+child_family_benefit_access:
+healthcare_access:
+education_access:
+language_integration_support:
+employment_integration_support:
+migrant_specific_cash_transfers:
+migrant_specific_in_kind_transfers:
+migrant_benefit_take_up_rate:
+migrant_social_transfer_cost:
+migrant_net_fiscal_balance:
+policy_generosity_index:
+```
+
+The model measures program rules, coverage, expenditure and take-up directly.
+
+A government ideological label is not a substitute for an unmeasured benefit level.
+
+General welfare available to legally resident low-income households must be distinguished from migrant-specific or asylum-specific reception programs.
+
+## 17. Snapshot maturity
 
 At freeze:
 
