@@ -323,6 +323,218 @@ violent_islamist_extremism:
   external_network_linkage: {value: "Sahel_ISIL_linkage_documented", unit: "categorical", reference_date: "2025-02-19", source_ids: ["MA-SNRT-ISIL-CELL-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "No percentage of Moroccan Muslims is labeled radical from cell/arrest data.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
+prisons:
+  total_prison_population:
+    value: 99366
+    unit: "persons"
+    geographic_scope: "Morocco"
+    reference_date: "2025-12-31"
+    source_ids: ["MA-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "DGAPR year-end figure."
+  remand_population:
+    value: 8785
+    unit: "persons"
+    reference_date: "2025-12-31"
+    source_ids: ["MA-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Year-end DGAPR figure."
+  prison_capacity:
+    value: 64812
+    unit: "places"
+    reference_date: "2025-12-31"
+    source_ids: ["MA-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  occupancy_rate:
+    value: 153.3
+    unit: "percent"
+    reference_date: "2025-12-31"
+    source_ids: ["MA-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Approximate occupancy using reported population and capacity."
+  terrorism_related_prisoners:
+    value: null
+    unit: "persons_current_stock"
+    reference_date: null
+    source_ids: ["MA-MOUSSALAHA-2025"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No complete current national stock located; programme participants cannot substitute for the prison stock."
+  islamist_extremist_terrorism_prisoners:
+    value: null
+    unit: "persons_current_stock"
+    reference_date: null
+    source_ids: ["MA-MOUSSALAHA-2025"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No defensible complete current numerator."
+  islamist_extremist_share_of_total_prison_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No imputation."
+  deradicalization_program_current_participants:
+    value: 24
+    unit: "persons_in_19th_Moussalaha_edition"
+    reference_date: "2025-12-26"
+    source_ids: ["MA-MOUSSALAHA-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Programme cohort, not total terrorism-prisoner stock."
+  deradicalization_program_cumulative_participants:
+    value: 436
+    unit: "persons_since_2017"
+    reference_date: "2025-12-26"
+    source_ids: ["MA-MOUSSALAHA-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Participants involved in radicalization/terrorism cases; cumulative, not current incarcerated stock."
+  prison_radicalization_monitoring_strength:
+    value: "Moussalaha_and_peer_prevention_programmes_present"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["MA-MOUSSALAHA-2025","MA-PRISON-PREVENTION-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Effectiveness not quantified."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future prison-control/release/network-pressure variable; never direct combatant conversion."
+  methodological_note:
+    value: "Rehabilitation-program participation is not equivalent to current extremist status."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name:
+    value: null
+    unit: "scale"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No comparable public Moroccan national terrorism-alert scale located."
+  domestic_public_level:
+    value: null
+    unit: "level"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  official_qualitative_assessment:
+    value: "persistent_counterterrorism_activity_and_ISIS_linked_cell_risk"
+    unit: "categorical"
+    reference_date: "2025-2026"
+    source_ids: ["MA-CT-REPORT-2024","MA-SNRT-ISIL-CELL-2025"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not a formal national alert level."
+  external_travel_advisory_level:
+    value: 2
+    unit: "US_State_Department_1_to_4"
+    reference_date: "2026-09-04"
+    source_ids: ["MA-US-TRAVEL-ADVISORY-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Exercise increased caution due to terrorism. External advisory, not Morocco's domestic alert posture."
+  external_travel_advisory_source:
+    value: "US_Department_of_State"
+    unit: "text"
+    reference_date: "2026-09-04"
+    source_ids: ["MA-US-TRAVEL-ADVISORY-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  normalized_cross_country_level:
+    value: null
+    unit: "0_1"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "External advisory cannot be normalized as a domestic alarm level."
+  cross_country_comparability:
+    value: "very_low"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  methodological_note:
+    value: "Do not compare U.S. travel-advisory Level 2 directly with domestic alert scales in Spain, France or the UK."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 manpower:
   legally_eligible:
     value: null
