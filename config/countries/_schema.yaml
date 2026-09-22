@@ -1,6 +1,6 @@
-schema_version: "0.5"
+schema_version: "1.0"
 schema_name: "country_snapshot"
-status: "canonical-pre-engine"
+status: "CANONICAL_FROZEN_V1"
 
 # Every empirical field should use this record shape unless the field is structural.
 datum_template:
@@ -27,6 +27,7 @@ datum_template:
 required_sections:
   - identity
   - population
+  - demographic_dynamics
   - religion
   - religious_infrastructure
   - violent_islamist_extremism
@@ -44,6 +45,15 @@ required_sections:
   - cyber
   - ai
   - economy
+  - energy_security
+  - food_water_security
+  - sustainment
+  - critical_infrastructure
+  - regional_government_topology
+  - administrative_continuity
+  - information_environment
+  - health_emergency
+  - external_social_finance
   - geography
   - alliances
   - governance
@@ -70,6 +80,23 @@ population:
     age_15_64: {}
     age_60_plus: {}
     age_65_plus: {}
+
+demographic_dynamics:
+  annual_population_growth_rate: {}
+  natural_increase: {}
+  annual_births: {}
+  crude_birth_rate: {}
+  total_fertility_rate: {}
+  urban_fertility_rate: {}
+  rural_fertility_rate: {}
+  christian_fertility_rate_direct: {}
+  muslim_fertility_rate_direct: {}
+  christian_population_growth_rate_direct: {}
+  muslim_population_growth_rate_direct: {}
+  muslim_fertility_national_proxy: {}
+  demographic_projection_2030: {}
+  demographic_projection_2050: {}
+  religion_specific_methodology: {}
 
 religion:
   christian_share: {}
@@ -436,6 +463,108 @@ economy:
   trade_dependency: {}
   sanctions_vulnerability: {}
 
+energy_security:
+  proven_crude_oil_reserves_barrels: {}
+  domestic_oil_production_bpd: {}
+  petroleum_consumption_bpd: {}
+  petroleum_consumption_annual: {}
+  petroleum_import_dependency: {}
+  strategic_petroleum_stock_days: {}
+  petroleum_security_obligation_days: {}
+  refinery_capacity: {}
+  domestic_refining_available: {}
+  electricity_installed_capacity_mw: {}
+  electricity_annual_demand_gwh: {}
+  electricity_annual_generation_gwh: {}
+  electricity_net_import_export_gwh: {}
+  renewable_installed_share: {}
+  electricity_storage_capacity_mw: {}
+  gas_supply_resilience: {}
+  fuel_supply_resilience: {}
+
+food_water_security:
+  cereal_production_tonnes: {}
+  cereal_imports_tonnes: {}
+  cereal_internal_use_tonnes: {}
+  cereal_end_stocks_tonnes: {}
+  cereal_import_dependency_ratio: {}
+  food_import_dependency: {}
+  strategic_food_stock_days: {}
+  renewable_freshwater_per_capita_m3: {}
+  water_stress_percent: {}
+  annual_freshwater_withdrawal_m3: {}
+  desalination_capacity_m3_day: {}
+  potable_water_access_percent: {}
+  food_supply_resilience: {}
+  water_supply_resilience: {}
+
+sustainment:
+  civilian_petroleum_baseline: {}
+  civilian_food_baseline: {}
+  civilian_water_baseline: {}
+  military_fuel_consumption_public: {}
+  military_food_consumption_public: {}
+  military_water_consumption_public: {}
+  military_munitions_consumption_public: {}
+  military_sustainment_policy: {}
+  munitions_burn_policy: {}
+  methodological_note: {}
+
+critical_infrastructure:
+  electricity_resilience: {}
+  fuel_storage_resilience: {}
+  telecom_resilience: {}
+  internet_resilience: {}
+  water_system_resilience: {}
+  port_capacity: {}
+  airport_capacity: {}
+  road_rail_resilience: {}
+  data_center_resilience: {}
+  critical_spare_parts_dependency: {}
+  infrastructure_repair_capacity: {}
+
+regional_government_topology:
+  subnational_autonomy: {}
+  regional_police_control: {}
+  regional_fiscal_control: {}
+  regional_emergency_powers: {}
+  regional_identity_pressure: {}
+  center_region_conflict: {}
+  regional_government_legitimacy: {}
+  decomposition_priority: {}
+
+administrative_continuity:
+  court_continuity: {}
+  prosecution_capacity: {}
+  civil_registry_continuity: {}
+  tax_collection_continuity: {}
+  public_salary_payment_continuity: {}
+  emergency_governance_capacity: {}
+
+information_environment:
+  mainstream_media_trust: {}
+  social_media_dependency: {}
+  misinformation_pressure: {}
+  foreign_information_operations_pressure: {}
+  encrypted_network_adoption: {}
+  government_communications_credibility: {}
+
+health_emergency:
+  hospital_bed_capacity: {}
+  emergency_bed_capacity: {}
+  trauma_capacity: {}
+  ambulance_resilience: {}
+  medicine_import_dependency: {}
+  public_health_continuity: {}
+
+external_social_finance:
+  diaspora_size: {}
+  remittances_gdp_share: {}
+  foreign_private_funding: {}
+  cross_border_family_networks: {}
+  external_political_financing_pressure: {}
+  methodological_note: {}
+
 geography:
   land_area_km2: {}
   population_density: {}
@@ -448,6 +577,8 @@ geography:
   atlantic_access: {}
   mediterranean_access: {}
   territorial_exclaves: []
+  capital_coordinates: {}
+  distance_matrix_reference: {}
 
 alliances:
   memberships: []
@@ -477,3 +608,18 @@ provenance_notes:
     sampling_requires_explicit_bounds_or_distribution: true
     no_unbounded_sampling_from_null: true
     preserve_cross_variable_correlations: true
+
+
+snapshot_v1_freeze_policy:
+  schema_major_version: 1
+  frozen_required_sections: true
+  new_required_section_requires_major_schema_bump: true
+  country_registration_must_use_template: "config/countries/_snapshot_v1_template.yaml"
+  distance_metric: "capital_to_capital_great_circle_km"
+  tactical_burn_rates_in_country_snapshot: false
+  military_consumption_policy: "scenario_derived_from_force_mix_tempo_duration_and_logistics"
+  religion_specific_fertility_requires_direct_evidence: true
+  nationality_or_origin_must_not_proxy_religion: true
+  religious_demography_must_not_proxy_extremism: true
+  adaptive_fractal_resolution: true
+  normal_runtime_target_latent_variables_per_country: "30-60"
