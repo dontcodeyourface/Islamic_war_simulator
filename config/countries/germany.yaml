@@ -188,6 +188,211 @@ violent_islamist_extremism:
   external_network_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "The 0.16-0.17% value is a country-specific security-statistics proxy, not a general estimate of the proportion of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
+prisons:
+  total_prison_population:
+    value: 57812
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2025-01-31"
+    source_ids: ["DE-PRISON-POP-2025"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Council of Europe data as surfaced by World Prison Brief; includes pre-trial/remand."
+  sentenced_population:
+    value: 44232
+    unit: "sentenced_prisoners_and_security_detention"
+    geographic_scope: "Germany"
+    reference_date: "2025-03-31"
+    source_ids: ["DE-DESTATIS-PRISON-2025"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Narrower Destatis prison-execution series; not identical to total prison population."
+  remand_population:
+    value: 15364
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2025-01-31"
+    source_ids: ["DE-PRISON-POP-2025"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  prison_capacity:
+    value: 72070
+    unit: "places"
+    reference_date: "2025-01-31"
+    source_ids: ["DE-PRISON-POP-2025"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  occupancy_rate:
+    value: 80.2
+    unit: "percent"
+    reference_date: "2025-01-31"
+    source_ids: ["DE-PRISON-POP-2025"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  terrorism_related_prisoners:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No current nationwide comparable prison stock located."
+  islamist_extremist_terrorism_prisoners:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Do not substitute BfV population-level Islamist person-potential for a prison-specific count."
+  islamist_extremist_share_of_total_prison_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Unknown; no imputation."
+  prison_radicalization_monitoring_strength:
+    value: "decentralized_Laender_prison_system"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Dedicated national comparable effectiveness score not yet available."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future prison-control/release/network-pressure variable; never direct combatant manpower."
+  methodological_note:
+    value: "National BfV Islamist-extremism estimates cannot be mapped to the prison population without prison-specific evidence."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name:
+    value: "Federal qualitative threat assessment"
+    unit: "qualitative"
+    reference_date: "2026"
+    source_ids: ["DE-THREAT-LEVEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No directly comparable public five-level terrorism scale in the cited federal sources."
+  domestic_public_level:
+    value: "high"
+    unit: "categorical"
+    reference_date: "2026-08-05"
+    source_ids: ["DE-THREAT-LEVEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Federal government describes the security threat as high."
+  domestic_public_interpretation:
+    value: "attacks_can_be_expected_at_any_time_without_a_specific_concrete_public_threat"
+    unit: "text"
+    reference_date: "2026-08-05"
+    source_ids: ["DE-THREAT-LEVEL-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_scope:
+    value: "national_security_threat_with_terrorism_component"
+    unit: "text"
+    reference_date: "2026"
+    source_ids: ["DE-THREAT-LEVEL-2026","DE-ISLAMIST-THREAT-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  official_qualitative_assessment:
+    value: "high_and_persistent_islamist_terrorism_threat"
+    unit: "categorical"
+    reference_date: "2026-09-16"
+    source_ids: ["DE-ISLAMIST-THREAT-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  normalized_cross_country_level:
+    value: null
+    unit: "0_1"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Deferred until semantic calibration."
+  cross_country_comparability:
+    value: "low"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Qualitative rather than ordinal public system."
+  methodological_note:
+    value: "Current federal assessment is not directly equivalent to Spain/UK/France alert scales."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   trained_or_prior_service: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-RESERVE-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Ordered reserve is not total prior-service population."}
