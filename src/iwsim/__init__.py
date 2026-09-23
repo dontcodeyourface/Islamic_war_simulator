@@ -1,4 +1,4 @@
 """Core package for the simulation engine infrastructure."""
 
 __all__ = ["__version__"]
-__version__ = "0.12.0"
+__version__ = "0.13.0"
