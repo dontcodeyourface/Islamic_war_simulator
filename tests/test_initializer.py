@@ -69,3 +69,15 @@ def test_different_seed_changes_prior_sampled_state() -> None:
     state_a, _, _ = _initialize("config/countries/spain.yaml", 77)
     state_b, _, _ = _initialize("config/countries/spain.yaml", 78)
     assert state_a.latents != state_b.latents
+
+
+def test_initialization_trace_rng_indices_are_unique_and_monotonic() -> None:
+    logger.info("test_initialization_trace_rng_indices_are_unique_and_monotonic")
+    _, trace, _ = _initialize("config/countries/spain.yaml", 91)
+    draw_indices = [
+        record["draw_index"]
+        for record in trace.records
+        if record["record_type"] == "initialization"
+    ]
+    assert draw_indices == sorted(draw_indices)
+    assert len(draw_indices) == len(set(draw_indices))
