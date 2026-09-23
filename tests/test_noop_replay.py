@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from iwsim import __version__
 from iwsim.config import canonical_hash, load_yaml
 from iwsim.engine import NoOpEngine
 from iwsim.initializer import initialize_synthetic_state
@@ -35,7 +36,7 @@ def _run(seed: int, days: int):
     manifest = build_manifest(
         run_id="test-run",
         created_at="2026-09-23T00:00:00+00:00",
-        engine_version="0.1.0",
+        engine_version=__version__,
         git_commit="TEST",
         snapshot_schema_version="1.0",
         snapshot_bundle_hash=canonical_hash(snapshot),
@@ -93,7 +94,7 @@ def test_manifest_replay_key_is_stable_but_default_run_id_is_unique() -> None:
     parameter_set = parameters["parameter_sets"]["synthetic_smoke_v1"]
     common = dict(
         created_at="2026-09-23T00:00:00+00:00",
-        engine_version="0.1.0",
+        engine_version=__version__,
         git_commit="TEST",
         snapshot_schema_version="1.0",
         snapshot_bundle_hash=canonical_hash(snapshot),
