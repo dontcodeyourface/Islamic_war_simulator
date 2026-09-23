@@ -19,7 +19,7 @@ class RunManifest:
     git_commit: str
     snapshot_schema_version: str
     snapshot_bundle_hash: str
-    country_file_hashes: dict[str, str]
+    country_file_hashes: tuple[tuple[str, str], ...]
     graph_hash: str
     scenario_id: str
     scenario_hash: str
@@ -38,7 +38,9 @@ class RunManifest:
 
     def to_dict(self) -> dict[str, Any]:
         logger.info("RunManifest.to_dict run_id=%s", self.run_id)
-        return asdict(self)
+        result = asdict(self)
+        result["country_file_hashes"] = dict(self.country_file_hashes)
+        return result
 
 
 def build_replay_key(payload: dict[str, Any]) -> str:
@@ -58,6 +60,12 @@ def build_manifest(**kwargs: Any) -> RunManifest:
         datetime.now(timezone.utc).isoformat(),
     )
     payload["created_at"] = created_at
+    country_hashes = payload.get("country_file_hashes", {})
+    if isinstance(country_hashes, dict):
+        payload["country_file_hashes"] = tuple(sorted(country_hashes.items()))
+    enabled_modules = payload.get("enabled_modules", ())
+    if not isinstance(enabled_modules, tuple):
+        payload["enabled_modules"] = tuple(enabled_modules)
     replay_key = build_replay_key(payload)
     run_id = payload.pop("run_id", f"run-{uuid4()}")
     return RunManifest(
