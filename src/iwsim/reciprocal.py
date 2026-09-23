@@ -12,6 +12,23 @@ from .trace import TraceLedger
 
 logger = logging.getLogger(__name__)
 
+EXPECTED_NETWORK_VARIABLES = frozenset(
+    {
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+    }
+)
+EXPECTED_DAMPING_VARIABLES = frozenset(
+    {
+        "social_cohesion",
+        "government_legitimacy",
+        "police_effective_capacity",
+        "intelligence_effectiveness",
+    }
+)
+EXPECTED_FEAR_VARIABLE = "communal_fear"
+EXPECTED_NARRATIVE_VARIABLE = "civilizational_narrative_strength"
+
 
 @dataclass(frozen=True)
 class ReciprocalRadicalizationComponents:
@@ -115,6 +132,28 @@ def _validate_config(
         raise ValueError(
             "v0.13 reciprocal radicalization requires symmetric_pair_required=true"
         )
+    if mode.get("skip_zero_delta") is not True:
+        raise ValueError(
+            "v0.13 reciprocal radicalization requires skip_zero_delta=true"
+        )
+
+    safety = feedback_config.get("safety_and_integrity")
+    if not isinstance(safety, dict):
+        raise ValueError("safety_and_integrity must be a mapping")
+    for key in (
+        "civilian_population_identity_as_propensity_input",
+        "religious_population_share_as_propensity_input",
+        "political_party_preference_as_propensity_input",
+    ):
+        if safety.get(key) is not False:
+            raise ValueError(f"Safety invariant {key} must remain false")
+    for key in (
+        "violent_network_state_only",
+        "owner_resolver_required",
+        "beginning_of_day_state_only",
+    ):
+        if safety.get(key) is not True:
+            raise ValueError(f"Safety invariant {key} must remain true")
 
     shared = feedback_config.get("shared_inputs")
     if not isinstance(shared, dict):
@@ -124,11 +163,23 @@ def _validate_config(
     damping_variables_raw = shared.get("damping_variables")
     if not fear_variable or not narrative_variable:
         raise ValueError("fear/narrative variables must be non-empty")
+    if fear_variable != EXPECTED_FEAR_VARIABLE:
+        raise ValueError(
+            f"fear_variable must remain {EXPECTED_FEAR_VARIABLE}"
+        )
+    if narrative_variable != EXPECTED_NARRATIVE_VARIABLE:
+        raise ValueError(
+            f"narrative_variable must remain {EXPECTED_NARRATIVE_VARIABLE}"
+        )
     if not isinstance(damping_variables_raw, list) or not damping_variables_raw:
         raise ValueError("damping_variables must be a non-empty list")
     damping_variables = tuple(str(item) for item in damping_variables_raw)
     if len(damping_variables) != len(set(damping_variables)):
         raise ValueError("Duplicate damping variable")
+    if frozenset(damping_variables) != EXPECTED_DAMPING_VARIABLES:
+        raise ValueError(
+            "damping_variables must remain the canonical institutional set"
+        )
 
     directions_raw = feedback_config.get("directions")
     if not isinstance(directions_raw, list) or len(directions_raw) != 2:
@@ -167,6 +218,18 @@ def _validate_config(
         or first["target_variable"] != second["source_variable"]
     ):
         raise ValueError("Reciprocal directions must be exact mirrors")
+    configured_network_variables = frozenset(
+        {
+            first["source_variable"],
+            first["target_variable"],
+            second["source_variable"],
+            second["target_variable"],
+        }
+    )
+    if configured_network_variables != EXPECTED_NETWORK_VARIABLES:
+        raise ValueError(
+            "Reciprocal directions must remain limited to canonical violent-network state"
+        )
 
     return (
         tuple(sorted(directions, key=lambda item: item["direction_id"])),
