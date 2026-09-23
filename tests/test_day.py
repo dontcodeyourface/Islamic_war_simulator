@@ -3123,3 +3123,367 @@ def test_fractal_topology_history_is_required_after_day_zero() -> None:
         )
     assert rng.describe() == rng_before
     assert trace.records == []
+
+
+
+def _set_fractal_parent_physical_stocks(state) -> None:
+    logger.info("_set_fractal_parent_physical_stocks node=%s", state.node_id)
+    state.physical_stocks.update(
+        {
+            "population_total": 101,
+            "working_age_population": 61,
+            "dependent_population": 40,
+            "displaced_people": 5,
+            "reception_population": 3,
+            "fuel_stock_days_equivalent": 90.0,
+            "strategic_food_stock_days": 30.0,
+            "available_police_personnel": 11,
+            "available_military_personnel": 1000,
+            "prison_population": 7,
+            "foreign_reserves_usd": 5000.0,
+            "gold_reserves_tonnes": 25.0,
+        }
+    )
+
+
+def test_fractal_child_states_initialize_after_materialization_atomically() -> None:
+    logger.info(
+        "test_fractal_child_states_initialize_after_materialization_atomically"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1041
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+    )
+
+    assert result.fractal_child_state_store is not None
+    children = result.fractal_child_state_store.state_map()
+    assert set(children) == {"ESP::R1", "ESP::R2"}
+    assert len(result.fractal_child_initialization_records) == 2
+    assert len(result.fractal_conservation_audits) == 1
+    assert result.fractal_conservation_audits[0].conserved is True
+
+    assert children["ESP::R1"].physical_stocks["population_total"] == 61
+    assert children["ESP::R2"].physical_stocks["population_total"] == 40
+    assert children["ESP::R1"].physical_stocks[
+        "available_police_personnel"
+    ] == 7
+    assert children["ESP::R2"].physical_stocks[
+        "available_police_personnel"
+    ] == 4
+
+    for child in children.values():
+        assert child.physical_stocks[
+            "fuel_stock_days_equivalent"
+        ] == pytest.approx(90.0)
+        assert child.physical_stocks["available_military_personnel"] is None
+        assert child.physical_stocks["foreign_reserves_usd"] is None
+        assert child.physical_stocks["gold_reserves_tonnes"] is None
+        assert child.latents == result.states["ESP"].latents
+        assert child.regimes == result.states["ESP"].regimes
+        assert child.metadata["fractal_child_dynamics_active"] is False
+
+    assert set(result.states) == set(states)
+    assert {node.iso3 for node in graph.nodes} == set(states)
+
+    esp_checkpoint = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "daily_checkpoint"
+        and item["node_id"] == "ESP"
+    )
+    assert set(esp_checkpoint["fractal_child_initialization_ids"]) == {
+        item.initialization_id
+        for item in result.fractal_child_initialization_records
+    }
+
+
+def test_fractal_child_store_advances_without_child_dynamics() -> None:
+    logger.info("test_fractal_child_store_advances_without_child_dynamics")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1042
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+    )
+    assert first.fractal_topology is not None
+    assert first.fractal_child_state_store is not None
+
+    first_children = {
+        node_id: state.to_dict()
+        for node_id, state in first.fractal_child_state_store.state_map().items()
+    }
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence={
+            node_id: item
+            for node_id, item in first.fractal_refinement_persistence.items()
+        },
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=first.fractal_topology,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=first.fractal_child_state_store,
+    )
+
+    assert second.fractal_child_initialization_records == ()
+    assert second.fractal_conservation_audits == ()
+    assert second.fractal_child_state_store is not None
+    for node_id, child in second.fractal_child_state_store.state_map().items():
+        assert child.day == 2
+        prior = first_children[node_id]
+        assert child.physical_stocks == prior["physical_stocks"]
+        assert child.latents == prior["latents"]
+        assert child.regimes == prior["regimes"]
+        assert child.metadata == prior["metadata"]
+
+
+def test_fractal_child_store_history_required_after_day_zero() -> None:
+    logger.info("test_fractal_child_store_history_required_after_day_zero")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1043
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    empty_catalog = {"schema_version": "1.0", "parents": {}}
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+    )
+    assert first.fractal_child_state_store is not None
+    assert first.fractal_child_state_store.last_initialized_day == 1
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(
+        ValueError,
+        match="Fractal child-state store is required after day zero",
+    ):
+        run_day_transaction(
+            states=first.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_fractal_refinement_evaluator=True,
+            fractal_refinement_config=refinement_config,
+            fractal_refinement_persistence={
+                node_id: item
+                for node_id, item in first.fractal_refinement_persistence.items()
+            },
+            enable_fractal_materialization=True,
+            fractal_materialization_config=materialization_config,
+            fractal_region_catalog=empty_catalog,
+            fractal_topology=first.fractal_topology,
+            enable_fractal_child_state_initialization=True,
+            fractal_child_state_config=child_config,
+            fractal_child_state_store=None,
+        )
+    assert rng.describe() == rng_before
+    assert trace.records == []
+
+
+def test_fractal_child_state_config_changes_transaction_identity() -> None:
+    logger.info(
+        "test_fractal_child_state_config_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1044)
+    runtime_b = _runtime(seed=1044)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_a = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    child_b = copy.deepcopy(child_a)
+    child_b["status"] = "identity-test-variant"
+    empty_catalog = {"schema_version": "1.0", "parents": {}}
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_a,
+        fractal_child_state_store=None,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_b,
+        fractal_child_state_store=None,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+    assert result_a.fractal_child_state_store == result_b.fractal_child_state_store

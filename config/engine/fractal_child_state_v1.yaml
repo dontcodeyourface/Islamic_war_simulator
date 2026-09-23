@@ -1,0 +1,49 @@
+schema_version: "1.0"
+status: "implementation-v0.21"
+purpose: "Conservation-aware initialization of newly materialized L2 EngineState children."
+
+mode:
+  child_state_initialization_allowed: true
+  child_dynamics_allowed: false
+  country_graph_child_activation: false
+  random_perturbation_allowed: false
+
+physical_stock_policies:
+  additive_integer_conserved:
+    - "population_total"
+    - "working_age_population"
+    - "dependent_population"
+    - "displaced_people"
+    - "reception_population"
+    - "available_police_personnel"
+    - "prison_population"
+
+  intensive_inherit_parent:
+    - "fuel_stock_days_equivalent"
+    - "strategic_food_stock_days"
+
+  parent_only_null:
+    - "available_military_personnel"
+    - "foreign_reserves_usd"
+    - "gold_reserves_tonnes"
+
+latent_policy:
+  mode: "inherit_parent_exact"
+  policy_id: "FRACTAL_LATENT_INHERIT_V1"
+
+regime_policy:
+  mode: "inherit_parent_exact"
+  policy_id: "FRACTAL_REGIME_INHERIT_V1"
+
+metadata_policy:
+  mode: "copy_parent_and_append_fractal_lineage"
+  policy_id: "FRACTAL_CHILD_METADATA_V1"
+
+conservation:
+  integer_allocation: "largest_remainder_child_id_tiebreak"
+  null_parent_additive_stock: "all_children_null"
+  exact_sum_required: true
+
+safety:
+  child_dynamics_must_remain_disabled: true
+  no_random_local_variation_before_uncertainty_pr: true
