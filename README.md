@@ -56,6 +56,8 @@ Typed graph infrastructure: [docs/TYPED_COUNTRY_GRAPH_V0.3.md](docs/TYPED_COUNTR
 
 Dry-run event infrastructure: [docs/EVENT_ENGINE_V0.4.md](docs/EVENT_ENGINE_V0.4.md), backed by [`config/engine/event_engine_v1.yaml`](config/engine/event_engine_v1.yaml). The engine can now generate traceable `GENERATED` and `RANDOM_SHOCK` strategic event candidates without mutating EngineState; event effects and phase transitions remain disabled.
 
+Event-effect proposal infrastructure: [docs/EVENT_EFFECT_PROPOSALS_V0.5.md](docs/EVENT_EFFECT_PROPOSALS_V0.5.md), backed by [`config/engine/event_effects_v1.yaml`](config/engine/event_effects_v1.yaml). Events may now emit deterministic, traceable delta proposals routed to canonical owner modules, but no EngineState mutation or phase transition is allowed yet.
+
 ---
 
 ## 2. Core analytical rule
