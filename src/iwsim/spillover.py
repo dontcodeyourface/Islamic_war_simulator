@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from .config import canonical_hash
+from .effects import DeltaProposal
 from .graph import CANONICAL_CHANNELS, CountryGraph
 from .state import EngineState
 from .trace import TraceLedger
@@ -33,6 +34,7 @@ class GraphSpilloverRecord:
     edge_data_version: str
     parameter_ids: tuple[str, ...]
     edge_parameter_id: str | None
+    apply_to_state: bool
     status: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,6 +63,7 @@ class GraphSpilloverRecord:
             "edge_data_version": self.edge_data_version,
             "parameter_ids": list(self.parameter_ids),
             "edge_parameter_id": self.edge_parameter_id,
+            "apply_to_state": self.apply_to_state,
             "status": self.status,
         }
 
@@ -143,10 +146,12 @@ def _parameter_value(
 def _validate_config(spillover_config: dict[str, Any]) -> tuple[dict[str, Any], ...]:
     logger.info("_validate_config")
     mode = spillover_config.get("mode", {})
-    if mode.get("trace_only") is not True:
-        raise ValueError("v0.11 requires graph spillover trace_only=true")
-    if mode.get("state_effects_allowed") is not False:
-        raise ValueError("v0.11 forbids state-changing graph spillover")
+    trace_only = mode.get("trace_only")
+    state_effects_allowed = mode.get("state_effects_allowed")
+    if not isinstance(trace_only, bool) or not isinstance(state_effects_allowed, bool):
+        raise ValueError("Spillover mode flags must be booleans")
+    if trace_only and state_effects_allowed:
+        raise ValueError("trace_only and state_effects_allowed cannot both be true")
 
     rules = spillover_config.get("rules")
     if not isinstance(rules, list) or not rules:
@@ -161,6 +166,13 @@ def _validate_config(spillover_config: dict[str, Any]) -> tuple[dict[str, Any], 
         source_variable = str(rule.get("source_variable", ""))
         target_variable = str(rule.get("target_variable", ""))
         channels = rule.get("channels")
+        apply_to_state = rule.get("apply_to_state", False)
+        if not isinstance(apply_to_state, bool):
+            raise ValueError(f"Spillover rule {rule_id} apply_to_state must be boolean")
+        if apply_to_state and not state_effects_allowed:
+            raise ValueError(
+                f"Spillover rule {rule_id} requests state effects while disabled"
+            )
         if not rule_id or not source_variable or not target_variable:
             raise ValueError("Spillover rule identifiers must be non-empty")
         if rule_id in seen:
@@ -182,6 +194,7 @@ def _validate_config(spillover_config: dict[str, Any]) -> tuple[dict[str, Any], 
                 "source_variable": source_variable,
                 "target_variable": target_variable,
                 "channels": channel_names,
+                "apply_to_state": apply_to_state,
             }
         )
     return tuple(sorted(normalized, key=lambda item: item["rule_id"]))
@@ -375,7 +388,14 @@ def evaluate_graph_spillovers(
     pending: list[GraphSpilloverRecord] = []
     for item in sorted(queue.pending, key=lambda record: record.spillover_id):
         if item.day_effective <= day:
-            matured_item = replace(item, status="MATURED_TRACE_ONLY")
+            matured_item = replace(
+                item,
+                status=(
+                    "MATURED_READY_FOR_PROPOSAL"
+                    if item.apply_to_state
+                    else "MATURED_TRACE_ONLY"
+                ),
+            )
             matured.append(matured_item)
             trace.append("graph_spillover_matured", **matured_item.to_dict())
         else:
@@ -473,6 +493,7 @@ def evaluate_graph_spillovers(
                         edge_data_version=edge_data_version,
                         parameter_ids=parameter_ids,
                         edge_parameter_id=edge_parameter_id,
+                        apply_to_state=bool(rule["apply_to_state"]),
                         status=status,
                     )
                     candidates.append(record)
@@ -483,7 +504,11 @@ def evaluate_graph_spillovers(
                     if record.day_effective <= day:
                         matured_item = replace(
                             record,
-                            status="MATURED_TRACE_ONLY",
+                            status=(
+                                "MATURED_READY_FOR_PROPOSAL"
+                                if record.apply_to_state
+                                else "MATURED_TRACE_ONLY"
+                            ),
                         )
                         matured.append(matured_item)
                         trace.append(
@@ -522,3 +547,115 @@ def evaluate_graph_spillovers(
         ),
         matured=tuple(sorted(matured, key=lambda item: item.spillover_id)),
     )
+
+
+def _owner_map(engine_state_registry: dict[str, Any]) -> dict[str, str]:
+    logger.info("_owner_map")
+    owners: dict[str, str] = {}
+    for group in engine_state_registry["latent_groups"].values():
+        owner = str(group["module_owner"])
+        for variable in group["variables"]:
+            variable_id = str(variable["id"])
+            if variable_id in owners:
+                raise ValueError(f"Duplicate latent owner for {variable_id}")
+            owners[variable_id] = owner
+    return owners
+
+
+def _spillover_proposal_id(record: GraphSpilloverRecord) -> str:
+    logger.info(
+        "_spillover_proposal_id spillover_id=%s target=%s variable=%s",
+        record.spillover_id,
+        record.target_node,
+        record.target_variable,
+    )
+    digest = canonical_hash(
+        {
+            "spillover_id": record.spillover_id,
+            "target_node": record.target_node,
+            "target_variable": record.target_variable,
+            "equation_id": record.rule_id,
+            "proposal_contract": "GRAPH_SPILLOVER_PROPOSAL_V1",
+        }
+    )
+    return f"delta-{digest[:24]}"
+
+
+def propose_matured_spillover_effects(
+    *,
+    matured: tuple[GraphSpilloverRecord, ...] | list[GraphSpilloverRecord],
+    states: dict[str, EngineState],
+    engine_state_registry: dict[str, Any],
+    trace: TraceLedger,
+) -> tuple[DeltaProposal, ...]:
+    """Convert eligible matured spillovers into canonical owner-resolved proposals."""
+    logger.info(
+        "propose_matured_spillover_effects matured=%s states=%s",
+        len(matured),
+        len(states),
+    )
+    owners = _owner_map(engine_state_registry)
+    proposals: list[DeltaProposal] = []
+
+    for record in sorted(matured, key=lambda item: item.spillover_id):
+        if not record.apply_to_state:
+            if record.status != "MATURED_TRACE_ONLY":
+                raise ValueError(
+                    f"Trace-only spillover {record.spillover_id} has invalid status "
+                    f"{record.status}"
+                )
+            continue
+
+        if record.status != "MATURED_READY_FOR_PROPOSAL":
+            raise ValueError(
+                f"State-changing spillover {record.spillover_id} is not proposal-ready"
+            )
+        if record.target_node not in states:
+            raise KeyError(f"Unknown spillover target node {record.target_node}")
+        if record.target_variable not in owners:
+            raise KeyError(
+                f"No owner module registered for {record.target_variable}"
+            )
+        if record.target_variable not in states[record.target_node].latents:
+            raise KeyError(
+                f"Spillover target variable {record.target_variable} missing from "
+                f"{record.target_node}"
+            )
+        if record.bounded_effect is None:
+            raise ValueError(
+                f"State-changing spillover {record.spillover_id} has no effect value"
+            )
+
+        value_before = float(
+            states[record.target_node].latents[record.target_variable]
+        )
+        raw_delta = float(record.bounded_effect)
+        proposal = DeltaProposal(
+            proposal_id=_spillover_proposal_id(record),
+            event_id=record.spillover_id,
+            event_type="GRAPH_SPILLOVER_V1",
+            target_node=record.target_node,
+            variable=record.target_variable,
+            owner_module=owners[record.target_variable],
+            value_before=value_before,
+            raw_delta=raw_delta,
+            proposed_unbounded_value=value_before + raw_delta,
+            equation_id=record.rule_id,
+            parameter_ids=record.parameter_ids,
+            apply_status="PROPOSED_NOT_APPLIED",
+            dry_run=True,
+        )
+        trace.append(
+            "spillover_delta_proposal",
+            spillover_id=record.spillover_id,
+            source_node=record.source_node,
+            channel=record.channel,
+            **proposal.to_dict(),
+        )
+        trace.append("delta_proposal", **proposal.to_dict())
+        proposals.append(proposal)
+
+    proposal_ids = [item.proposal_id for item in proposals]
+    if len(proposal_ids) != len(set(proposal_ids)):
+        raise ValueError("Duplicate spillover proposal IDs")
+    return tuple(sorted(proposals, key=lambda item: item.proposal_id))
