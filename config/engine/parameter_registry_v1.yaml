@@ -48,6 +48,14 @@ parameter_sets:
         unit: daily_dimensionless_gain
         rationale: "Low-gain smoke-test transmission coefficients to exercise typed graph propagation without assuming empirical probabilities."
 
+      EDGE_ALLIANCE_FORMAL_SYN_V1:
+        type: categorical_membership_score
+        value:
+          NATO: 1.0
+          European Union: 0.75
+          no_shared_formal_membership: 0.0
+        rationale: "Engineering-only score for shared formal institutional membership. NATO and EU mechanisms remain analytically distinct elsewhere."
+
       GRAPH_LATENCIES_SYN_V1:
         type: channel_interval_map
         value:
@@ -288,6 +296,7 @@ parameter_sets:
       MEM_HALF_LIVES_CAL_V1: null
       EDGE_GEO_SCALE_CAL_V1: null
       GRAPH_TRANSMISSION_CAL_V1: null
+      EDGE_ALLIANCE_FORMAL_CAL_V1: null
       GRAPH_LATENCIES_CAL_V1: null
       PHASE_TRANSITIONS_CAL_V1: null
       PHASE_RECOVERY_CAL_V1: null

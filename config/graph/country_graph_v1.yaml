@@ -1,0 +1,77 @@
+schema_version: "1.0"
+status: "implementation-v0.3"
+date: "2026-09-23"
+purpose: "Country-independent source configuration for the first typed country graph."
+
+distance_matrix_path: "config/geography/country_distance_matrix_v1.yaml"
+
+nodes:
+  ESP:
+    snapshot_path: "config/countries/spain.yaml"
+    distance_matrix_name: "Spain"
+  MAR:
+    snapshot_path: "config/countries/morocco.yaml"
+    distance_matrix_name: "Morocco"
+  FRA:
+    snapshot_path: "config/countries/france.yaml"
+    distance_matrix_name: "France"
+  DEU:
+    snapshot_path: "config/countries/germany.yaml"
+    distance_matrix_name: "Germany"
+  GBR:
+    snapshot_path: "config/countries/united_kingdom.yaml"
+    distance_matrix_name: "United_Kingdom"
+
+channels:
+  geographic_proximity:
+    directionality: symmetric
+    source: distance_matrix
+    normalization_rule_id: EDGE_GEO_V1
+
+  land_border:
+    directionality: symmetric
+    source: distance_matrix
+    normalization_rule_id: EDGE_LAND_BORDER_V1
+
+  alliance_link:
+    directionality: symmetric
+    source: "snapshot.alliances.memberships"
+    normalization_rule_id: EDGE_ALLIANCE_FORMAL_V1
+
+  trade_dependency:
+    directionality: directed
+    source: unresolved
+
+  energy_dependency:
+    directionality: directed
+    source: unresolved
+
+  migration_link:
+    directionality: directed
+    source: unresolved
+
+  diaspora_link:
+    directionality: directed
+    source: unresolved
+
+  information_link:
+    directionality: directed
+    source: unresolved
+
+  criminal_network_link:
+    directionality: directed
+    source: unresolved
+
+  extremist_network_link:
+    directionality: directed
+    source: unresolved
+
+rules:
+  pair_topology_is_undirected: true
+  directional_channels_supported_inside_pair: true
+  complete_pair_coverage_required: true
+  unresolved_channel_is_null_not_zero: true
+  country_specific_edge_logic_forbidden: true
+  population_identity_must_not_create_extremist_edge: true
+  diaspora_identity_must_not_create_faction_alignment: true
+  directed_dependency_channels_must_not_be_symmetrized_without_evidence: true

@@ -725,6 +725,30 @@ Edge vector:
     criminal_network_link
     extremist_network_link
 
+Directionality is part of the channel contract.
+
+Symmetric in v0.3:
+
+    geographic_proximity
+    land_border
+    alliance_link
+
+Directed in v0.3:
+
+    trade_dependency
+    energy_dependency
+    migration_link
+    diaspora_link
+    information_link
+    criminal_network_link
+    extremist_network_link
+
+For directed channels, A -> B and B -> A are independent values.
+
+Unresolved channel values are null, not zero. A value of 0.0 means evidence supports an absent/negligible link; null means the link has not yet been resolved. Directed dependencies must never be symmetrized without evidence.
+
+The first executable topology contract is documented in [TYPED_COUNTRY_GRAPH_V0.3.md](TYPED_COUNTRY_GRAPH_V0.3.md).
+
 Generic spillover:
 
     spillover[i->j] =

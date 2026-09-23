@@ -52,6 +52,8 @@ Canonical normalization/parameter contract: [docs/NORMALIZATION_AND_PARAMETERS_V
 
 Current executable infrastructure: [docs/ENGINE_IMPLEMENTATION_V0.1.md](docs/ENGINE_IMPLEMENTATION_V0.1.md). Snapshot-to-state initialization is now extended by [docs/SNAPSHOT_NORMALIZATION_V0.2.md](docs/SNAPSHOT_NORMALIZATION_V0.2.md): a conservative subset of latents is initialized from traced Snapshot v1 evidence, baseline-relative functionality uses explicit anchors, and unresolved latents retain registered synthetic priors. Conflict dynamics remain disabled.
 
+Typed graph infrastructure: [docs/TYPED_COUNTRY_GRAPH_V0.3.md](docs/TYPED_COUNTRY_GRAPH_V0.3.md), backed by [`config/graph/country_graph_v1.yaml`](config/graph/country_graph_v1.yaml). Geographic proximity, land borders and shared formal alliance membership are resolved; trade, energy, migration, diaspora, information, criminal-network and extremist-network channels are explicitly directional and remain null until comparable evidence is added.
+
 ---
 
 ## 2. Core analytical rule

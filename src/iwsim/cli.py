@@ -7,6 +7,7 @@ from pathlib import Path
 from . import __version__
 from .config import canonical_hash, file_sha256, load_yaml
 from .engine import NoOpEngine
+from .graph import build_country_graph
 from .initializer import initialize_hybrid_state
 from .io import write_json
 from .logging import configure_logging
@@ -24,6 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
     smoke = subparsers.add_parser("smoke", help="Run infrastructure-only deterministic smoke loop")
     smoke.add_argument("--repo-root", default=".")
     smoke.add_argument("--country", required=True)
+    smoke.add_argument(
+        "--graph-config",
+        default="config/graph/country_graph_v1.yaml",
+    )
     smoke.add_argument("--seed", type=int, default=42)
     smoke.add_argument("--days", type=int, default=30)
     smoke.add_argument("--out", default="run_output")
@@ -45,12 +50,42 @@ def run_smoke(args: argparse.Namespace) -> int:
     normalization_path = root / "config/engine/normalization_parameters_v1.yaml"
     parameters_path = root / "config/engine/parameter_registry_v1.yaml"
     feature_map_path = root / "config/engine/snapshot_feature_map_v1.yaml"
+    graph_config_path = root / args.graph_config
 
     snapshot = load_yaml(country_path)
     engine_state_registry = load_yaml(engine_state_path)
     normalization_registry = load_yaml(normalization_path)
     parameter_registry = load_yaml(parameters_path)
     feature_map = load_yaml(feature_map_path)
+    graph_config = load_yaml(graph_config_path)
+    distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
+
+    graph_snapshots: dict[str, dict[str, object]] = {}
+    country_file_hashes: dict[str, str] = {}
+    for iso3, node_config in graph_config["nodes"].items():
+        graph_country_path = root / node_config["snapshot_path"]
+        graph_snapshot = load_yaml(graph_country_path)
+        graph_snapshots[iso3] = graph_snapshot
+        country_file_hashes[iso3] = file_sha256(graph_country_path)
+
+    country_graph = build_country_graph(
+        graph_config=graph_config,
+        distance_matrix=distance_matrix,
+        snapshots=graph_snapshots,
+        parameter_registry=parameter_registry,
+        profile="synthetic_smoke_v1",
+    )
+
+    selected_iso3 = str(snapshot["identity"]["iso3"])
+    if selected_iso3 not in graph_snapshots:
+        raise ValueError(
+            f"Selected country {selected_iso3} is not present in graph config "
+            f"{args.graph_config}"
+        )
+    if canonical_hash(snapshot) != canonical_hash(graph_snapshots[selected_iso3]):
+        raise ValueError(
+            "Selected country file does not match the snapshot referenced by the graph"
+        )
 
     rng = RNGManager(master_seed=args.seed)
     trace = TraceLedger()
@@ -72,9 +107,9 @@ def run_smoke(args: argparse.Namespace) -> int:
         engine_version=__version__,
         git_commit=args.git_commit,
         snapshot_schema_version=str(snapshot["identity"]["snapshot_version"]),
-        snapshot_bundle_hash=canonical_hash(snapshot),
-        country_file_hashes={initial_state.node_id: file_sha256(country_path)},
-        graph_hash=canonical_hash({"graph": "none", "version": "smoke-v1"}),
+        snapshot_bundle_hash=canonical_hash(graph_snapshots),
+        country_file_hashes=country_file_hashes,
+        graph_hash=country_graph.graph_hash(),
         scenario_id="SCN-SMOKE-NOOP",
         scenario_hash=canonical_hash(scenario_payload),
         parameter_set_id="synthetic_smoke_v1",
@@ -85,7 +120,7 @@ def run_smoke(args: argparse.Namespace) -> int:
         time_step_days=1,
         start_date=str(snapshot["identity"]["snapshot_date"]),
         horizon_days=args.days,
-        enabled_modules=("initializer", "trace", "noop_engine"),
+        enabled_modules=("initializer", "typed_graph", "trace", "noop_engine"),
         normalization_version="1.0-hybrid-v0.2",
         execution_order_version="EXEC_ORDER_V1",
     )
@@ -101,6 +136,7 @@ def run_smoke(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     write_json(out / "manifest.json", manifest.to_dict())
+    write_json(out / "graph.json", country_graph.to_dict())
     write_json(out / "initial_state.json", initial_state.to_dict())
     write_json(out / "final_state.json", result.final_state.to_dict())
     write_json(
@@ -111,6 +147,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             "initial_hash": result.state_hashes[0],
             "final_hash": result.state_hashes[-1],
             "days": args.days,
+            "graph_hash": country_graph.graph_hash(),
+            "graph_nodes": len(country_graph.nodes),
+            "graph_edges": len(country_graph.edges),
             "rng": rng.describe(),
             "profile_warning": "ENGINEERING TEST PROFILE / PARTIAL EMPIRICAL INITIALIZATION / NOT CALIBRATED / NOT A REAL-WORLD PROBABILITY",
             "initialization_mix": {
