@@ -54,6 +54,8 @@ Current executable infrastructure: [docs/ENGINE_IMPLEMENTATION_V0.1.md](docs/ENG
 
 Typed graph infrastructure: [docs/TYPED_COUNTRY_GRAPH_V0.3.md](docs/TYPED_COUNTRY_GRAPH_V0.3.md), backed by [`config/graph/country_graph_v1.yaml`](config/graph/country_graph_v1.yaml). Geographic proximity, land borders and shared formal alliance membership are resolved; trade, energy, migration, diaspora, information, criminal-network and extremist-network channels are explicitly directional and remain null until comparable evidence is added.
 
+Dry-run event infrastructure: [docs/EVENT_ENGINE_V0.4.md](docs/EVENT_ENGINE_V0.4.md), backed by [`config/engine/event_engine_v1.yaml`](config/engine/event_engine_v1.yaml). The engine can now generate traceable `GENERATED` and `RANDOM_SHOCK` strategic event candidates without mutating EngineState; event effects and phase transitions remain disabled.
+
 ---
 
 ## 2. Core analytical rule
