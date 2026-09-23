@@ -163,6 +163,27 @@ def _force_only_spain_morocco_interstate_event(parameters: dict) -> dict:
     return patched
 
 
+def _set_reciprocal_test_state(states: dict) -> None:
+    logger.info("_set_reciprocal_test_state")
+    for state in states.values():
+        state.latents["violent_islamist_pressure"] = 0.0
+        state.latents["violent_ultranationalist_pressure"] = 0.0
+        state.latents["revolutionary_extremist_pressure"] = 0.0
+        state.latents["communal_fear"] = 0.0
+        state.latents["civilizational_narrative_strength"] = 0.0
+        state.latents["polarization"] = 0.0
+        state.latents["foreign_support_nonstate"] = 0.0
+        state.latents["prison_control"] = 1.0
+        state.latents["social_cohesion"] = 0.0
+        state.latents["government_legitimacy"] = 0.0
+        state.latents["police_effective_capacity"] = 0.0
+        state.latents["intelligence_effectiveness"] = 0.0
+
+    states["ESP"].latents["violent_islamist_pressure"] = 0.8
+    states["ESP"].latents["violent_ultranationalist_pressure"] = 0.2
+    states["ESP"].latents["communal_fear"] = 1.0
+
+
 def test_no_event_day_advances_all_nodes_once_without_mutating_inputs() -> None:
     logger.info("test_no_event_day_advances_all_nodes_once_without_mutating_inputs")
     states, graph, day_config, registry, parameters, rng, manifest = _runtime()
@@ -1188,6 +1209,250 @@ def test_extremist_network_config_changes_transaction_identity() -> None:
         trace=TraceLedger(),
         enable_extremist_network_dynamics=True,
         extremist_network_config=config_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+
+
+
+def test_reciprocal_radicalization_resolves_from_common_beginning_state() -> None:
+    logger.info(
+        "test_reciprocal_radicalization_resolves_from_common_beginning_state"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1013
+    )
+    parameters = _disable_all_events(parameters)
+    feedback_config = load_yaml(
+        ROOT / "config/engine/reciprocal_radicalization_v1.yaml"
+    )
+    _set_reciprocal_test_state(states)
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_reciprocal_radicalization=True,
+        reciprocal_radicalization_config=feedback_config,
+    )
+
+    assert result.events == ()
+    assert len(result.reciprocal_radicalization_proposals) == 2
+    by_variable = {
+        item.variable: item
+        for item in result.reciprocal_radicalization_proposals
+    }
+    islamist = by_variable["violent_islamist_pressure"]
+    ultranationalist = by_variable["violent_ultranationalist_pressure"]
+    assert islamist.value_before == pytest.approx(0.8)
+    assert ultranationalist.value_before == pytest.approx(0.2)
+    assert islamist.raw_delta == pytest.approx(0.0008)
+    assert ultranationalist.raw_delta == pytest.approx(0.0128)
+
+    islamist_resolution = next(
+        item
+        for item in result.resolutions
+        if item.target_node == "ESP"
+        and item.variable == "violent_islamist_pressure"
+    )
+    ultra_resolution = next(
+        item
+        for item in result.resolutions
+        if item.target_node == "ESP"
+        and item.variable == "violent_ultranationalist_pressure"
+    )
+    assert islamist_resolution.value_after == pytest.approx(0.8008)
+    assert ultra_resolution.value_after == pytest.approx(0.2128)
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+
+    evaluations = [
+        item
+        for item in trace.records
+        if item["record_type"] == "reciprocal_radicalization_evaluation"
+    ]
+    assert len(evaluations) == 10
+    assert set(
+        trace.records[-1]["reciprocal_radicalization_proposal_ids"]
+    ) == {
+        item.proposal_id
+        for item in result.reciprocal_radicalization_proposals
+    }
+
+
+def test_network_dynamics_and_reciprocal_feedback_share_owner_resolution() -> None:
+    logger.info(
+        "test_network_dynamics_and_reciprocal_feedback_share_owner_resolution"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1014
+    )
+    parameters = _disable_all_events(parameters)
+    network_config = load_yaml(
+        ROOT / "config/engine/extremist_network_dynamics_v1.yaml"
+    )
+    feedback_config = load_yaml(
+        ROOT / "config/engine/reciprocal_radicalization_v1.yaml"
+    )
+    _set_reciprocal_test_state(states)
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_extremist_network_dynamics=True,
+        extremist_network_config=network_config,
+        enable_reciprocal_radicalization=True,
+        reciprocal_radicalization_config=feedback_config,
+    )
+
+    assert len(result.network_proposals) == 3
+    assert len(result.reciprocal_radicalization_proposals) == 2
+
+    esp_islamist = [
+        item
+        for item in result.proposals
+        if item.target_node == "ESP"
+        and item.variable == "violent_islamist_pressure"
+    ]
+    esp_ultra = [
+        item
+        for item in result.proposals
+        if item.target_node == "ESP"
+        and item.variable == "violent_ultranationalist_pressure"
+    ]
+    esp_revolutionary = [
+        item
+        for item in result.proposals
+        if item.target_node == "ESP"
+        and item.variable == "revolutionary_extremist_pressure"
+    ]
+
+    assert len(esp_islamist) == 2
+    assert len(esp_ultra) == 2
+    assert len(esp_revolutionary) == 1
+    assert all(item.value_before == pytest.approx(0.8) for item in esp_islamist)
+    assert all(item.value_before == pytest.approx(0.2) for item in esp_ultra)
+    assert esp_revolutionary[0].value_before == pytest.approx(0.0)
+
+    islamist_network = next(
+        item
+        for item in esp_islamist
+        if item.event_type == "ENDOGENOUS_EXTREMIST_NETWORK_V1"
+    )
+    islamist_feedback = next(
+        item
+        for item in esp_islamist
+        if item.event_type == "RECIPROCAL_RADICALIZATION_V1"
+    )
+    ultra_network = next(
+        item
+        for item in esp_ultra
+        if item.event_type == "ENDOGENOUS_EXTREMIST_NETWORK_V1"
+    )
+    ultra_feedback = next(
+        item
+        for item in esp_ultra
+        if item.event_type == "RECIPROCAL_RADICALIZATION_V1"
+    )
+
+    assert islamist_network.raw_delta == pytest.approx(0.00048)
+    assert islamist_feedback.raw_delta == pytest.approx(0.0008)
+    assert ultra_network.raw_delta == pytest.approx(0.00192)
+    assert ultra_feedback.raw_delta == pytest.approx(0.0128)
+    assert esp_revolutionary[0].raw_delta == pytest.approx(0.0024)
+
+    islamist_resolution = next(
+        item
+        for item in result.resolutions
+        if item.target_node == "ESP"
+        and item.variable == "violent_islamist_pressure"
+    )
+    ultra_resolution = next(
+        item
+        for item in result.resolutions
+        if item.target_node == "ESP"
+        and item.variable == "violent_ultranationalist_pressure"
+    )
+    revolutionary_resolution = next(
+        item
+        for item in result.resolutions
+        if item.target_node == "ESP"
+        and item.variable == "revolutionary_extremist_pressure"
+    )
+
+    assert islamist_resolution.raw_sum_delta == pytest.approx(0.00128)
+    assert ultra_resolution.raw_sum_delta == pytest.approx(0.01472)
+    assert revolutionary_resolution.raw_sum_delta == pytest.approx(0.0024)
+    assert result.states["ESP"].latents[
+        "violent_islamist_pressure"
+    ] == pytest.approx(0.80128)
+    assert result.states["ESP"].latents[
+        "violent_ultranationalist_pressure"
+    ] == pytest.approx(0.21472)
+    assert result.states["ESP"].latents[
+        "revolutionary_extremist_pressure"
+    ] == pytest.approx(0.0024)
+
+
+def test_reciprocal_config_changes_transaction_identity() -> None:
+    logger.info("test_reciprocal_config_changes_transaction_identity")
+    runtime_a = _runtime(seed=1015)
+    runtime_b = _runtime(seed=1015)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    _set_reciprocal_test_state(runtime_a[0])
+    _set_reciprocal_test_state(runtime_b[0])
+
+    config_a = load_yaml(
+        ROOT / "config/engine/reciprocal_radicalization_v1.yaml"
+    )
+    config_b = copy.deepcopy(config_a)
+    config_b["status"] = "identity-test-variant"
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_reciprocal_radicalization=True,
+        reciprocal_radicalization_config=config_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_reciprocal_radicalization=True,
+        reciprocal_radicalization_config=config_b,
     )
 
     assert result_a.transaction_id != result_b.transaction_id

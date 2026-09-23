@@ -24,6 +24,7 @@ from .phase_transition import (
     retain_phase_persistence,
 )
 from .recovery import propose_recovery_effects
+from .reciprocal import propose_reciprocal_radicalization_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
 from .rng import RNGManager
 from .spillover import (
@@ -75,6 +76,7 @@ class DayTransactionResult:
     matured_spillovers: tuple[GraphSpilloverRecord, ...]
     spillover_proposals: tuple[DeltaProposal, ...]
     network_proposals: tuple[DeltaProposal, ...]
+    reciprocal_radicalization_proposals: tuple[DeltaProposal, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -114,6 +116,10 @@ class DayTransactionResult:
             ],
             "network_proposals": [
                 item.to_dict() for item in self.network_proposals
+            ],
+            "reciprocal_radicalization_proposals": [
+                item.to_dict()
+                for item in self.reciprocal_radicalization_proposals
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -277,6 +283,7 @@ def _transaction_id(
     recovery_inputs: dict[str, Any] | None = None,
     spillover_inputs: dict[str, Any] | None = None,
     network_inputs: dict[str, Any] | None = None,
+    reciprocal_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -298,6 +305,7 @@ def _transaction_id(
             "recovery_inputs": recovery_inputs,
             "spillover_inputs": spillover_inputs,
             "network_inputs": network_inputs,
+            "reciprocal_inputs": reciprocal_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -627,6 +635,8 @@ def run_day_transaction(
     spillover_queue: SpilloverQueueState | None = None,
     enable_extremist_network_dynamics: bool = False,
     extremist_network_config: dict[str, Any] | None = None,
+    enable_reciprocal_radicalization: bool = False,
+    reciprocal_radicalization_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -651,7 +661,29 @@ def run_day_transaction(
     recovery_inputs: dict[str, Any] | None = None
     spillover_inputs: dict[str, Any] | None = None
     network_inputs: dict[str, Any] | None = None
+    reciprocal_inputs: dict[str, Any] | None = None
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_reciprocal_radicalization:
+        if reciprocal_radicalization_config is None:
+            raise ValueError(
+                "Reciprocal-radicalization integration requires "
+                "reciprocal_radicalization_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "reciprocal_radicalization_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Reciprocal radicalization is disabled by the day transaction contract"
+            )
+        reciprocal_inputs = {
+            "reciprocal_radicalization_config_hash": canonical_hash(
+                reciprocal_radicalization_config
+            ),
+        }
 
     if enable_extremist_network_dynamics:
         if extremist_network_config is None:
@@ -740,6 +772,7 @@ def run_day_transaction(
         recovery_inputs=recovery_inputs,
         spillover_inputs=spillover_inputs,
         network_inputs=network_inputs,
+        reciprocal_inputs=reciprocal_inputs,
     )
 
     working_rng = rng.clone()
@@ -818,6 +851,20 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    reciprocal_radicalization_proposals: tuple[DeltaProposal, ...] = ()
+    if enable_reciprocal_radicalization:
+        assert reciprocal_radicalization_config is not None
+        reciprocal_radicalization_proposals = (
+            propose_reciprocal_radicalization_effects(
+                states=states,
+                feedback_config=reciprocal_radicalization_config,
+                engine_state_registry=engine_state_registry,
+                parameter_registry=parameter_registry,
+                profile=profile,
+                trace=staged_trace,
+            )
+        )
+
     recovery_proposals: tuple[DeltaProposal, ...] = ()
     if enable_recovery:
         assert recovery_config is not None
@@ -836,6 +883,7 @@ def run_day_transaction(
                 *recovery_proposals,
                 *spillover_proposals,
                 *network_proposals,
+                *reciprocal_radicalization_proposals,
             ),
             key=lambda proposal: proposal.proposal_id,
         )
@@ -921,6 +969,10 @@ def run_day_transaction(
         network_proposal_ids=[
             proposal.proposal_id for proposal in network_proposals
         ],
+        reciprocal_radicalization_proposal_ids=[
+            proposal.proposal_id
+            for proposal in reciprocal_radicalization_proposals
+        ],
         spillover_queue=(
             spillover_queue_out.to_dict()
             if spillover_queue_out is not None
@@ -953,6 +1005,9 @@ def run_day_transaction(
         matured_spillovers=matured_spillovers,
         spillover_proposals=spillover_proposals,
         network_proposals=network_proposals,
+        reciprocal_radicalization_proposals=(
+            reciprocal_radicalization_proposals
+        ),
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,

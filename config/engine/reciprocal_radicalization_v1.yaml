@@ -1,0 +1,48 @@
+schema_version: "1.0"
+status: "implementation-v0.14"
+purpose: "Symmetric reciprocal violent-network feedback proposals with institutional damping."
+
+mode:
+  proposal_only: true
+  symmetric_pair_required: true
+  skip_zero_delta: true
+
+parameter_family:
+  synthetic_smoke_v1: "RECIPROCAL_RADICALIZATION_SYN_V1"
+  calibrated_v1: "RECIPROCAL_RADICALIZATION_CAL_V1"
+
+shared_inputs:
+  fear_variable: "communal_fear"
+  narrative_variable: "civilizational_narrative_strength"
+  damping_variables:
+    - "social_cohesion"
+    - "government_legitimacy"
+    - "police_effective_capacity"
+    - "intelligence_effectiveness"
+
+directions:
+  - direction_id: "ISLAMIST_TO_ULTRANATIONALIST_V1"
+    source_variable: "violent_islamist_pressure"
+    target_variable: "violent_ultranationalist_pressure"
+    equation_id: "RECIPROCAL_RADICALIZATION_PRESSURE_V1"
+
+  - direction_id: "ULTRANATIONALIST_TO_ISLAMIST_V1"
+    source_variable: "violent_ultranationalist_pressure"
+    target_variable: "violent_islamist_pressure"
+    equation_id: "RECIPROCAL_RADICALIZATION_PRESSURE_V1"
+
+equation:
+  saturation: "1 - target_pressure"
+  cross_component: "cross_reaction_gain * source_pressure * communal_fear * saturation"
+  narrative_component: "narrative_amplification_gain * narrative_strength * source_pressure * saturation"
+  damping_component: "damping_gain * mean(damping_variables) * target_pressure"
+  unbounded_delta: "cross_component + narrative_component - damping_component"
+  raw_delta: "clamp(unbounded_delta, -max_single_day_latent_delta, +max_single_day_latent_delta)"
+
+safety_and_integrity:
+  civilian_population_identity_as_propensity_input: false
+  religious_population_share_as_propensity_input: false
+  political_party_preference_as_propensity_input: false
+  violent_network_state_only: true
+  owner_resolver_required: true
+  beginning_of_day_state_only: true
