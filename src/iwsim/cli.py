@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import __version__
 from .config import canonical_hash, file_sha256, load_yaml
+from .day import run_day_transaction
 from .engine import NoOpEngine
 from .graph import build_country_graph
 from .initializer import initialize_hybrid_state
@@ -34,6 +35,24 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--out", default="run_output")
     smoke.add_argument("--git-commit", default="UNKNOWN")
     smoke.add_argument("--log-level", default="INFO")
+
+    day_smoke = subparsers.add_parser(
+        "day-smoke",
+        help="Run one complete atomic multi-country day transaction",
+    )
+    day_smoke.add_argument("--repo-root", default=".")
+    day_smoke.add_argument(
+        "--graph-config",
+        default="config/graph/country_graph_v1.yaml",
+    )
+    day_smoke.add_argument(
+        "--day-config",
+        default="config/engine/day_transaction_v1.yaml",
+    )
+    day_smoke.add_argument("--seed", type=int, default=42)
+    day_smoke.add_argument("--out", default="run_output/day-smoke")
+    day_smoke.add_argument("--git-commit", default="UNKNOWN")
+    day_smoke.add_argument("--log-level", default="INFO")
     return parser
 
 
@@ -163,6 +182,153 @@ def run_smoke(args: argparse.Namespace) -> int:
     return 0
 
 
+
+def run_day_smoke(args: argparse.Namespace) -> int:
+    logger.info(
+        "run_day_smoke seed=%s graph_config=%s day_config=%s",
+        args.seed,
+        args.graph_config,
+        args.day_config,
+    )
+    root = Path(args.repo_root)
+    engine_state_registry = load_yaml(root / "config/engine/engine_state_v1.yaml")
+    normalization_registry = load_yaml(
+        root / "config/engine/normalization_parameters_v1.yaml"
+    )
+    parameter_registry = load_yaml(root / "config/engine/parameter_registry_v1.yaml")
+    feature_map = load_yaml(root / "config/engine/snapshot_feature_map_v1.yaml")
+    graph_config = load_yaml(root / args.graph_config)
+    day_config = load_yaml(root / args.day_config)
+    distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
+
+    snapshots: dict[str, dict[str, object]] = {}
+    country_file_hashes: dict[str, str] = {}
+    for iso3, node_config in sorted(graph_config["nodes"].items()):
+        country_path = root / node_config["snapshot_path"]
+        snapshot = load_yaml(country_path)
+        snapshots[iso3] = snapshot
+        country_file_hashes[iso3] = file_sha256(country_path)
+
+    country_graph = build_country_graph(
+        graph_config=graph_config,
+        distance_matrix=distance_matrix,
+        snapshots=snapshots,
+        parameter_registry=parameter_registry,
+        profile="synthetic_smoke_v1",
+    )
+
+    rng = RNGManager(master_seed=args.seed)
+    trace = TraceLedger()
+    states = {
+        iso3: initialize_hybrid_state(
+            snapshot=snapshots[iso3],
+            engine_state_registry=engine_state_registry,
+            normalization_registry=normalization_registry,
+            parameter_registry=parameter_registry,
+            feature_map=feature_map,
+            rng=rng,
+            trace=trace,
+            profile="synthetic_smoke_v1",
+        )
+        for iso3 in sorted(snapshots)
+    }
+
+    parameter_set = parameter_registry["parameter_sets"]["synthetic_smoke_v1"]
+    scenario_payload = {
+        "scenario_id": "SCN-DAY-SMOKE",
+        "version": "1",
+        "mode": "atomic-single-day",
+    }
+    manifest = build_manifest(
+        engine_version=__version__,
+        git_commit=args.git_commit,
+        snapshot_schema_version="1.0",
+        snapshot_bundle_hash=canonical_hash(snapshots),
+        country_file_hashes=country_file_hashes,
+        graph_hash=country_graph.graph_hash(),
+        scenario_id="SCN-DAY-SMOKE",
+        scenario_hash=canonical_hash(scenario_payload),
+        parameter_set_id="synthetic_smoke_v1",
+        parameter_set_hash=canonical_hash(parameter_set),
+        calibration_version="UNSCALED_SYNTHETIC",
+        rng_master_seed=args.seed,
+        rng_algorithm=rng.algorithm,
+        time_step_days=1,
+        start_date="2026-09-23",
+        horizon_days=1,
+        enabled_modules=(
+            "initializer",
+            "typed_graph",
+            "event_engine",
+            "event_effects",
+            "owner_resolver",
+            "day_transaction",
+            "trace",
+        ),
+        normalization_version="1.0-hybrid-v0.2",
+        execution_order_version="EXEC_ORDER_V1",
+    )
+
+    initial_states = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    initial_hashes = {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    }
+
+    result = run_day_transaction(
+        states=states,
+        graph=country_graph,
+        day_config=day_config,
+        engine_state_registry=engine_state_registry,
+        parameter_registry=parameter_registry,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+    )
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    write_json(out / "manifest.json", manifest.to_dict())
+    write_json(out / "graph.json", country_graph.to_dict())
+    write_json(out / "initial_states.json", initial_states)
+    write_json(out / "day_result.json", result.to_dict())
+    write_json(
+        out / "final_states.json",
+        {
+            node_id: state.to_dict()
+            for node_id, state in sorted(result.states.items())
+        },
+    )
+    write_json(
+        out / "replay_summary.json",
+        {
+            "run_id": manifest.run_id,
+            "replay_key": manifest.replay_key,
+            "transaction_id": result.transaction_id,
+            "day_from": result.day_from,
+            "day_to": result.day_to,
+            "initial_state_hashes": initial_hashes,
+            "final_state_hashes": {
+                node_id: state.state_hash()
+                for node_id, state in sorted(result.states.items())
+            },
+            "event_ids": [event.event_id for event in result.events],
+            "proposal_count": len(result.proposals),
+            "resolution_count": len(result.resolutions),
+            "rng": rng.describe(),
+            "profile_warning": (
+                "ENGINEERING TEST PROFILE / SYNTHETIC EVENT PARAMETERS / "
+                "NOT CALIBRATED / NOT A REAL-WORLD PROBABILITY"
+            ),
+        },
+    )
+    trace.to_jsonl(out / "trace.jsonl")
+    return 0
+
 def main() -> int:
     logger.info("main")
     parser = build_parser()
@@ -170,6 +336,8 @@ def main() -> int:
     configure_logging(getattr(logging, args.log_level.upper(), logging.INFO))
     if args.command == "smoke":
         return run_smoke(args)
+    if args.command == "day-smoke":
+        return run_day_smoke(args)
     parser.error(f"Unsupported command {args.command}")
     return 2
 
