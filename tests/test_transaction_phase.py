@@ -243,7 +243,7 @@ def test_phase_runtime_memory_changes_transaction_identity() -> None:
     persistence_b["ESP"] = PhasePersistenceState(
         node_id="ESP",
         current_phase="STABLE",
-        last_evaluated_day=-1,
+        last_evaluated_day=0,
         streaks=(("PHASE_STABLE_TENSION_V1", 2),),
     )
 
