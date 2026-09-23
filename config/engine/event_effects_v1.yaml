@@ -1,0 +1,44 @@
+schema_version: "1.0"
+status: "implementation-v0.5"
+purpose: "Read-only event effect proposal contract."
+
+mode:
+  proposal_generation: true
+  direct_state_mutation: false
+  owner_module_resolution: false
+  constraints_applied: false
+  phase_transitions_allowed: false
+
+equation:
+  equation_id: "EVENT_EFFECT_PROPOSAL_V1"
+  parameter_id:
+    synthetic_smoke_v1: "EVENT_EFFECT_PROPOSALS_SYN_V1"
+    calibrated_v1: "EVENT_EFFECT_PROPOSALS_CAL_V1"
+
+proposal_fields:
+  - proposal_id
+  - event_id
+  - event_type
+  - target_node
+  - variable
+  - owner_module
+  - value_before
+  - raw_delta
+  - proposed_unbounded_value
+  - equation_id
+  - parameter_ids
+  - apply_status
+  - dry_run
+
+apply_status:
+  proposed: "PROPOSED_NOT_APPLIED"
+
+rules:
+  event_must_exist_before_proposal: true
+  proposal_id_deterministic_from_event_node_variable: true
+  target_variable_must_exist_in_engine_state: true
+  target_variable_must_have_registered_owner_module: true
+  proposal_generation_must_not_mutate_state: true
+  multiple_proposals_must_remain_separate_until_owner_resolution: true
+  clamps_and_saturation_deferred_to_owner_resolution: true
+  calibrated_profile_missing_effect_parameters_is_fatal: true
