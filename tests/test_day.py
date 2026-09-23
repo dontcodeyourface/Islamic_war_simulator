@@ -674,3 +674,45 @@ def test_graph_spillover_queue_supports_consecutive_day_replay() -> None:
     assert second_a.to_dict() == second_b.to_dict()
     assert second_a.spillover_queue is not None
     assert second_a.spillover_queue.last_processed_day == 2
+
+
+
+def test_graph_spillover_does_not_shift_event_rng_streams() -> None:
+    logger.info("test_graph_spillover_does_not_shift_event_rng_streams")
+    runtime_a = _runtime(seed=1004)
+    runtime_b = _runtime(seed=1004)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+
+    assert [item.to_dict() for item in result_a.candidates] == [
+        item.to_dict() for item in result_b.candidates
+    ]
+    assert runtime_a[5].describe() == runtime_b[5].describe()
+    assert result_a.transaction_id != result_b.transaction_id
