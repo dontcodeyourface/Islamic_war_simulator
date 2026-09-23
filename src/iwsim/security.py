@@ -11,6 +11,45 @@ from .trace import TraceLedger
 
 logger = logging.getLogger(__name__)
 
+EXPECTED_STRESS_INPUTS = {
+    "public_order_stress": ("public_order_stress", "identity"),
+    "external_conflict_pressure": ("external_conflict_pressure", "identity"),
+    "organized_armed_actor_capacity": (
+        "organized_armed_actor_capacity",
+        "identity",
+    ),
+    "salary_payment_discontinuity": (
+        "salary_payment_continuity",
+        "one_minus",
+    ),
+    "government_legitimacy_inverse": (
+        "government_legitimacy",
+        "one_minus",
+    ),
+    "transport_logistics_degradation": (
+        "transport_logistics_functionality",
+        "one_minus",
+    ),
+}
+
+EXPECTED_RESILIENCE_INPUTS = {
+    "government_legitimacy": ("government_legitimacy", "identity"),
+    "salary_payment_continuity": (
+        "salary_payment_continuity",
+        "identity",
+    ),
+    "police_effective_capacity": (
+        "police_effective_capacity",
+        "identity",
+    ),
+    "intelligence_effectiveness": (
+        "intelligence_effectiveness",
+        "identity",
+    ),
+    "administrative_capacity": ("administrative_capacity", "identity"),
+    "social_cohesion": ("social_cohesion", "identity"),
+}
+
 
 def _parameter_ids(profile: str) -> tuple[str, str]:
     logger.info("_parameter_ids profile=%s", profile)
@@ -87,6 +126,19 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     )
     if not stress_inputs or not resilience_inputs:
         raise ValueError("Security-chain stress/resilience inputs must be non-empty")
+
+    stress_map = {
+        item["key"]: (item["variable"], item["transform"])
+        for item in stress_inputs
+    }
+    resilience_map = {
+        item["key"]: (item["variable"], item["transform"])
+        for item in resilience_inputs
+    }
+    if stress_map != EXPECTED_STRESS_INPUTS:
+        raise ValueError("Security-chain stress inputs must remain canonical")
+    if resilience_map != EXPECTED_RESILIENCE_INPUTS:
+        raise ValueError("Security-chain resilience inputs must remain canonical")
 
     keys = [item["key"] for item in (*stress_inputs, *resilience_inputs)]
     if len(keys) != len(set(keys)):
@@ -191,6 +243,12 @@ def _weighted_score(
         score_name,
         len(specs),
     )
+    expected_weight_keys = {spec["key"] for spec in specs}
+    if set(weights) != expected_weight_keys:
+        raise ValueError(
+            f"Security-chain {score_name} weight keys must match configured inputs"
+        )
+
     values: dict[str, float] = {}
     terms: list[float] = []
     weight_sum = 0.0
