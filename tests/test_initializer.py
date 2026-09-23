@@ -202,3 +202,59 @@ def test_hybrid_initialization_mix_sums_to_one() -> None:
         + state.metadata["prior_fraction"]
     )
     assert total == pytest.approx(1.0)
+
+
+def test_country_prior_streams_do_not_depend_on_initialization_order() -> None:
+    logger.info("test_country_prior_streams_do_not_depend_on_initialization_order")
+    state_registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    normalization = load_yaml(ROOT / "config/engine/normalization_parameters_v1.yaml")
+    parameters = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
+    feature_map = load_yaml(ROOT / "config/engine/snapshot_feature_map_v1.yaml")
+    esp_snapshot = load_yaml(ROOT / "config/countries/spain.yaml")
+    mar_snapshot = load_yaml(ROOT / "config/countries/morocco.yaml")
+
+    rng_a = RNGManager(2026)
+    esp_a = initialize_hybrid_state(
+        snapshot=esp_snapshot,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_a,
+        trace=TraceLedger(),
+        profile="synthetic_smoke_v1",
+    )
+    _ = initialize_hybrid_state(
+        snapshot=mar_snapshot,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_a,
+        trace=TraceLedger(),
+        profile="synthetic_smoke_v1",
+    )
+
+    rng_b = RNGManager(2026)
+    _ = initialize_hybrid_state(
+        snapshot=mar_snapshot,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_b,
+        trace=TraceLedger(),
+        profile="synthetic_smoke_v1",
+    )
+    esp_b = initialize_hybrid_state(
+        snapshot=esp_snapshot,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_b,
+        trace=TraceLedger(),
+        profile="synthetic_smoke_v1",
+    )
+
+    assert esp_a.to_dict() == esp_b.to_dict()
