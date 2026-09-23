@@ -511,3 +511,166 @@ def test_recovery_config_changes_transaction_identity() -> None:
 
     assert result_a.transaction_id != result_b.transaction_id
     assert result_a.states == result_b.states
+
+
+
+def test_graph_spillover_trace_integrates_without_state_mutation() -> None:
+    logger.info("test_graph_spillover_trace_integrates_without_state_mutation")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1001)
+    parameters = _disable_all_events(parameters)
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+    before = {
+        node_id: dict(state.latents)
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+
+    assert result.spillover_queue is not None
+    assert result.spillover_queue.last_processed_day == 1
+    assert len(result.spillover_candidates) == 140
+    assert len(result.events) == 0
+    assert len(result.proposals) == 0
+    assert len(result.resolutions) == 0
+
+    for node_id in sorted(states):
+        assert result.states[node_id].latents == before[node_id]
+        assert result.states[node_id].day == 1
+
+    record_types = [item["record_type"] for item in trace.records]
+    assert "graph_spillover_candidate" in record_types
+    assert "graph_spillover_queue_committed" in record_types
+    assert record_types.index("graph_spillover_candidate") < record_types.index(
+        "event_candidate"
+    )
+
+
+def test_graph_spillover_queue_is_required_after_day_zero() -> None:
+    logger.info("test_graph_spillover_queue_is_required_after_day_zero")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1002)
+    parameters = _disable_all_events(parameters)
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+
+    day_one = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+    assert day_one.spillover_queue is not None
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(ValueError, match="Spillover queue is required after day zero"):
+        run_day_transaction(
+            states=day_one.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_graph_spillover=True,
+            spillover_config=spillover_config,
+            spillover_queue=None,
+        )
+
+    assert rng.describe() == rng_before
+    assert trace.records == []
+
+
+def test_graph_spillover_queue_supports_consecutive_day_replay() -> None:
+    logger.info("test_graph_spillover_queue_supports_consecutive_day_replay")
+    runtime_a = _runtime(seed=1003)
+    runtime_b = _runtime(seed=1003)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+
+    first_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+    first_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+    assert first_a.spillover_queue is not None
+    assert first_b.spillover_queue is not None
+
+    second_a = run_day_transaction(
+        states=first_a.states,
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=first_a.spillover_queue,
+    )
+    second_b = run_day_transaction(
+        states=first_b.states,
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=first_b.spillover_queue,
+    )
+
+    assert second_a.to_dict() == second_b.to_dict()
+    assert second_a.spillover_queue is not None
+    assert second_a.spillover_queue.last_processed_day == 2
