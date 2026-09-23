@@ -40,3 +40,6 @@ jobs:
       - name: Morocco smoke replay
         run: |
           iwsim smoke             --repo-root .             --country config/countries/morocco.yaml             --seed 42             --days 30             --git-commit "${GITHUB_SHA}"             --out /tmp/iwsim-morocco
+      - name: Atomic day smoke
+        run: |
+          iwsim day-smoke --repo-root . --seed 42 --git-commit "${GITHUB_SHA}" --out /tmp/iwsim-day
