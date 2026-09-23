@@ -12,6 +12,7 @@ from .events import (
     evaluate_interstate_incident,
     evaluate_mass_protest,
 )
+from .extremism import propose_extremist_network_dynamics
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -73,6 +74,7 @@ class DayTransactionResult:
     spillover_candidates: tuple[GraphSpilloverRecord, ...]
     matured_spillovers: tuple[GraphSpilloverRecord, ...]
     spillover_proposals: tuple[DeltaProposal, ...]
+    network_proposals: tuple[DeltaProposal, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -109,6 +111,9 @@ class DayTransactionResult:
             ],
             "spillover_proposals": [
                 item.to_dict() for item in self.spillover_proposals
+            ],
+            "network_proposals": [
+                item.to_dict() for item in self.network_proposals
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -271,6 +276,7 @@ def _transaction_id(
     phase_inputs: dict[str, Any] | None = None,
     recovery_inputs: dict[str, Any] | None = None,
     spillover_inputs: dict[str, Any] | None = None,
+    network_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -291,6 +297,7 @@ def _transaction_id(
             "phase_inputs": phase_inputs,
             "recovery_inputs": recovery_inputs,
             "spillover_inputs": spillover_inputs,
+            "network_inputs": network_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -618,6 +625,8 @@ def run_day_transaction(
     enable_graph_spillover: bool = False,
     spillover_config: dict[str, Any] | None = None,
     spillover_queue: SpilloverQueueState | None = None,
+    enable_extremist_network_dynamics: bool = False,
+    extremist_network_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -641,7 +650,29 @@ def run_day_transaction(
     phase_inputs: dict[str, Any] | None = None
     recovery_inputs: dict[str, Any] | None = None
     spillover_inputs: dict[str, Any] | None = None
+    network_inputs: dict[str, Any] | None = None
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_extremist_network_dynamics:
+        if extremist_network_config is None:
+            raise ValueError(
+                "Extremist-network integration requires extremist_network_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "extremist_network_dynamics_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Extremist-network dynamics are disabled by the day transaction contract"
+            )
+        network_inputs = {
+            "extremist_network_config_hash": canonical_hash(
+                extremist_network_config
+            ),
+        }
+
     if enable_graph_spillover:
         if spillover_config is None:
             raise ValueError("Graph spillover integration requires spillover_config")
@@ -708,6 +739,7 @@ def run_day_transaction(
         phase_inputs=phase_inputs,
         recovery_inputs=recovery_inputs,
         spillover_inputs=spillover_inputs,
+        network_inputs=network_inputs,
     )
 
     working_rng = rng.clone()
@@ -774,6 +806,18 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    network_proposals: tuple[DeltaProposal, ...] = ()
+    if enable_extremist_network_dynamics:
+        assert extremist_network_config is not None
+        network_proposals = propose_extremist_network_dynamics(
+            states=states,
+            network_config=extremist_network_config,
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            trace=staged_trace,
+        )
+
     recovery_proposals: tuple[DeltaProposal, ...] = ()
     if enable_recovery:
         assert recovery_config is not None
@@ -787,7 +831,12 @@ def run_day_transaction(
         )
     proposals = tuple(
         sorted(
-            (*event_proposals, *recovery_proposals, *spillover_proposals),
+            (
+                *event_proposals,
+                *recovery_proposals,
+                *spillover_proposals,
+                *network_proposals,
+            ),
             key=lambda proposal: proposal.proposal_id,
         )
     )
@@ -869,6 +918,9 @@ def run_day_transaction(
         applied_spillover_ids=[
             proposal.event_id for proposal in spillover_proposals
         ],
+        network_proposal_ids=[
+            proposal.proposal_id for proposal in network_proposals
+        ],
         spillover_queue=(
             spillover_queue_out.to_dict()
             if spillover_queue_out is not None
@@ -900,6 +952,7 @@ def run_day_transaction(
         spillover_candidates=spillover_candidates,
         matured_spillovers=matured_spillovers,
         spillover_proposals=spillover_proposals,
+        network_proposals=network_proposals,
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,
