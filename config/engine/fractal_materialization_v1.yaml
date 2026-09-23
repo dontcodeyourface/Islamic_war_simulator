@@ -1,0 +1,32 @@
+schema_version: "1.0"
+status: "implementation-v0.20"
+purpose: "Commit L1->L2 fractal topology materialization with immutable lineage."
+
+mode:
+  expansion_commit_allowed: true
+  collapse_commit_allowed: false
+  engine_state_child_activation: false
+  country_graph_child_activation: false
+  explicit_catalog_required: true
+
+catalog_constraints:
+  min_children: 2
+  max_children: 20
+  child_ids_must_be_parent_namespaced: true
+  initialization_weights_must_sum_to_one: true
+
+lineage:
+  preserve_parent_node: true
+  preserve_refinement_action_id: true
+  preserve_refinement_reason: true
+  preserve_source_variables: true
+  preserve_initialization_weight: true
+  preserve_initialization_weight_policy_id: true
+  preserve_inherited_uncertainty_policy_id: true
+  preserve_aggregation_rule_id: true
+  preserve_catalog_source_id: true
+
+safety:
+  no_implicit_region_generation: true
+  no_engine_state_child_activation: true
+  no_country_graph_child_activation: true

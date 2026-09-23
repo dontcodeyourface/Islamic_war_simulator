@@ -19,6 +19,13 @@ from .fractal import (
     FractalRefinementPersistenceState,
     evaluate_fractal_refinement,
 )
+from .fractal_materialization import (
+    FractalMaterializationCommitRecord,
+    FractalTopologyState,
+    advance_fractal_topology_without_materialization,
+    empty_fractal_topology,
+    materialize_l1_to_l2,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -126,6 +133,10 @@ class DayTransactionResult:
     fractal_refinement_actions: tuple[
         FractalRefinementActionProposal, ...
     ]
+    fractal_topology: FractalTopologyState | None
+    fractal_materialization_commits: tuple[
+        FractalMaterializationCommitRecord, ...
+    ]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -222,6 +233,14 @@ class DayTransactionResult:
             "fractal_refinement_actions": [
                 item.to_dict() for item in self.fractal_refinement_actions
             ],
+            "fractal_topology": (
+                self.fractal_topology.to_dict()
+                if self.fractal_topology is not None
+                else None
+            ),
+            "fractal_materialization_commits": [
+                item.to_dict() for item in self.fractal_materialization_commits
+            ],
         }
 
 
@@ -261,6 +280,88 @@ def _validate_day_inputs(
         state.validate(latent_registry)
 
     return next(iter(days))
+
+
+def _normalize_fractal_topology_input(
+    *,
+    day_from: int,
+    topology: FractalTopologyState | None,
+) -> FractalTopologyState:
+    logger.info(
+        "_normalize_fractal_topology_input day_from=%s supplied=%s",
+        day_from,
+        topology is not None,
+    )
+    if topology is None:
+        if day_from != 0:
+            raise ValueError(
+                "Fractal topology is required after day zero when "
+                "materialization is enabled"
+            )
+        return empty_fractal_topology(day_from)
+    if topology.last_committed_day != day_from:
+        raise ValueError(
+            "Fractal topology day mismatch: "
+            f"expected {day_from}, got {topology.last_committed_day}"
+        )
+    return topology
+
+
+def _validate_fractal_topology_consistency(
+    *,
+    states: dict[str, EngineState],
+    persistence: dict[str, FractalRefinementPersistenceState | None],
+    topology: FractalTopologyState,
+) -> None:
+    logger.info(
+        "_validate_fractal_topology_consistency states=%s topology_nodes=%s",
+        len(states),
+        len(topology.nodes),
+    )
+    known_parents = set(states)
+    topology_parents = {item.parent_node_id for item in topology.nodes}
+    unknown = topology_parents - known_parents
+    if unknown:
+        raise ValueError(
+            f"Fractal topology contains unknown parents: {sorted(unknown)}"
+        )
+
+    for node_id in sorted(states):
+        item = persistence[node_id]
+        children = topology.active_children(node_id)
+        if item is None:
+            if children:
+                raise ValueError(
+                    f"Fractal topology has children for {node_id} without "
+                    "refinement persistence"
+                )
+            continue
+        if item.current_level == "L1_COUNTRY" and children:
+            raise ValueError(
+                f"Fractal L1 parent {node_id} cannot have active L2 children"
+            )
+        if item.current_level == "L2_REGION" and not children:
+            raise ValueError(
+                f"Fractal L2 parent {node_id} requires active L2 children"
+            )
+
+
+def _fractal_materialization_inputs_fingerprint(
+    *,
+    topology: FractalTopologyState,
+    materialization_config: dict[str, Any],
+    region_catalog: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info(
+        "_fractal_materialization_inputs_fingerprint day=%s nodes=%s",
+        topology.last_committed_day,
+        len(topology.nodes),
+    )
+    return {
+        "topology": topology.to_dict(),
+        "materialization_config_hash": canonical_hash(materialization_config),
+        "region_catalog_hash": canonical_hash(region_catalog),
+    }
 
 
 def _normalize_fractal_refinement_persistence_inputs(
@@ -605,6 +706,7 @@ def _transaction_id(
     security_regime_inputs: dict[str, Any] | None = None,
     security_regime_recovery_inputs: dict[str, Any] | None = None,
     fractal_refinement_inputs: dict[str, Any] | None = None,
+    fractal_materialization_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -631,6 +733,7 @@ def _transaction_id(
             "security_regime_inputs": security_regime_inputs,
             "security_regime_recovery_inputs": security_regime_recovery_inputs,
             "fractal_refinement_inputs": fractal_refinement_inputs,
+            "fractal_materialization_inputs": fractal_materialization_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1072,6 +1175,77 @@ def _evaluate_fractal_refinements(
     )
 
 
+def _commit_fractal_materializations(
+    *,
+    day: int,
+    actions: tuple[FractalRefinementActionProposal, ...],
+    persistence: dict[str, FractalRefinementPersistenceState],
+    topology: FractalTopologyState,
+    region_catalog: dict[str, Any],
+    materialization_config: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    FractalTopologyState,
+    dict[str, FractalRefinementPersistenceState],
+    tuple[FractalMaterializationCommitRecord, ...],
+]:
+    logger.info(
+        "_commit_fractal_materializations day=%s actions=%s",
+        day,
+        len(actions),
+    )
+    topology_out = topology
+    persistence_out = dict(persistence)
+    commits: list[FractalMaterializationCommitRecord] = []
+
+    if not actions:
+        topology_out = advance_fractal_topology_without_materialization(
+            topology=topology,
+            day=day,
+            trace=trace,
+        )
+        return topology_out, persistence_out, ()
+
+    seen_parents: set[str] = set()
+    for action in sorted(actions, key=lambda item: item.action_id):
+        if action.node_id in seen_parents:
+            raise ValueError(
+                f"Multiple fractal actions for parent {action.node_id} in one day"
+            )
+        seen_parents.add(action.node_id)
+        if action.node_id not in persistence_out:
+            raise ValueError(
+                f"Fractal action targets unknown persistence node {action.node_id}"
+            )
+        (
+            topology_out,
+            persistence_after,
+            commit_record,
+        ) = materialize_l1_to_l2(
+            action=action,
+            persistence=persistence_out[action.node_id],
+            topology=topology_out,
+            region_catalog=region_catalog,
+            materialization_config=materialization_config,
+            manifest=manifest,
+            trace=trace,
+        )
+        persistence_out[action.node_id] = persistence_after
+        commits.append(commit_record)
+
+    if topology_out.last_committed_day != day:
+        raise RuntimeError(
+            "Fractal topology materialization did not commit target day"
+        )
+
+    return (
+        topology_out,
+        persistence_out,
+        tuple(sorted(commits, key=lambda item: item.commit_id)),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -1203,6 +1377,10 @@ def run_day_transaction(
     fractal_refinement_persistence: (
         dict[str, FractalRefinementPersistenceState | None] | None
     ) = None,
+    enable_fractal_materialization: bool = False,
+    fractal_materialization_config: dict[str, Any] | None = None,
+    fractal_region_catalog: dict[str, Any] | None = None,
+    fractal_topology: FractalTopologyState | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1232,6 +1410,8 @@ def run_day_transaction(
     security_regime_inputs: dict[str, Any] | None = None
     security_regime_recovery_inputs: dict[str, Any] | None = None
     fractal_refinement_inputs: dict[str, Any] | None = None
+    fractal_materialization_inputs: dict[str, Any] | None = None
+    normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
         str, FractalRefinementPersistenceState | None
     ] = {}
@@ -1246,6 +1426,34 @@ def run_day_transaction(
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_fractal_materialization:
+        if not enable_fractal_refinement_evaluator:
+            raise ValueError(
+                "Fractal materialization requires fractal refinement evaluator"
+            )
+        if fractal_materialization_config is None:
+            raise ValueError(
+                "Fractal materialization requires "
+                "fractal_materialization_config"
+            )
+        if fractal_region_catalog is None:
+            raise ValueError(
+                "Fractal materialization requires explicit fractal_region_catalog"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_materialization_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal materialization is disabled by the day transaction contract"
+            )
+        normalized_fractal_topology = _normalize_fractal_topology_input(
+            day_from=day_from,
+            topology=fractal_topology,
+        )
 
     if enable_fractal_refinement_evaluator:
         if fractal_refinement_config is None:
@@ -1276,6 +1484,23 @@ def run_day_transaction(
                 refinement_config=fractal_refinement_config,
             )
         )
+
+        if enable_fractal_materialization:
+            assert normalized_fractal_topology is not None
+            assert fractal_materialization_config is not None
+            assert fractal_region_catalog is not None
+            _validate_fractal_topology_consistency(
+                states=states,
+                persistence=normalized_fractal_refinement_persistence,
+                topology=normalized_fractal_topology,
+            )
+            fractal_materialization_inputs = (
+                _fractal_materialization_inputs_fingerprint(
+                    topology=normalized_fractal_topology,
+                    materialization_config=fractal_materialization_config,
+                    region_catalog=fractal_region_catalog,
+                )
+            )
 
     if enable_security_regime_recovery_evaluator:
         if not enable_security_regime_evaluator or not enable_security_regime_commits:
@@ -1504,6 +1729,7 @@ def run_day_transaction(
         security_regime_inputs=security_regime_inputs,
         security_regime_recovery_inputs=security_regime_recovery_inputs,
         fractal_refinement_inputs=fractal_refinement_inputs,
+        fractal_materialization_inputs=fractal_materialization_inputs,
     )
 
     working_rng = rng.clone()
@@ -1769,6 +1995,30 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    fractal_topology_out: FractalTopologyState | None = None
+    fractal_materialization_commits: tuple[
+        FractalMaterializationCommitRecord, ...
+    ] = ()
+
+    if enable_fractal_materialization:
+        assert normalized_fractal_topology is not None
+        assert fractal_materialization_config is not None
+        assert fractal_region_catalog is not None
+        (
+            fractal_topology_out,
+            fractal_refinement_persistence_out,
+            fractal_materialization_commits,
+        ) = _commit_fractal_materializations(
+            day=day_to,
+            actions=fractal_refinement_actions,
+            persistence=fractal_refinement_persistence_out,
+            topology=normalized_fractal_topology,
+            region_catalog=fractal_region_catalog,
+            materialization_config=fractal_materialization_config,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -1801,6 +2051,14 @@ def run_day_transaction(
         fractal_refinement_action_ids=[
             item.action_id for item in fractal_refinement_actions
         ],
+        fractal_materialization_commit_ids=[
+            item.commit_id for item in fractal_materialization_commits
+        ],
+        fractal_topology=(
+            fractal_topology_out.to_dict()
+            if fractal_topology_out is not None
+            else None
+        ),
         fractal_refinement_persistence={
             node_id: item.to_dict()
             for node_id, item in sorted(
@@ -1908,4 +2166,6 @@ def run_day_transaction(
             fractal_refinement_evaluations
         ),
         fractal_refinement_actions=fractal_refinement_actions,
+        fractal_topology=fractal_topology_out,
+        fractal_materialization_commits=fractal_materialization_commits,
     )

@@ -90,6 +90,14 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_refinement_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-materialization-config",
+        default="config/engine/fractal_materialization_v1.yaml",
+    )
+    day_smoke.add_argument(
+        "--fractal-region-catalog",
+        default="config/engine/fractal_region_catalog_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -261,6 +269,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_refinement_config = load_yaml(
         root / args.fractal_refinement_config
     )
+    fractal_materialization_config = load_yaml(
+        root / args.fractal_materialization_config
+    )
+    fractal_region_catalog = load_yaml(root / args.fractal_region_catalog)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -339,6 +351,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "phase_arbitration",
             "phase_commit",
             "fractal_refinement_evaluator",
+            "fractal_l2_materialization",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -398,6 +411,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         enable_fractal_refinement_evaluator=True,
         fractal_refinement_config=fractal_refinement_config,
         fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=fractal_materialization_config,
+        fractal_region_catalog=fractal_region_catalog,
+        fractal_topology=None,
     )
 
     out = Path(args.out)
@@ -478,6 +495,15 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                     result.fractal_refinement_persistence.items()
                 )
             },
+            "fractal_materialization_commit_ids": [
+                item.commit_id
+                for item in result.fractal_materialization_commits
+            ],
+            "fractal_topology": (
+                result.fractal_topology.to_dict()
+                if result.fractal_topology is not None
+                else None
+            ),
             "spillover_queue": (
                 result.spillover_queue.to_dict()
                 if result.spillover_queue is not None

@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.19"
+status: "implementation-v0.20"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -36,7 +36,11 @@ mode:
   fractal_refinement_evaluator_allowed: true
   fractal_refinement_requires_explicit_enable_flag: true
   fractal_refinement_contract: "config/engine/fractal_refinement_v1.yaml"
-  fractal_node_materialization_allowed: false
+  fractal_materialization_allowed: true
+  fractal_materialization_requires_explicit_enable_flag: true
+  fractal_materialization_contract: "config/engine/fractal_materialization_v1.yaml"
+  fractal_region_catalog_contract: "config/engine/fractal_region_catalog_v1.yaml"
+  fractal_child_engine_state_activation_allowed: false
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
   recovery_contract: "config/engine/recovery_v1.yaml"
@@ -75,6 +79,11 @@ transaction_rules:
   fractal_refinement_persistence_must_commit_only_after_success: true
   fractal_refinement_history_required_after_day_zero_when_enabled: true
   fractal_refinement_is_read_only_in_v0_19: true
+  fractal_materialization_topology_separate_from_country_graph: true
+  fractal_materialization_topology_history_required_after_day_zero: true
+  fractal_materialization_requires_explicit_region_catalog: true
+  fractal_materialization_updates_refinement_level_only_after_commit: true
+  fractal_collapse_commit_allowed: false
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
   proposals_resolved_once_per_day: true
@@ -96,6 +105,7 @@ trace:
   include_phase_commit_ids: true
   include_security_regime_commit_ids: true
   include_refinement_action_ids: true
+  include_fractal_materialization_commit_ids: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -109,7 +119,8 @@ ordering:
   security_regime_recovery_evaluation: "after_security_regime_commit_before_phase_evaluation"
   phase_evaluation: "after_security_regime_recovery_evaluation"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
-  fractal_refinement_evaluation: "after_phase_commit_before_checkpoint"
+  fractal_refinement_evaluation: "after_phase_commit"
+  fractal_materialization: "after_fractal_refinement_before_checkpoint"
 
 safety_abstraction:
   tactical_target_selection: false

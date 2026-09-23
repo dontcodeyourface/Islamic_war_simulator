@@ -1,0 +1,5 @@
+schema_version: "1.0"
+status: "scaffold-no-regional-data"
+purpose: "Explicit L2 region catalog. Empty until region data is added through dedicated data PRs."
+
+parents: {}

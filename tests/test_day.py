@@ -2880,3 +2880,246 @@ def test_fractal_refinement_does_not_shift_rng_streams() -> None:
     ]
     assert runtime_a[5].describe() == runtime_b[5].describe()
     assert result_a.transaction_id != result_b.transaction_id
+
+
+
+def _fractal_test_catalog_for_esp() -> dict:
+    logger.info("_fractal_test_catalog_for_esp")
+    return {
+        "schema_version": "1.0",
+        "parents": {
+            "ESP": {
+                "source_id": "SYNTHETIC_DAY_TEST",
+                "children": [
+                    {
+                        "child_id": "ESP::R1",
+                        "label": "Region 1",
+                        "initialization_weight": 0.6,
+                    },
+                    {
+                        "child_id": "ESP::R2",
+                        "label": "Region 2",
+                        "initialization_weight": 0.4,
+                    },
+                ],
+            }
+        },
+    }
+
+
+def test_fractal_materialization_commits_l2_topology_atomically() -> None:
+    logger.info("test_fractal_materialization_commits_l2_topology_atomically")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1038
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+    )
+
+    assert len(result.fractal_refinement_actions) == 1
+    assert result.fractal_refinement_actions[0].node_id == "ESP"
+    assert len(result.fractal_materialization_commits) == 1
+    commit = result.fractal_materialization_commits[0]
+    assert commit.parent_node_id == "ESP"
+    assert commit.child_node_ids == ("ESP::R1", "ESP::R2")
+    assert result.fractal_topology is not None
+    assert result.fractal_topology.last_committed_day == 1
+    assert {
+        item.node_id
+        for item in result.fractal_topology.active_children("ESP")
+    } == {"ESP::R1", "ESP::R2"}
+    assert result.fractal_refinement_persistence[
+        "ESP"
+    ].current_level == "L2_REGION"
+    assert set(result.states) == set(states)
+    assert {node.iso3 for node in graph.nodes} == set(states)
+
+    for node_id in states:
+        assert states[node_id].to_dict() == before[node_id]
+
+    day_commit = trace.records[-1]
+    assert day_commit["fractal_materialization_commit_ids"] == [
+        commit.commit_id
+    ]
+
+
+def test_fractal_materialization_missing_catalog_rolls_back_transaction() -> None:
+    logger.info(
+        "test_fractal_materialization_missing_catalog_rolls_back_transaction"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1039
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in states.items()
+    }
+    rng_before = rng.describe()
+    trace = TraceLedger()
+
+    with pytest.raises(ValueError, match="No explicit regional catalog"):
+        run_day_transaction(
+            states=states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_fractal_refinement_evaluator=True,
+            fractal_refinement_config=refinement_config,
+            fractal_refinement_persistence=persistence,
+            enable_fractal_materialization=True,
+            fractal_materialization_config=materialization_config,
+            fractal_region_catalog={
+                "schema_version": "1.0",
+                "parents": {},
+            },
+            fractal_topology=None,
+        )
+
+    assert rng.describe() == rng_before
+    assert trace.records == []
+    for node_id in states:
+        assert states[node_id].to_dict() == before[node_id]
+
+
+def test_fractal_topology_history_is_required_after_day_zero() -> None:
+    logger.info(
+        "test_fractal_topology_history_is_required_after_day_zero"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1040
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    empty_catalog = {"schema_version": "1.0", "parents": {}}
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+    )
+    assert first.fractal_topology is not None
+    assert first.fractal_topology.last_committed_day == 1
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(
+        ValueError,
+        match="Fractal topology is required after day zero",
+    ):
+        run_day_transaction(
+            states=first.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_fractal_refinement_evaluator=True,
+            fractal_refinement_config=refinement_config,
+            fractal_refinement_persistence={
+                node_id: item
+                for node_id, item in (
+                    first.fractal_refinement_persistence.items()
+                )
+            },
+            enable_fractal_materialization=True,
+            fractal_materialization_config=materialization_config,
+            fractal_region_catalog=empty_catalog,
+            fractal_topology=None,
+        )
+    assert rng.describe() == rng_before
+    assert trace.records == []
