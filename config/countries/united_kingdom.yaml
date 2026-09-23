@@ -131,6 +131,204 @@ violent_islamist_extremism:
   external_network_linkage: {value: "Al_Qaeda_and_IS_attempts_to_direct_or_inspire_UK_threat_documented", unit: "categorical", reference_date: "2026", source_ids: ["UK-MI5-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "75% is counterterrorism caseload composition, not 75% of any population group.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
+prisons:
+  total_prison_population:
+    value: 96426
+    unit: "persons_approx"
+    geographic_scope: "United_Kingdom"
+    reference_date: "2026-06-30_to_2026-07-03"
+    source_ids: ["UK-EW-PRISON-2026","UK-SCOT-PRISON-2026","UK-NI-PRISON-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "85,858 England/Wales + 8,466 Scotland + 2,102 Northern Ireland; near-synchronous composite."
+  terrorism_related_prisoners:
+    value: 273
+    unit: "persons_in_custody_for_terrorism_or_terrorism_connected_offences"
+    geographic_scope: "Great_Britain"
+    reference_date: "2026-03-31"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "England, Wales and Scotland; excludes Northern Ireland."
+  islamist_extremist_terrorism_prisoners:
+    value: 158
+    unit: "persons_approx"
+    geographic_scope: "Great_Britain"
+    reference_date: "2026-03-31"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "58% of 273, rounded to nearest person."
+  islamist_extremist_share_of_terrorism_prisoners:
+    value: 58
+    unit: "percent"
+    geographic_scope: "Great_Britain"
+    reference_date: "2026-03-31"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Official ideology classification."
+  islamist_extremist_share_of_total_prison_population:
+    value: 0.17
+    unit: "percent_approx"
+    geographic_scope: "Great_Britain"
+    reference_date: "2026-03-31_to_2026-04-01"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026","UK-EW-PRISON-2026-MAR","UK-SCOT-PRISON-2026-APR"]
+    quality: "medium"
+    freshness_class: "current"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Approx. 158 Islamist-extremist terrorism prisoners / ~95,758 GB prisoners. Scope-aligned near-synchronous proxy."
+  annual_terrorism_prisoner_releases:
+    value: 41
+    unit: "persons"
+    geographic_scope: "Great_Britain"
+    reference_date: "year_ending_2025-12-31"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "All terrorist ideologies."
+  prison_radicalization_monitoring_strength:
+    value: "specialized_HMPPS_counterterrorism_management_present"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-TERRORIST-PRISONERS-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Effectiveness not scored."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future prison-control/release/network-pressure variable; never direct combatant conversion."
+  methodological_note:
+    value: "The 58% ideology share applies to terrorism/terrorism-connected prisoners in Great Britain, not to Muslim prisoners generally."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name:
+    value: "UK National Terrorism Threat Level"
+    unit: "scale"
+    reference_date: "2026"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_level:
+    value: 4
+    unit: "ordinal_level"
+    reference_date: "2026-04-30"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "SEVERE is fourth of five published categories."
+  domestic_public_level_max:
+    value: 5
+    unit: "ordinal_level"
+    reference_date: "2026"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_interpretation:
+    value: "SEVERE_attack_highly_likely"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  domestic_public_scope:
+    value: "all_terrorism_except_NI_related_terrorism_in_Northern_Ireland"
+    unit: "text"
+    reference_date: "2026"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Northern Ireland-related terrorism in Northern Ireland has a separate threat level."
+  official_qualitative_assessment:
+    value: "severe"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-THREAT-LEVEL-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Attack highly likely."
+  normalized_cross_country_level:
+    value: null
+    unit: "0_1"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No cross-country mapping yet."
+  cross_country_comparability:
+    value: "medium_after_semantic_mapping"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  methodological_note:
+    value: "National threat level covers terrorism across ideologies, not only Islamist terrorism."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   trained_or_prior_service: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}

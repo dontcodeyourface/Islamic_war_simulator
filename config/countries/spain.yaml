@@ -342,6 +342,150 @@ violent_islamist_extremism:
     imputed: false
     notes: null
 
+prisons:
+  total_prison_population:
+    value: 62398
+    unit: "persons"
+    geographic_scope: "Spain"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "National total reported by Fiscalía using Secretaría General de Instituciones Penitenciarias data."
+  sentenced_population:
+    value: 50034
+    unit: "persons"
+    geographic_scope: "Spain"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Does not include sentenced-with-remand category."
+  remand_population:
+    value: 10867
+    unit: "persons"
+    geographic_scope: "Spain"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-PRISON-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  prison_capacity: {value: null, unit: "places", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  occupancy_rate: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  terrorism_related_prisoners:
+    value: 82
+    unit: "persons_imprisoned_for_jihadist_terrorism_offences"
+    geographic_scope: "Spain"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "28 convicted and 54 held pre-trial according to prison administration figures reported by EFE."
+  islamist_extremist_terrorism_prisoners:
+    value: 82
+    unit: "persons"
+    geographic_scope: "Spain"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Offence-based count, not a count of Muslim prisoners."
+  islamist_extremist_share_of_terrorism_prisoners:
+    value: 100
+    unit: "percent_of_this_jihadist_specific_prisoner_series"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "Trivial within a jihadism-specific series; not comparable to UK's all-terrorism ideology split."
+  islamist_extremist_share_of_total_prison_population:
+    value: 0.13
+    unit: "percent_approx"
+    reference_date: "mixed_2024-10_numerator_2025-12_denominator"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024","ES-PRISON-POP-2025"]
+    quality: "low"
+    freshness_class: "mixed"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "82 / 62,398. Mixed dates; retained only as a rough scale proxy, not a current prevalence estimate."
+  radicalized_common_law_prisoners: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  at_risk_of_radicalization_prisoners:
+    value: 70
+    unit: "persons_identified_as_susceptible_to_jihadist_recruitment"
+    reference_date: "2024-10-03"
+    source_ids: ["ES-JIHADIST-PRISONERS-2024"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Prison-administration risk category; not equivalent to extremists."
+  deradicalization_program_current_participants: {value: null, unit: "persons", reference_date: null, source_ids: ["ES-DALIL"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "DALIL exists; current participant stock not populated."}
+  deradicalization_program_cumulative_participants: {value: null, unit: "persons", reference_date: null, source_ids: ["ES-DALIL"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  annual_terrorism_prisoner_releases: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  prison_radicalization_monitoring_strength:
+    value: "specialized_program_and_security_monitoring_present"
+    unit: "categorical"
+    reference_date: "2025"
+    source_ids: ["ES-DALIL"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No numeric effectiveness score yet."
+  prison_security_release_risk:
+    value: null
+    unit: "latent_index"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Future derived variable. Must not be converted into combatant manpower."
+  methodological_note:
+    value: "Prisoners are not automatically combatants. In state-collapse scenarios this layer affects security, release, recruitment and network pressure only."
+    unit: "text"
+    reference_date: "2026"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+terrorism_threat_posture:
+  domestic_public_scale_name: {value: "Nivel de Alerta Antiterrorista (NAA)", unit: "scale", reference_date: "2026", source_ids: ["ES-NAA-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_public_level: {value: 4, unit: "level", reference_date: "2026-06-12", source_ids: ["ES-NAA-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Level 4 remains active and reinforced."}
+  domestic_public_level_max: {value: 5, unit: "level", reference_date: "2026", source_ids: ["ES-NAA-SCALE"], quality: "high", freshness_class: "structural", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_public_interpretation: {value: "riesgo_alto", unit: "categorical", reference_date: "2026", source_ids: ["ES-NAA-SCALE"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_public_scope: {value: "all_terrorism_national", unit: "text", reference_date: "2026", source_ids: ["ES-NAA-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  domestic_public_since: {value: "2015-06-26", unit: "date_level4_original_activation", reference_date: "2026", source_ids: ["ES-NAA-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Reinforcement measures have changed over time."}
+  official_qualitative_assessment: {value: "high", unit: "categorical", reference_date: "2026", source_ids: ["ES-NAA-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  external_travel_advisory_level: {value: null, unit: "level", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  external_travel_advisory_source: {value: null, unit: "text", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  normalized_cross_country_level: {value: null, unit: "0_1", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not normalized until alert systems are calibrated."}
+  cross_country_comparability: {value: "low_without_mapping", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "NAA level is a state threat posture, not an Islamist-specific probability.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
 manpower:
   legally_eligible:
     value: null

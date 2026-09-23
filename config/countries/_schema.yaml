@@ -1,4 +1,4 @@
-schema_version: "0.3"
+schema_version: "0.4"
 schema_name: "country_snapshot"
 status: "canonical-pre-engine"
 
@@ -93,6 +93,40 @@ violent_islamist_extremism:
   terrorism_caseload_share: {}
   extremist_network_assessment: {}
   external_network_linkage: {}
+  methodological_note: {}
+
+prisons:
+  total_prison_population: {}
+  sentenced_population: {}
+  remand_population: {}
+  prison_capacity: {}
+  occupancy_rate: {}
+  terrorism_related_prisoners: {}
+  islamist_extremist_terrorism_prisoners: {}
+  islamist_extremist_share_of_terrorism_prisoners: {}
+  islamist_extremist_share_of_total_prison_population: {}
+  radicalized_common_law_prisoners: {}
+  at_risk_of_radicalization_prisoners: {}
+  deradicalization_program_current_participants: {}
+  deradicalization_program_cumulative_participants: {}
+  annual_terrorism_prisoner_releases: {}
+  prison_radicalization_monitoring_strength: {}
+  prison_security_release_risk: {}
+  prison_extremism_security_pressure: {}
+  methodological_note: {}
+
+terrorism_threat_posture:
+  domestic_public_scale_name: {}
+  domestic_public_level: {}
+  domestic_public_level_max: {}
+  domestic_public_interpretation: {}
+  domestic_public_scope: {}
+  domestic_public_since: {}
+  official_qualitative_assessment: {}
+  external_travel_advisory_level: {}
+  external_travel_advisory_source: {}
+  normalized_cross_country_level: {}
+  cross_country_comparability: {}
   methodological_note: {}
 
 manpower:
