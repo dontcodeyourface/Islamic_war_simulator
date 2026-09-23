@@ -183,6 +183,187 @@ def _parameter_id(profile: str) -> str:
     raise ValueError(f"Unknown parameter profile: {profile}")
 
 
+def _escalation_parameter_id(profile: str) -> str:
+    logger.info("_escalation_parameter_id profile=%s", profile)
+    if profile == "synthetic_smoke_v1":
+        return "SECURITY_REGIMES_SYN_V1"
+    if profile == "calibrated_v1":
+        return "SECURITY_REGIMES_CAL_V1"
+    raise ValueError(f"Unknown parameter profile: {profile}")
+
+
+def _escalation_parameter_value(
+    parameter_registry: dict[str, Any],
+    *,
+    profile: str,
+    parameter_id: str,
+) -> dict[str, Any]:
+    logger.info(
+        "_escalation_parameter_value profile=%s parameter_id=%s",
+        profile,
+        parameter_id,
+    )
+    parameter = parameter_registry["parameter_sets"][profile]["parameters"].get(
+        parameter_id
+    )
+    if parameter is None:
+        raise ValueError(
+            f"Missing security-regime escalation parameter {parameter_id} for {profile}"
+        )
+    value = parameter.get("value")
+    if not isinstance(value, dict):
+        raise ValueError(
+            f"Security-regime escalation parameter {parameter_id} "
+            "must contain a mapping value"
+        )
+    return value
+
+
+def _validate_hysteresis(
+    *,
+    recovery_rules: dict[str, Any],
+    escalation_rules: dict[str, Any],
+) -> None:
+    logger.info("_validate_hysteresis")
+    numeric_guards = (
+        (
+            "strained_to_cohesive",
+            "security_chain_cohesion_gte",
+            "strained",
+            "security_chain_cohesion_lt",
+            "gt",
+        ),
+        (
+            "strained_to_cohesive",
+            "operational_fatigue_lte",
+            "strained",
+            "operational_fatigue_gte",
+            "lt",
+        ),
+        (
+            "selective_noncompliance_to_strained",
+            "security_chain_cohesion_gte",
+            "selective_noncompliance",
+            "security_chain_cohesion_lte",
+            "gt",
+        ),
+        (
+            "selective_noncompliance_to_strained",
+            "constitutional_loyalty_gte",
+            "selective_noncompliance",
+            "constitutional_loyalty_lte",
+            "gt",
+        ),
+        (
+            "command_fracture_to_selective_noncompliance",
+            "command_cohesion_gte",
+            "command_fracture",
+            "command_cohesion_lte",
+            "gt",
+        ),
+        (
+            "command_fracture_to_selective_noncompliance",
+            "security_chain_cohesion_gte",
+            "command_fracture",
+            "security_chain_cohesion_lte",
+            "gt",
+        ),
+        (
+            "localized_defection_to_command_fracture",
+            "command_cohesion_gte",
+            "localized_defection",
+            "command_cohesion_lte",
+            "gt",
+        ),
+        (
+            "localized_defection_to_command_fracture",
+            "center_region_cohesion_gte",
+            "localized_defection",
+            "center_region_cohesion_lte",
+            "gt",
+        ),
+        (
+            "multiple_commands_to_localized_defection",
+            "command_cohesion_gte",
+            "multiple_commands",
+            "command_cohesion_lte",
+            "gt",
+        ),
+        (
+            "multiple_commands_to_localized_defection",
+            "state_cohesion_gte",
+            "multiple_commands",
+            "state_cohesion_lte",
+            "gt",
+        ),
+    )
+
+    for (
+        recovery_subkey,
+        recovery_condition,
+        escalation_subkey,
+        escalation_condition,
+        relation,
+    ) in numeric_guards:
+        recovery_entry = recovery_rules.get(recovery_subkey)
+        escalation_entry = escalation_rules.get(escalation_subkey)
+        if not isinstance(recovery_entry, dict) or not isinstance(
+            escalation_entry, dict
+        ):
+            raise ValueError("Security recovery hysteresis mapping is incomplete")
+        recovery_conditions = recovery_entry.get("all")
+        if not isinstance(recovery_conditions, dict):
+            raise ValueError(
+                f"Security recovery {recovery_subkey} must define all conditions"
+            )
+        if recovery_condition not in recovery_conditions:
+            raise ValueError(
+                f"Security recovery hysteresis condition missing: "
+                f"{recovery_subkey}.{recovery_condition}"
+            )
+        if escalation_condition not in escalation_entry:
+            raise ValueError(
+                f"Security escalation hysteresis condition missing: "
+                f"{escalation_subkey}.{escalation_condition}"
+            )
+        recovery_value = float(recovery_conditions[recovery_condition])
+        escalation_value = float(escalation_entry[escalation_condition])
+        if relation == "gt" and not recovery_value > escalation_value:
+            raise ValueError(
+                f"Security recovery hysteresis gap must be positive for "
+                f"{recovery_subkey}.{recovery_condition}"
+            )
+        if relation == "lt" and not recovery_value < escalation_value:
+            raise ValueError(
+                f"Security recovery hysteresis gap must be positive for "
+                f"{recovery_subkey}.{recovery_condition}"
+            )
+
+    boolean_guards = (
+        (
+            "localized_defection_to_command_fracture",
+            "competing_authority_present",
+            "localized_defection",
+        ),
+        (
+            "multiple_commands_to_localized_defection",
+            "multiple_authority_nodes_present",
+            "multiple_commands",
+        ),
+    )
+    for recovery_subkey, condition_key, escalation_subkey in boolean_guards:
+        recovery_conditions = recovery_rules[recovery_subkey]["all"]
+        escalation_conditions = escalation_rules[escalation_subkey]
+        if recovery_conditions.get(condition_key) is not False:
+            raise ValueError(
+                f"Security recovery {condition_key} must require false"
+            )
+        if escalation_conditions.get(condition_key) is not True:
+            raise ValueError(
+                f"Security escalation {condition_key} must require true"
+            )
+
+
 def _parameter_value(
     parameter_registry: dict[str, Any],
     *,
@@ -465,6 +646,16 @@ def evaluate_security_regime_recovery(
         raise ValueError(
             f"Security recovery parameter {parameter_id} must define transitions"
         )
+    escalation_parameter_id = _escalation_parameter_id(profile)
+    escalation_rules = _escalation_parameter_value(
+        parameter_registry,
+        profile=profile,
+        parameter_id=escalation_parameter_id,
+    )
+    _validate_hysteresis(
+        recovery_rules=rules,
+        escalation_rules=escalation_rules,
+    )
 
     previous_streaks = _initial_streaks(
         persistence=persistence,
