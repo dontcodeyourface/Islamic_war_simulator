@@ -59,6 +59,30 @@ religion:
     estimated: true
     derived: false
     imputed: false
+    notes: "Best comparable nationwide estimate currently in the snapshot."
+  muslim_share_best_current_approx:
+    value: 9.1
+    unit: "percent_approx"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "France does not collect religion in a population census in a form providing a newer directly comparable national figure."
+  muslim_share_comparable_pew_2020:
+    value: 9.1
+    unit: "percent"
+    geographic_scope: "France"
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
     notes: null
   unaffiliated_share:
     value: 42.6
@@ -87,6 +111,48 @@ religion:
   muslim_first_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "No reliable religion-by-generation cross-tab populated."}
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Must not be inferred from ancestry."}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "FSPRT entries are not a census of violent radicals and are not comparable to Germany's person-potential definition."
+  country_specific_proxy_percent_of_muslim_estimate: {value: null, unit: "percent", reference_date: null, source_ids: ["FR-FSPRT-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Registry count is intentionally not divided by Muslim population."}
+  observed_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  violence_oriented_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  radicalization_registry_count:
+    value: ">15000"
+    unit: "FSPRT_entries"
+    reference_date: "2025-03"
+    source_ids: ["FR-FSPRT-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "FSPRT is a prevention/tracking registry. Entry does not mean conviction, active terrorism, or violent capability."
+  annual_jihadist_arrests: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  disrupted_plots:
+    value: 94
+    unit: "jihadist_violent_projects_foiled_since_2012"
+    reference_date: "2026-06-18"
+    source_ids: ["FR-JIHADIST-THREAT-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Cumulative since 2012, not annual."
+  terrorism_caseload_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  extremist_network_assessment: {value: "high_persistent_jihadist_threat_with_youth_radicalization_concern", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-JIHADIST-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Qualitative official threat assessment, not demographic prevalence."}
+  external_network_linkage: {value: "international_jihadist_network_risk_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-JIHADIST-THREAT-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Do not interpret FSPRT entries as a percentage of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Age bands are not substituted for military eligibility."}
@@ -304,6 +370,19 @@ ai:
 
 economy:
   gdp_current_usd: {value: 3370000000000, unit: "USD", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD."}
+  official_gold_reserves_tonnes:
+    value: 2437
+    unit: "tonnes"
+    reference_date: "2026"
+    source_ids: ["FR-BDF-GOLD-2026", "WGC-GOLD-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Banque de France explicitly states reserves remain at 2,437 tonnes."
+  official_gold_reserves_market_value: {value: null, unit: "EUR", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not needed for v0.3."}
+  total_official_reserve_assets: {value: null, unit: "EUR_or_USD", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   gdp_per_capita_usd: {value: 48985.7, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   real_gdp_growth: {value: 0.8, unit: "percent", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   unemployment_rate: {value: 7.5, unit: "percent", reference_date: "2025", source_ids: ["WB-FR-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}

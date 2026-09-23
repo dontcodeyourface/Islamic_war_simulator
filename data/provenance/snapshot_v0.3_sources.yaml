@@ -1,0 +1,150 @@
+snapshot_version: "0.3"
+snapshot_date: "2026-09-23"
+purpose: "Religious-demography, violent-Islamist-extremism proxy and public gold-reserve provenance."
+
+sources:
+  ES-JIHADIST-ARRESTS-2025:
+    title: "Memoria 2026 - Fiscalía de la Audiencia Nacional - lucha contra el terrorismo internacional"
+    publisher: "Fiscalía General del Estado / Ministerio del Interior data"
+    url: "https://www.fiscal.es/memorias/memoria2026/FISCALIA_SITE/capitulo_II/cap_II_4_9.html"
+    reference_date: "2025"
+    publication_date: "2026"
+    type: "official_counterterrorism_statistics"
+    quality: "high"
+    notes: "Reports 64 jihadist counterterrorism operations and 100 detainees in Spain during 2025. Arrests are a flow measure, not prevalence."
+
+  ES-JIHADIST-MAP-2026:
+    title: "Mapa interactivo de operaciones y detenidos por yihadismo en España desde 2012"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/en/prensa/balances-e-informes/lucha-contra-el-terrorismo/mapa-interactivo-de-operaciones-y-detenidos-por-yihadismo-en-espana-desde-2012/"
+    reference_date: "2026-06-23"
+    type: "official_counterterrorism_statistics"
+    quality: "high"
+
+  ES-BDE-GOLD-2025:
+    title: "Annual Accounts of the Banco de España 2025"
+    publisher: "Banco de España"
+    url: "https://www.bde.es/wbe/en/publicaciones/informes-memorias-anuales/cuentas-anuales/cuentas-anuales-del-banco-de-espana-2025.html"
+    reference_date: "2025-12-31"
+    publication_date: "2026-03-30"
+    type: "official_central_bank_accounts"
+    quality: "high"
+    notes: "Reports 9.054 million fine troy ounces of gold and EUR 33,219.17m market value."
+
+  WGC-GOLD-2026:
+    title: "Gold Reserves by Country"
+    publisher: "World Gold Council"
+    url: "https://www.gold.org/goldhub/data/gold-reserves-by-country"
+    reference_date: "2026-06-30"
+    publication_date: "2026-09-03"
+    type: "international_reserve_statistics"
+    quality: "high"
+    notes: "Compiled primarily from IMF International Financial Statistics; most country data as of Q2 2026, with late reporters earlier."
+
+  MA-CT-REPORT-2024:
+    title: "Country Report on Terrorism 2024 - Morocco"
+    publisher: "U.S. Department of State"
+    url: "https://www.ecoi.net/en/document/2144748.html"
+    reference_date: "2024"
+    publication_date: "2026-05-01"
+    type: "government_counterterrorism_report"
+    quality: "high"
+    notes: "Reports at least 29 ISIS-inspired persons arrested in 2024; eight lone actors, others associated with cells."
+
+  MA-SNRT-ISIL-CELL-2025:
+    title: "Morocco foils high-risk terrorist plot linked to ISIL Sahel"
+    publisher: "SNRT News / Maghreb Arabe Presse"
+    url: "https://snrtnews.com/article/113515"
+    reference_date: "2025-02-19"
+    type: "official_news_agency_security_report"
+    quality: "high"
+    notes: "Reports 12 suspects arrested across nine cities and direct incitement/coordination from an ISIL leader in the African Sahel."
+
+  MA-OFFICIAL-RESERVES-2026:
+    title: "Data Template on International Reserves/Foreign Currency Liquidity"
+    publisher: "Ministry of Economy and Finance, Morocco / Bank Al-Maghrib"
+    url: "https://www.finances.gov.ma/Pages/TAND_Maroc_english.htm"
+    reference_date: "2026-08"
+    type: "official_reserve_statistics"
+    quality: "high"
+    notes: "Reports gold value MAD 29.443bn and total international reserves MAD 499.813bn for August 2026."
+
+  FR-FSPRT-2025:
+    title: "Conseil des ministres du 12 mars 2025 - counterterrorism policy"
+    publisher: "Gouvernement français"
+    url: "https://www.info.gouv.fr/conseil-des-ministres/compte-rendu-du-conseil-des-ministres-du-12-03-2025"
+    reference_date: "2025-03-12"
+    type: "official_counterterrorism_policy"
+    quality: "high"
+    notes: "States more than 15,000 individuals are registered in FSPRT. FSPRT entries are not convictions or a measure of violent capability."
+
+  FR-JIHADIST-THREAT-2026:
+    title: "Radicalisation et islamisme - réponse du Ministère de l'intérieur"
+    publisher: "Sénat français / Ministère de l'Intérieur"
+    url: "https://www.senat.fr/questions/base/2025/qSEQ250404216.html"
+    reference_date: "2026-06-18"
+    type: "official_counterterrorism_assessment"
+    quality: "high"
+    notes: "Reports 51 jihadist attacks since 2012 and 94 violent projects foiled."
+
+  FR-BDF-GOLD-2026:
+    title: "Banque de France 2025 results"
+    publisher: "Banque de France"
+    url: "https://www.banque-france.fr/en/news/banque-de-france-2025-results"
+    reference_date: "2026-04-09"
+    type: "official_central_bank"
+    quality: "high"
+    notes: "States France's gold reserves are 2,437 tonnes and remain unchanged."
+
+  UK-BSA-RELIGION-2019:
+    title: "UK religious demography - British Social Attitudes 2019 excerpt"
+    publisher: "U.S. Department of State, citing National Centre for Social Research"
+    url: "https://2021-2025.state.gov/report/custom/3971445b51/"
+    reference_date: "2019"
+    type: "survey_summary"
+    quality: "medium"
+    notes: "UK-wide survey reported 6% identifying as Muslim. England and Wales Census 2021 separately reported 6.5% Muslim."
+
+  UK-MI5-THREAT-2026:
+    title: "UK National Terrorism Threat Level Raised To SEVERE"
+    publisher: "MI5 / Security Service"
+    url: "https://www.mi5.gov.uk/uk-national-terrorism-threat-level-raised-to-severe"
+    reference_date: "2026-05-01"
+    type: "official_counterterrorism_assessment"
+    quality: "high"
+    notes: "States Islamist terrorism is the primary threat by volume; headline counterterrorism workload split roughly 75% Islamist extremist and 25% extreme-right; 43 late-stage plots of mixed ideologies disrupted since March 2017."
+
+  UK-OFFICIAL-RESERVES-2026:
+    title: "UK official holdings of international reserves / Bank of England reserves statistics"
+    publisher: "HM Treasury / Bank of England"
+    url: "https://www.bankofengland.co.uk/statistics/uk-international-reserves/2026/june-2026"
+    reference_date: "2026-06"
+    type: "official_reserve_statistics"
+    quality: "high"
+
+  DE-BFV-EXTREMISM-2025:
+    title: "Verfassungsschutzbericht 2025 / Islamist scene figures"
+    publisher: "Bundesamt für Verfassungsschutz / Bundesregierung"
+    url: "https://www.bundesregierung.de/breg-de/aktuelles/verfassungsschutzbericht-2025-2445498"
+    reference_date: "2025"
+    publication_date: "2026-06-30"
+    type: "official_domestic_intelligence_statistics"
+    quality: "high"
+    notes: "BfV data: 28,645 persons in Islamism/Islamist terrorism person-potential in 2025; violence-oriented subset reported as 9,110 by the Federal Agency for Civic Education summary of the report."
+
+  DE-BUNDESBANK-GOLD-2025:
+    title: "Annual Accounts of the Deutsche Bundesbank for 2025"
+    publisher: "Deutsche Bundesbank"
+    url: "https://publikationen.bundesbank.de/publikationen-en/reports-studies/annual-reports/annual-report-2025-974388?article=annual-accounts-of-the-deutsche-bundesbank-for-2025-988046"
+    reference_date: "2025-12-31"
+    type: "official_central_bank_accounts"
+    quality: "high"
+    notes: "Reports 3,350.285 tonnes of physical fine gold and EUR 395.215bn market value."
+
+  DE-BUNDESBANK-RESERVES-2026:
+    title: "Währungsreserven"
+    publisher: "Deutsche Bundesbank"
+    url: "https://www.bundesbank.de/de/statistiken/aussenwirtschaft/auslandsvermoegen-und-verschuldung/waehrungsreserven-640356"
+    reference_date: "2026-09"
+    type: "official_reserve_statistics"
+    quality: "high"

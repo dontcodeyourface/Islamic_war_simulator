@@ -38,17 +38,41 @@ religion:
     imputed: false
     notes: "No whole-UK official 2021 census value inserted because constituent-country census systems differ. Pew estimates Christianity at roughly 49% in 2020; retained in provenance pending exact table import."
   muslim_share:
+    value: 6.0
+    unit: "percent_approx"
+    geographic_scope: "United Kingdom"
+    reference_date: "2019"
+    source_ids: ["UK-BSA-RELIGION-2019"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "UK-wide British Social Attitudes estimate. England and Wales Census 2021 reports 6.5%, but is not whole-UK."
+  muslim_share_best_current_approx:
+    value: 6.0
+    unit: "percent_approx"
+    geographic_scope: "United Kingdom"
+    reference_date: "2019"
+    source_ids: ["UK-BSA-RELIGION-2019"]
+    quality: "medium"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Best whole-UK approximation currently imported; future snapshot should harmonize constituent-country census data."
+  muslim_share_comparable_pew_2020:
     value: null
     unit: "percent"
     geographic_scope: "United Kingdom"
-    reference_date: null
-    source_ids: ["UK-ONS-RELIGION-EW-2021", "PEW-RELIGION-2020"]
+    reference_date: "2020"
+    source_ids: ["PEW-RELIGION-2020"]
     quality: "unavailable"
-    freshness_class: null
+    freshness_class: "aging"
     estimated: false
     derived: false
     imputed: false
-    notes: "England and Wales 2021: 6.5% Muslim. This is not silently generalized to the whole UK."
+    notes: "Exact Pew Muslim share not imported into v0.3; do not infer from residual categories."
   unaffiliated_share:
     value: null
     unit: "percent"
@@ -64,6 +88,48 @@ religion:
   muslim_first_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+violent_islamist_extremism:
+  comparable_radical_share_of_muslim_population:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "MI5 publishes caseload composition, not a census of radicalized Muslims."
+  country_specific_proxy_percent_of_muslim_estimate: {value: null, unit: "percent", reference_date: null, source_ids: ["UK-MI5-THREAT-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Caseload share cannot be converted into population prevalence."}
+  observed_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  violence_oriented_person_potential: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  radicalization_registry_count: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  annual_jihadist_arrests: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  disrupted_plots:
+    value: 43
+    unit: "late_stage_terrorist_plots_all_ideologies_since_2017"
+    reference_date: "2026-05-01"
+    source_ids: ["UK-MI5-THREAT-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "All ideologies; not all Islamist."
+  terrorism_caseload_share:
+    value: 75
+    unit: "percent_of_counterterrorism_work_approximately"
+    reference_date: "2026-05-01"
+    source_ids: ["UK-MI5-THREAT-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "MI5 states headline split remains roughly 75% Islamist extremist / 25% extreme-right. This is workload/caseload composition, not population prevalence."
+  extremist_network_assessment: {value: "Islamist_terrorism_primary_threat_by_volume_with_rising_extreme_right_threat", unit: "categorical", reference_date: "2026-05-01", source_ids: ["UK-MI5-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  external_network_linkage: {value: "Al_Qaeda_and_IS_attempts_to_direct_or_inspire_UK_threat_documented", unit: "categorical", reference_date: "2026", source_ids: ["UK-MI5-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "75% is counterterrorism caseload composition, not 75% of any population group.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
@@ -265,6 +331,19 @@ ai:
 
 economy:
   gdp_current_usd: {value: 4002587541846, unit: "USD", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD."}
+  official_gold_reserves_tonnes:
+    value: 310.29
+    unit: "tonnes"
+    reference_date: "2026-Q2"
+    source_ids: ["WGC-GOLD-2026", "UK-OFFICIAL-RESERVES-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "WGC/IMF series; HM Treasury/Bank of England publish monthly official-reserves data including gold."
+  official_gold_reserves_market_value: {value: null, unit: "GBP_or_USD", reference_date: null, source_ids: ["UK-OFFICIAL-RESERVES-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Monthly official value available but not imported in v0.3."}
+  total_official_reserve_assets: {value: null, unit: "GBP_or_USD", reference_date: null, source_ids: ["UK-OFFICIAL-RESERVES-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   gdp_per_capita_usd: {value: 57602.0, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   real_gdp_growth: {value: 1.4, unit: "percent", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
   unemployment_rate: {value: 4.7, unit: "percent", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}
