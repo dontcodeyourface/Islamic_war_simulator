@@ -70,6 +70,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/reciprocal_radicalization_v1.yaml",
     )
     day_smoke.add_argument(
+        "--security-chain-config",
+        default="config/engine/security_chain_dynamics_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -230,6 +234,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     reciprocal_radicalization_config = load_yaml(
         root / args.reciprocal_radicalization_config
     )
+    security_chain_config = load_yaml(root / args.security_chain_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -300,6 +305,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "graph_spillover_effects",
             "extremist_network_dynamics",
             "reciprocal_radicalization",
+            "security_chain_dynamics",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -340,6 +346,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         reciprocal_radicalization_config=(
             reciprocal_radicalization_config
         ),
+        enable_security_chain_dynamics=True,
+        security_chain_config=security_chain_config,
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
@@ -384,6 +392,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "network_proposal_count": len(result.network_proposals),
             "reciprocal_radicalization_proposal_count": len(
                 result.reciprocal_radicalization_proposals
+            ),
+            "security_chain_proposal_count": len(
+                result.security_chain_proposals
             ),
             "spillover_queue": (
                 result.spillover_queue.to_dict()
