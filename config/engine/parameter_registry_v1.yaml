@@ -32,6 +32,17 @@ parameter_sets:
         unit: km
         rationale: "Engineering proximity-decay scale."
 
+      ALLIANCE_EDGE_SYN_V1:
+        type: structural_edge_normalization
+        value:
+          shared_membership_scores:
+            NATO: 1.0
+            European Union: 0.75
+          explicit_relationship_scores:
+            documented_bilateral_counterterrorism_cooperation: 0.55
+          aggregation: "max"
+        rationale: "Engineering-only structural alliance-link scores for graph plumbing; not empirical estimates of wartime support."
+
       GRAPH_TRANSMISSION_SYN_V1:
         type: channel_map
         value:
@@ -287,6 +298,7 @@ parameter_sets:
       BASELINE_ANCHORS_CAL_V1: null
       MEM_HALF_LIVES_CAL_V1: null
       EDGE_GEO_SCALE_CAL_V1: null
+      ALLIANCE_EDGE_CAL_V1: null
       GRAPH_TRANSMISSION_CAL_V1: null
       GRAPH_LATENCIES_CAL_V1: null
       PHASE_TRANSITIONS_CAL_V1: null
