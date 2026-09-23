@@ -191,6 +191,42 @@ parameter_sets:
             persistence_days: 21
         rationale: "Synthetic institutional regime classification."
 
+      SECURITY_REGIME_RECOVERY_SYN_V1:
+        type: security_regime_recovery_threshold_set
+        value:
+          transitions:
+            strained_to_cohesive:
+              persistence_days: 13
+              all:
+                security_chain_cohesion_gte: 0.80
+                command_cohesion_gte: 0.80
+                operational_fatigue_lte: 0.35
+            selective_noncompliance_to_strained:
+              persistence_days: 13
+              all:
+                security_chain_cohesion_gte: 0.68
+                constitutional_loyalty_gte: 0.78
+                operational_fatigue_lte: 0.40
+            command_fracture_to_selective_noncompliance:
+              persistence_days: 21
+              all:
+                command_cohesion_gte: 0.60
+                security_chain_cohesion_gte: 0.62
+                constitutional_loyalty_gte: 0.72
+            localized_defection_to_command_fracture:
+              persistence_days: 21
+              all:
+                command_cohesion_gte: 0.48
+                center_region_cohesion_gte: 0.55
+                competing_authority_present: false
+            multiple_commands_to_localized_defection:
+              persistence_days: 34
+              all:
+                command_cohesion_gte: 0.40
+                state_cohesion_gte: 0.45
+                multiple_authority_nodes_present: false
+        rationale: "Synthetic recovery thresholds with explicit hysteresis gaps relative to escalation thresholds. Engineering-only values, not empirical causal estimates."
+
       EVENT_HAZARD_WEIGHTS_SYN_V1:
         type: event_hazard_weight_set
         value:
@@ -388,6 +424,7 @@ parameter_sets:
       PHASE_TRANSITIONS_CAL_V1: null
       PHASE_RECOVERY_CAL_V1: null
       SECURITY_REGIMES_CAL_V1: null
+      SECURITY_REGIME_RECOVERY_CAL_V1: null
       EVENT_HAZARD_WEIGHTS_CAL_V1: null
       EVENT_HAZARD_PROBABILITY_CAL_V1: null
       OWNER_RESOLVER_POLICY_CAL_V1: null
