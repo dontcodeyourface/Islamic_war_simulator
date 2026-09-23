@@ -2233,3 +2233,344 @@ def test_security_regime_commit_precedes_phase_evaluation_in_trace() -> None:
         if item["record_type"] == "phase_evaluation"
     )
     assert commit_index < phase_index
+
+
+
+def test_security_regime_recovery_continues_across_atomic_days() -> None:
+    logger.info(
+        "test_security_regime_recovery_continues_across_atomic_days"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1028
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+
+    for state in states.values():
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.85
+        state.latents["command_cohesion"] = 0.85
+        state.latents["operational_fatigue"] = 0.20
+        state.latents["constitutional_loyalty"] = 0.90
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_config,
+        security_regime_recovery_persistence=None,
+    )
+
+    assert first.security_regime_commits == ()
+    assert first.security_regime_recovery_proposals == ()
+    assert all(
+        dict(item.streaks).get(
+            "SECURITY_RECOVERY_STRAINED_COHESIVE_V1"
+        ) == 1
+        for item in first.security_regime_recovery_persistence.values()
+    )
+
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence={
+            node_id: item
+            for node_id, item in first.security_regime_persistence.items()
+        },
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_config,
+        security_regime_recovery_persistence={
+            node_id: item
+            for node_id, item in (
+                first.security_regime_recovery_persistence.items()
+            )
+        },
+    )
+
+    assert second.security_regime_recovery_proposals == ()
+    assert all(
+        dict(item.streaks).get(
+            "SECURITY_RECOVERY_STRAINED_COHESIVE_V1"
+        ) == 2
+        for item in second.security_regime_recovery_persistence.values()
+    )
+    assert all(
+        state.regimes["security_force_regime"] == "STRAINED"
+        for state in second.states.values()
+    )
+
+
+def test_security_regime_recovery_requires_history_after_day_zero() -> None:
+    logger.info(
+        "test_security_regime_recovery_requires_history_after_day_zero"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1029
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+    for state in states.values():
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.85
+        state.latents["command_cohesion"] = 0.85
+        state.latents["operational_fatigue"] = 0.20
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_config,
+        security_regime_recovery_persistence=None,
+    )
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(
+        ValueError,
+        match="Security regime recovery persistence is required after day zero",
+    ):
+        run_day_transaction(
+            states=first.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_security_regime_evaluator=True,
+            security_regime_config=regime_config,
+            security_regime_persistence={
+                node_id: item
+                for node_id, item in first.security_regime_persistence.items()
+            },
+            security_regime_context_flags={},
+            enable_security_regime_commits=True,
+            security_regime_transition_config=transition_config,
+            enable_security_regime_recovery_evaluator=True,
+            security_regime_recovery_config=recovery_config,
+            security_regime_recovery_persistence=None,
+        )
+    assert rng.describe() == rng_before
+    assert trace.records == []
+
+
+def test_same_day_security_escalation_suppresses_recovery_evaluation() -> None:
+    logger.info(
+        "test_same_day_security_escalation_suppresses_recovery_evaluation"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1030
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+    for state in states.values():
+        state.regimes["security_force_regime"] = "COHESIVE"
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["command_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+
+    esp = states["ESP"]
+    esp.latents["security_chain_cohesion"] = 0.70
+    esp.latents["operational_fatigue"] = 0.50
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_config,
+        security_regime_recovery_persistence=None,
+    )
+
+    assert len(result.security_regime_commits) == 1
+    assert result.security_regime_commits[0].node_id == "ESP"
+    esp_recovery = next(
+        item
+        for item in result.security_regime_recovery_evaluations
+        if item.persistence.node_id == "ESP"
+    )
+    assert esp_recovery.evaluations[0].suppressed_by_same_day_escalation is True
+    assert esp_recovery.evaluations[0].persistence_observed == 0
+    assert esp_recovery.proposals == ()
+    assert result.states["ESP"].regimes["security_force_regime"] == "STRAINED"
+
+
+def test_security_regime_recovery_requires_escalation_commit_precedence() -> None:
+    logger.info(
+        "test_security_regime_recovery_requires_escalation_commit_precedence"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1031
+    )
+    parameters = _disable_all_events(parameters)
+    recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="requires escalation evaluator and commit",
+    ):
+        run_day_transaction(
+            states=states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=TraceLedger(),
+            enable_security_regime_recovery_evaluator=True,
+            security_regime_recovery_config=recovery_config,
+            security_regime_recovery_persistence=None,
+        )
+
+
+def test_security_regime_recovery_config_changes_transaction_identity() -> None:
+    logger.info(
+        "test_security_regime_recovery_config_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1032)
+    runtime_b = _runtime(seed=1032)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    recovery_a = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+    recovery_b = copy.deepcopy(recovery_a)
+    recovery_b["status"] = "identity-test-variant"
+
+    for runtime in (runtime_a, runtime_b):
+        for state in runtime[0].values():
+            state.regimes["security_force_regime"] = "STRAINED"
+            state.latents["security_chain_cohesion"] = 0.85
+            state.latents["command_cohesion"] = 0.85
+            state.latents["operational_fatigue"] = 0.20
+            state.latents["constitutional_loyalty"] = 0.90
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_a,
+        security_regime_recovery_persistence=None,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_b,
+        security_regime_recovery_persistence=None,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
