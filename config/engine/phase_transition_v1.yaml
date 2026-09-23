@@ -1,0 +1,42 @@
+schema_version: "1.0"
+status: "implementation-v0.9"
+purpose: "Deterministic arbitration and atomic commit of matured national phase-transition proposals."
+
+mode:
+  enabled: true
+  max_commits_per_node_per_day: 1
+  deescalation_enabled: false
+  phase_commit_is_atomic_with_day_transaction: true
+  reset_persistence_after_committed_transition: true
+
+arbitration:
+  rule_id: "PHASE_ARBITRATION_HIGHEST_ORDER_V1"
+  policy: "highest_target_phase_order"
+  phase_order_source: "config/engine/phase_evaluator_v1.yaml:phase_order"
+  tie_breaker: "proposal_id_ascending"
+  require_same_node: true
+  require_same_day: true
+  require_same_from_phase: true
+
+commit:
+  rule_id: "PHASE_COMMIT_V1"
+  state_field: "regimes.national_phase"
+  original_state_must_remain_unchanged: true
+  committed_state_must_validate: true
+
+persistence:
+  no_history_allowed_only_when_input_day_is_zero: true
+  all_nodes_required_after_day_zero: true
+  committed_transition_resets_streaks: true
+  last_evaluated_day_tracks_committed_day: true
+
+trace:
+  arbitration_record: "phase_arbitration"
+  commit_record: "phase_transition_committed"
+  persistence_record: "phase_persistence_committed"
+  checkpoint_includes_phase_commit_ids: true
+
+safety:
+  deescalation_requires_future_explicit_recovery_contract: true
+  demographic_identity_direct_transition_input: false
+  political_identity_direct_transition_input: false
