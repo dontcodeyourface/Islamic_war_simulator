@@ -46,6 +46,8 @@ Canonical frozen country-data contract: [docs/SNAPSHOT_V1_SPEC.md](docs/SNAPSHOT
 
 Canonical pre-implementation engine contract: [docs/ENGINE_DYNAMICS_V1.md](docs/ENGINE_DYNAMICS_V1.md). It defines country-independent dynamics, endogenous RANDOM_SHOCK/GENERATED conflict initiation, typed contagion, adaptive fractal refinement, execution order and mandatory causal traceability.
 
+Canonical runtime-state contract: [docs/ENGINE_STATE_V1.md](docs/ENGINE_STATE_V1.md), with the machine-readable registry in [`config/engine/engine_state_v1.yaml`](config/engine/engine_state_v1.yaml). It fixes 12 physical stocks, 60 country latents, 4 regimes and the dynamic-collection model.
+
 ---
 
 ## 2. Core analytical rule

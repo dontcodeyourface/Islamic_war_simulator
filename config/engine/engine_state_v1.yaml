@@ -1,0 +1,513 @@
+schema_version: "1.0"
+status: "canonical-pre-implementation"
+date: "2026-09-23"
+purpose: "Machine-readable registry for generic country EngineState v1."
+
+rules:
+  normalized_range_default: [0.0, 1.0]
+  signed_range: [-1.0, 1.0]
+  country_specific_equations_forbidden: true
+  silent_default_values_forbidden: true
+  missing_required_latent_requires_documented_prior: true
+  sampled_prior_requires_rng_trace: true
+  every_initial_value_requires_init_rule_id: true
+  every_runtime_delta_requires_equation_id: true
+
+physical_stocks:
+  - id: population_total
+    unit: persons
+    nullable: false
+    source_sections: [population]
+  - id: working_age_population
+    unit: persons
+    nullable: true
+    source_sections: [population, manpower]
+  - id: dependent_population
+    unit: persons
+    nullable: true
+    source_sections: [population, demographic_dynamics]
+  - id: displaced_people
+    unit: persons
+    nullable: false
+    initial_value_policy: zero_unless_baseline_evidence
+  - id: reception_population
+    unit: persons
+    nullable: false
+    initial_value_policy: zero_or_baseline_program_load
+  - id: fuel_stock_days_equivalent
+    unit: days
+    nullable: true
+    source_sections: [energy_security]
+  - id: strategic_food_stock_days
+    unit: days
+    nullable: true
+    source_sections: [food_water_security]
+  - id: available_police_personnel
+    unit: persons
+    nullable: true
+    source_sections: [law_enforcement]
+  - id: available_military_personnel
+    unit: persons
+    nullable: true
+    source_sections: [armed_forces, manpower]
+  - id: prison_population
+    unit: persons
+    nullable: true
+    source_sections: [prisons]
+  - id: foreign_reserves_usd
+    unit: USD
+    nullable: true
+    source_sections: [economy]
+  - id: gold_reserves_tonnes
+    unit: tonnes
+    nullable: true
+    source_sections: [economy]
+
+latent_groups:
+  demographics_social:
+    module_owner: demographics
+    variables:
+      - id: demographic_momentum
+        range: [-1.0, 1.0]
+        meaning: "Net slow demographic growth/decline pressure from fertility, age structure, mortality, migration and switching."
+        init_rule_id: DEM_MOMENTUM_INIT_V1
+        source_sections: [demographic_dynamics, demographic_differentials, religion, population]
+        time_scale: long
+      - id: migration_pressure
+        range: [0.0, 1.0]
+        meaning: "Pressure created by migration inflow relative to absorption capacity."
+        init_rule_id: MIG_PRESSURE_INIT_V1
+        source_sections: [population, demographic_differentials, external_social_finance, migration_welfare_policy]
+        time_scale: medium
+      - id: dependency_pressure
+        range: [0.0, 1.0]
+        meaning: "Demographic/fiscal pressure from dependent population relative to working-age population."
+        init_rule_id: DEPENDENCY_PRESSURE_INIT_V1
+        source_sections: [population, demographic_dynamics]
+        time_scale: structural
+      - id: social_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: SOCIAL_COHESION_INIT_V1
+        source_sections: [governance, religion, regional_government_topology, information_environment]
+        time_scale: medium
+      - id: polarization
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: POLARIZATION_INIT_V1
+        source_sections: [governance, information_environment, violent_islamist_extremism]
+        time_scale: short_medium
+      - id: communal_fear
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: COMMUNAL_FEAR_INIT_V1
+        source_sections: [terrorism_threat_posture, violent_islamist_extremism, information_environment]
+        time_scale: short
+      - id: reception_pressure
+        range: [0.0, 1.0]
+        init_rule_id: RECEPTION_PRESSURE_INIT_V1
+        source_sections: [migration_welfare_policy, population]
+        time_scale: short_medium
+      - id: displacement_pressure
+        range: [0.0, 1.0]
+        init_rule_id: DISPLACEMENT_PRESSURE_INIT_V1
+        source_sections: [population, geography]
+        time_scale: short_medium
+
+  institutions_governance:
+    module_owner: institutions
+    variables:
+      - id: government_legitimacy
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: GOV_LEGITIMACY_INIT_V1
+        source_sections: [governance, information_environment]
+        time_scale: medium
+      - id: state_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: STATE_COHESION_INIT_V1
+        source_sections: [governance, regional_government_topology, security_force_cohesion]
+        time_scale: medium_structural
+      - id: elite_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: ELITE_COHESION_INIT_V1
+        source_sections: [governance]
+        time_scale: medium
+      - id: administrative_capacity
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: ADMIN_CAPACITY_INIT_V1
+        source_sections: [administrative_continuity, governance]
+        time_scale: structural
+      - id: judicial_continuity
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: JUDICIAL_CONTINUITY_INIT_V1
+        source_sections: [administrative_continuity]
+        time_scale: structural
+      - id: fiscal_capacity
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: FISCAL_CAPACITY_INIT_V1
+        source_sections: [economy, administrative_continuity]
+        time_scale: medium_structural
+      - id: salary_payment_continuity
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: SALARY_CONTINUITY_INIT_V1
+        source_sections: [administrative_continuity, economy]
+        time_scale: medium
+      - id: center_region_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: CENTER_REGION_COHESION_INIT_V1
+        source_sections: [regional_government_topology, governance]
+        time_scale: medium
+      - id: territorial_control
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: TERRITORIAL_CONTROL_INIT_V1
+        source_sections: [governance, law_enforcement, armed_forces, geography]
+        time_scale: short_medium
+      - id: regional_fragmentation_pressure
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: REGIONAL_FRAGMENTATION_INIT_V1
+        source_sections: [regional_government_topology, governance]
+        time_scale: medium
+
+  security:
+    module_owner: security
+    variables:
+      - id: police_effective_capacity
+        range: [0.0, 1.0]
+        direction: higher_is_more_capable
+        init_rule_id: POLICE_CAPACITY_INIT_V1
+        source_sections: [law_enforcement, critical_infrastructure]
+        time_scale: short_medium
+      - id: intelligence_effectiveness
+        range: [0.0, 1.0]
+        direction: higher_is_more_capable
+        init_rule_id: INTEL_EFFECTIVENESS_INIT_V1
+        source_sections: [intelligence, cyber]
+        time_scale: medium
+      - id: security_chain_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: SECURITY_CHAIN_COHESION_INIT_V1
+        source_sections: [security_force_cohesion]
+        time_scale: medium
+      - id: command_cohesion
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: COMMAND_COHESION_INIT_V1
+        source_sections: [security_force_cohesion, armed_forces]
+        time_scale: medium
+      - id: constitutional_loyalty
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: CONSTITUTIONAL_LOYALTY_INIT_V1
+        source_sections: [security_force_cohesion, governance]
+        time_scale: structural
+      - id: operational_fatigue
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: OPERATIONAL_FATIGUE_INIT_V1
+        source_sections: [law_enforcement, security_force_cohesion]
+        time_scale: short_medium
+      - id: public_order_stress
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: PUBLIC_ORDER_STRESS_INIT_V1
+        source_sections: [law_enforcement, terrorism_threat_posture, governance]
+        time_scale: short
+      - id: prison_control
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: PRISON_CONTROL_INIT_V1
+        source_sections: [prisons]
+        time_scale: short_medium
+      - id: terrorism_threat_pressure
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: TERRORISM_PRESSURE_INIT_V1
+        source_sections: [terrorism_threat_posture, violent_islamist_extremism]
+        time_scale: short_medium
+
+  non_state:
+    module_owner: non_state_networks
+    variables:
+      - id: criminal_network_power
+        range: [0.0, 1.0]
+        init_rule_id: CRIMINAL_POWER_INIT_V1
+        source_sections: [organized_crime, prisons]
+        time_scale: medium
+      - id: black_market_expansion
+        range: [0.0, 1.0]
+        init_rule_id: BLACK_MARKET_INIT_V1
+        source_sections: [organized_crime, economy, energy_security, food_water_security]
+        time_scale: short_medium
+      - id: violent_islamist_pressure
+        range: [0.0, 1.0]
+        init_rule_id: VIOLENT_ISLAMIST_INIT_V1
+        source_sections: [violent_islamist_extremism, terrorism_threat_posture, prisons]
+        time_scale: medium
+      - id: violent_ultranationalist_pressure
+        range: [0.0, 1.0]
+        init_rule_id: VIOLENT_ULTRANATIONALIST_INIT_V1
+        source_sections: [governance, information_environment]
+        time_scale: medium
+      - id: revolutionary_extremist_pressure
+        range: [0.0, 1.0]
+        init_rule_id: REVOLUTIONARY_EXTREMIST_INIT_V1
+        source_sections: [governance, information_environment]
+        time_scale: medium
+      - id: organized_armed_actor_capacity
+        range: [0.0, 1.0]
+        init_rule_id: ORGANIZED_ARMED_ACTOR_INIT_V1
+        source_sections: [violent_islamist_extremism, organized_crime, security_force_cohesion]
+        time_scale: medium
+      - id: foreign_support_nonstate
+        range: [0.0, 1.0]
+        init_rule_id: FOREIGN_SUPPORT_NONSTATE_INIT_V1
+        source_sections: [alliances, external_social_finance, intelligence]
+        time_scale: medium
+      - id: civilizational_narrative_strength
+        range: [0.0, 1.0]
+        init_rule_id: CIVILIZATIONAL_NARRATIVE_INIT_V1
+        source_sections: [information_environment, religion, violent_islamist_extremism]
+        time_scale: medium
+
+  economy_resources:
+    module_owner: economy_resources
+    variables:
+      - id: economic_output
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: ECON_OUTPUT_INIT_V1
+        source_sections: [economy]
+        time_scale: medium
+      - id: inflation_pressure
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: INFLATION_PRESSURE_INIT_V1
+        source_sections: [economy]
+        time_scale: medium
+      - id: unemployment_pressure
+        range: [0.0, 1.0]
+        direction: higher_is_more_stressed
+        init_rule_id: UNEMPLOYMENT_PRESSURE_INIT_V1
+        source_sections: [economy, demographic_dynamics]
+        time_scale: medium
+      - id: financial_buffer
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: FINANCIAL_BUFFER_INIT_V1
+        source_sections: [economy]
+        time_scale: medium_structural
+      - id: trade_access
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: TRADE_ACCESS_INIT_V1
+        source_sections: [economy, geography, alliances]
+        time_scale: short_medium
+      - id: energy_resilience
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: ENERGY_RESILIENCE_INIT_V1
+        source_sections: [energy_security]
+        time_scale: medium
+      - id: electricity_functionality
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: ELECTRICITY_FUNCTION_INIT_V1
+        source_sections: [energy_security, critical_infrastructure]
+        time_scale: short
+      - id: fuel_distribution_functionality
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: FUEL_DISTRIBUTION_INIT_V1
+        source_sections: [energy_security, critical_infrastructure]
+        time_scale: short
+      - id: food_resilience
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: FOOD_RESILIENCE_INIT_V1
+        source_sections: [food_water_security]
+        time_scale: medium
+      - id: water_resilience
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: WATER_RESILIENCE_INIT_V1
+        source_sections: [food_water_security, critical_infrastructure]
+        time_scale: medium
+      - id: transport_logistics_functionality
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: TRANSPORT_FUNCTION_INIT_V1
+        source_sections: [critical_infrastructure, geography]
+        time_scale: short
+      - id: telecom_internet_functionality
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: TELECOM_FUNCTION_INIT_V1
+        source_sections: [critical_infrastructure, cyber]
+        time_scale: short
+      - id: health_system_functionality
+        range: [0.0, 1.0]
+        direction: higher_is_more_resilient
+        init_rule_id: HEALTH_FUNCTION_INIT_V1
+        source_sections: [health_emergency, critical_infrastructure]
+        time_scale: short_medium
+
+  military_technology:
+    module_owner: military
+    variables:
+      - id: military_land_effective
+        range: [0.0, 1.0]
+        init_rule_id: MIL_LAND_INIT_V1
+        source_sections: [armed_forces, military_domains, weapon_categories]
+        time_scale: short_medium
+      - id: military_air_effective
+        range: [0.0, 1.0]
+        init_rule_id: MIL_AIR_INIT_V1
+        source_sections: [armed_forces, military_domains, weapon_categories]
+        time_scale: short_medium
+      - id: military_naval_effective
+        range: [0.0, 1.0]
+        init_rule_id: MIL_NAVAL_INIT_V1
+        source_sections: [armed_forces, military_domains, weapon_categories]
+        time_scale: short_medium
+      - id: military_isr_ew_effective
+        range: [0.0, 1.0]
+        init_rule_id: MIL_ISR_EW_INIT_V1
+        source_sections: [military_domains, intelligence, cyber]
+        time_scale: short_medium
+      - id: military_drone_cuas_effective
+        range: [0.0, 1.0]
+        init_rule_id: MIL_DRONE_CUAS_INIT_V1
+        source_sections: [military_domains, weapon_categories, defence_industry]
+        time_scale: short_medium
+      - id: military_logistics_availability
+        range: [0.0, 1.0]
+        init_rule_id: MIL_LOGISTICS_INIT_V1
+        source_sections: [military_domains, sustainment, energy_security, critical_infrastructure]
+        time_scale: short
+      - id: defence_industrial_capacity
+        range: [0.0, 1.0]
+        init_rule_id: DEFENCE_INDUSTRY_INIT_V1
+        source_sections: [defence_industry, economy]
+        time_scale: structural
+      - id: replenishment_capacity
+        range: [0.0, 1.0]
+        init_rule_id: REPLENISHMENT_INIT_V1
+        source_sections: [defence_industry, alliances, economy]
+        time_scale: structural
+      - id: ai_defence_maturity
+        range: [0.0, 1.0]
+        init_rule_id: AI_DEFENCE_INIT_V1
+        source_sections: [ai, defence_industry]
+        time_scale: structural_long
+      - id: cyber_resilience
+        range: [0.0, 1.0]
+        init_rule_id: CYBER_RESILIENCE_INIT_V1
+        source_sections: [cyber, critical_infrastructure]
+        time_scale: short_medium
+
+  external_system:
+    module_owner: external_system
+    variables:
+      - id: alliance_support
+        range: [0.0, 1.0]
+        init_rule_id: ALLIANCE_SUPPORT_INIT_V1
+        source_sections: [alliances]
+        time_scale: short_medium
+      - id: external_conflict_pressure
+        range: [0.0, 1.0]
+        init_rule_id: EXTERNAL_CONFLICT_PRESSURE_INIT_V1
+        source_sections: [alliances, geography, governance, armed_forces]
+        time_scale: short_medium
+
+regimes:
+  national_phase:
+    values:
+      - STABLE
+      - TENSION
+      - EMERGENCY
+      - MASS_UNREST
+      - ORGANIZED_POLITICAL_VIOLENCE
+      - INSURGENCY
+      - DUAL_AUTHORITY
+      - CIVIL_WAR
+      - STATE_FRAGMENTATION
+    initial_rule_id: NATIONAL_PHASE_INIT_V1
+
+  security_force_regime:
+    values:
+      - COHESIVE
+      - STRAINED
+      - SELECTIVE_NONCOMPLIANCE
+      - COMMAND_FRACTURE
+      - LOCALIZED_DEFECTION
+      - MULTIPLE_COMMANDS
+    initial_rule_id: SECURITY_FORCE_REGIME_INIT_V1
+
+  prison_regime:
+    values:
+      - CONTROLLED
+      - STAFF_STRESS
+      - PARTIAL_CONTROL_LOSS
+      - DISORDER
+      - UNCONTROLLED_RELEASES
+    initial_rule_id: PRISON_REGIME_INIT_V1
+
+  organized_crime_regime:
+    values:
+      - NORMAL_MARKET
+      - STRESS_ADAPTATION
+      - BLACK_MARKET_EXPANSION
+      - TERRITORIAL_INFLUENCE
+      - PROTECTION_RELATIONSHIP
+      - COERCIVE_LOCAL_ACTOR
+    initial_rule_id: ORGANIZED_CRIME_REGIME_INIT_V1
+
+dynamic_collections:
+  demographic_cohorts:
+    key: cohort_id
+    examples: [religious_group, generation, age_band, nationality_or_origin_when_evidenced]
+    rule: "Only instantiate cohorts supported by Snapshot v1 or scenario data. Preserve original category semantics."
+  extremist_networks:
+    key: network_id
+    allowed_families: [violent_islamist, violent_ultranationalist, revolutionary, separatist]
+    rule: "Network entities are separate from civilian demographic groups."
+  criminal_networks:
+    key: network_id
+    rule: "Instantiate material organized-crime actors only when evidence or fractal refinement justifies them."
+  regional_nodes:
+    key: node_id
+    rule: "Created only by data configuration or adaptive fractal refinement; must preserve parent lineage."
+
+trace_contract:
+  initial_value_fields:
+    - init_rule_id
+    - snapshot_field_refs
+    - source_ids
+    - normalization_version
+    - uncertainty_refs
+  runtime_delta_fields:
+    - equation_id
+    - parameter_ids
+    - input_variable_refs
+    - event_refs
+    - edge_refs
+    - value_before
+    - raw_delta
+    - bounded_delta
+    - value_after
+  forbidden:
+    - silent_initialization
+    - unversioned_equation
+    - unreferenced_high_impact_parameter
+    - country_specific_dynamic_override

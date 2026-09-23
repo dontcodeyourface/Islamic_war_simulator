@@ -176,7 +176,7 @@ A runtime variable may expose:
 
 ## 8. Runtime reduction
 
-Snapshot v1 is an evidence store. The engine should normally execute on roughly 30–60 latent variables per country.
+Snapshot v1 is an evidence store. The exact runtime contract is defined by [ENGINE_STATE_V1.md](ENGINE_STATE_V1.md) and `config/engine/engine_state_v1.yaml`: **60 country scalar latents**, 12 physical stock fields, four regimes and dynamic collections.
 
 The transformation must be deterministic for fixed inputs, documented, unit-tested and uncertainty-aware.
 
@@ -184,7 +184,7 @@ The transformation must be deterministic for fixed inputs, documented, unit-test
       -> normalization / aggregation
       -> initial EngineState
 
-Every latent initial value must retain a contribution trace back to raw snapshot fields and source IDs.
+Every latent initial value must retain a contribution trace back to raw snapshot fields and source IDs. No module may introduce an additional permanent country scalar without an EngineState schema review.
 
 # PART III — DYNAMIC BLOCKS
 
