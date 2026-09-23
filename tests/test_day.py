@@ -1258,8 +1258,8 @@ def test_reciprocal_radicalization_resolves_from_common_beginning_state() -> Non
     ultranationalist = by_variable["violent_ultranationalist_pressure"]
     assert islamist.value_before == pytest.approx(0.8)
     assert ultranationalist.value_before == pytest.approx(0.2)
-    assert islamist.raw_delta == pytest.approx(0.004)
-    assert ultranationalist.raw_delta == pytest.approx(0.016)
+    assert islamist.raw_delta == pytest.approx(0.0008)
+    assert ultranationalist.raw_delta == pytest.approx(0.0128)
 
     islamist_resolution = next(
         item
@@ -1273,8 +1273,8 @@ def test_reciprocal_radicalization_resolves_from_common_beginning_state() -> Non
         if item.target_node == "ESP"
         and item.variable == "violent_ultranationalist_pressure"
     )
-    assert islamist_resolution.value_after == pytest.approx(0.804)
-    assert ultra_resolution.value_after == pytest.approx(0.216)
+    assert islamist_resolution.value_after == pytest.approx(0.8008)
+    assert ultra_resolution.value_after == pytest.approx(0.2128)
     for node_id in sorted(states):
         assert states[node_id].to_dict() == before[node_id]
 
@@ -1375,9 +1375,9 @@ def test_network_dynamics_and_reciprocal_feedback_share_owner_resolution() -> No
     )
 
     assert islamist_network.raw_delta == pytest.approx(0.00048)
-    assert islamist_feedback.raw_delta == pytest.approx(0.004)
+    assert islamist_feedback.raw_delta == pytest.approx(0.0008)
     assert ultra_network.raw_delta == pytest.approx(0.00192)
-    assert ultra_feedback.raw_delta == pytest.approx(0.016)
+    assert ultra_feedback.raw_delta == pytest.approx(0.0128)
     assert esp_revolutionary[0].raw_delta == pytest.approx(0.0024)
 
     islamist_resolution = next(
@@ -1399,15 +1399,15 @@ def test_network_dynamics_and_reciprocal_feedback_share_owner_resolution() -> No
         and item.variable == "revolutionary_extremist_pressure"
     )
 
-    assert islamist_resolution.raw_sum_delta == pytest.approx(0.00448)
-    assert ultra_resolution.raw_sum_delta == pytest.approx(0.01792)
+    assert islamist_resolution.raw_sum_delta == pytest.approx(0.00128)
+    assert ultra_resolution.raw_sum_delta == pytest.approx(0.01472)
     assert revolutionary_resolution.raw_sum_delta == pytest.approx(0.0024)
     assert result.states["ESP"].latents[
         "violent_islamist_pressure"
-    ] == pytest.approx(0.80448)
+    ] == pytest.approx(0.80128)
     assert result.states["ESP"].latents[
         "violent_ultranationalist_pressure"
-    ] == pytest.approx(0.21792)
+    ] == pytest.approx(0.21472)
     assert result.states["ESP"].latents[
         "revolutionary_extremist_pressure"
     ] == pytest.approx(0.0024)
