@@ -34,6 +34,11 @@ from .security_regime import (
     SecurityRegimeTransitionProposal,
     evaluate_security_regime,
 )
+from .security_regime_transition import (
+    SecurityRegimeCommitRecord,
+    commit_security_regime_transition,
+    retain_security_regime_persistence,
+)
 from .spillover import (
     GraphSpilloverRecord,
     SpilloverQueueState,
@@ -88,6 +93,7 @@ class DayTransactionResult:
     security_regime_persistence: dict[str, SecurityRegimePersistenceState]
     security_regime_evaluations: tuple[SecurityRegimeEvaluationResult, ...]
     security_regime_proposals: tuple[SecurityRegimeTransitionProposal, ...]
+    security_regime_commits: tuple[SecurityRegimeCommitRecord, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -146,6 +152,9 @@ class DayTransactionResult:
             ],
             "security_regime_proposals": [
                 item.to_dict() for item in self.security_regime_proposals
+            ],
+            "security_regime_commits": [
+                item.to_dict() for item in self.security_regime_commits
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -306,6 +315,7 @@ def _security_regime_inputs_fingerprint(
     persistence: dict[str, SecurityRegimePersistenceState | None],
     context_flags: dict[str, dict[str, bool]],
     regime_config: dict[str, Any],
+    transition_config: dict[str, Any] | None,
 ) -> dict[str, Any]:
     logger.info(
         "_security_regime_inputs_fingerprint nodes=%s",
@@ -321,6 +331,11 @@ def _security_regime_inputs_fingerprint(
             for node_id, flags in sorted(context_flags.items())
         },
         "regime_config_hash": canonical_hash(regime_config),
+        "transition_config_hash": (
+            canonical_hash(transition_config)
+            if transition_config is not None
+            else None
+        ),
     }
 
 
@@ -691,6 +706,78 @@ def _evaluate_security_regimes(
     )
 
 
+def _commit_security_regimes(
+    *,
+    states: dict[str, EngineState],
+    persistence: dict[str, SecurityRegimePersistenceState],
+    proposals: tuple[SecurityRegimeTransitionProposal, ...],
+    transition_config: dict[str, Any],
+    engine_state_registry: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, EngineState],
+    dict[str, SecurityRegimePersistenceState],
+    tuple[SecurityRegimeCommitRecord, ...],
+]:
+    logger.info(
+        "_commit_security_regimes states=%s proposals=%s",
+        len(states),
+        len(proposals),
+    )
+    proposals_by_node: dict[str, list[SecurityRegimeTransitionProposal]] = {
+        node_id: [] for node_id in states
+    }
+    for proposal in proposals:
+        if proposal.node_id not in proposals_by_node:
+            raise ValueError(
+                f"Security regime proposal targets unknown node {proposal.node_id}"
+            )
+        proposals_by_node[proposal.node_id].append(proposal)
+
+    committed_states: dict[str, EngineState] = {}
+    persistence_out: dict[str, SecurityRegimePersistenceState] = {}
+    commits: list[SecurityRegimeCommitRecord] = []
+
+    for node_id in sorted(states):
+        node_proposals = sorted(
+            proposals_by_node[node_id],
+            key=lambda item: item.proposal_id,
+        )
+        if len(node_proposals) > 1:
+            raise ValueError(
+                f"Multiple matured security regime proposals for {node_id}"
+            )
+
+        if not node_proposals:
+            committed_states[node_id] = states[node_id]
+            persistence_out[node_id] = retain_security_regime_persistence(
+                persistence=persistence[node_id],
+                trace=trace,
+            )
+            continue
+
+        committed_state, commit_record, committed_persistence = (
+            commit_security_regime_transition(
+                state=states[node_id],
+                proposal=node_proposals[0],
+                transition_config=transition_config,
+                engine_state_registry=engine_state_registry,
+                manifest=manifest,
+                trace=trace,
+            )
+        )
+        committed_states[node_id] = committed_state
+        persistence_out[node_id] = committed_persistence
+        commits.append(commit_record)
+
+    return (
+        committed_states,
+        persistence_out,
+        tuple(sorted(commits, key=lambda item: item.commit_id)),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -699,6 +786,7 @@ def _checkpoint_node(
     events: tuple[SimEvent, ...],
     resolutions: tuple[ResolutionRecord, ...],
     spillover_proposals: tuple[DeltaProposal, ...],
+    security_regime_commits: tuple[SecurityRegimeCommitRecord, ...],
     phase_commits: tuple[PhaseCommitRecord, ...],
     manifest: RunManifest,
     trace: TraceLedger,
@@ -730,6 +818,13 @@ def _checkpoint_node(
             and abs(record.clamp_amount) > 1e-15
         )
     )
+    node_security_regime_commits = tuple(
+        sorted(
+            record.commit_id
+            for record in security_regime_commits
+            if record.node_id == node_id
+        )
+    )
     node_phase_commits = tuple(
         sorted(
             record.commit_id
@@ -756,6 +851,7 @@ def _checkpoint_node(
         spillover_ids_applied=node_spillovers,
         constraint_clamps=clamp_resolutions,
         phase_transition_ids=node_phase_commits,
+        security_regime_transition_ids=node_security_regime_commits,
     )
 
 
@@ -792,6 +888,8 @@ def run_day_transaction(
         dict[str, SecurityRegimePersistenceState | None] | None
     ) = None,
     security_regime_context_flags: dict[str, dict[str, bool]] | None = None,
+    enable_security_regime_commits: bool = False,
+    security_regime_transition_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -828,6 +926,25 @@ def run_day_transaction(
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
 
+    if enable_security_regime_commits:
+        if not enable_security_regime_evaluator:
+            raise ValueError(
+                "Security regime commits require security regime evaluator"
+            )
+        if security_regime_transition_config is None:
+            raise ValueError(
+                "Security regime commits require security_regime_transition_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "security_regime_commit_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Security regime commit is disabled by the day transaction contract"
+            )
+
     if enable_security_regime_evaluator:
         if security_regime_config is None:
             raise ValueError(
@@ -861,6 +978,11 @@ def run_day_transaction(
             persistence=normalized_security_regime_persistence,
             context_flags=normalized_security_regime_context_flags,
             regime_config=security_regime_config,
+            transition_config=(
+                security_regime_transition_config
+                if enable_security_regime_commits
+                else None
+            ),
         )
 
     if enable_security_chain_dynamics:
@@ -1159,11 +1281,29 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    security_regime_commits: tuple[SecurityRegimeCommitRecord, ...] = ()
+    security_committed_states = advanced_states
+    if enable_security_regime_commits:
+        assert security_regime_transition_config is not None
+        (
+            security_committed_states,
+            security_regime_persistence_out,
+            security_regime_commits,
+        ) = _commit_security_regimes(
+            states=advanced_states,
+            persistence=security_regime_persistence_out,
+            proposals=security_regime_proposals,
+            transition_config=security_regime_transition_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
     phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
     phase_commits: tuple[PhaseCommitRecord, ...] = ()
-    final_states = advanced_states
+    final_states = security_committed_states
 
     if enable_phase_transitions:
         assert phase_config is not None
@@ -1175,7 +1315,7 @@ def run_day_transaction(
             phase_arbitrations,
             phase_commits,
         ) = _evaluate_and_commit_phases(
-            states=advanced_states,
+            states=security_committed_states,
             phase_persistence=normalized_phase_persistence,
             phase_context_flags=normalized_phase_context_flags,
             phase_config=phase_config,
@@ -1195,6 +1335,7 @@ def run_day_transaction(
             events=events,
             resolutions=resolution.records,
             spillover_proposals=spillover_proposals,
+            security_regime_commits=security_regime_commits,
             phase_commits=phase_commits,
             manifest=manifest,
             trace=staged_trace,
@@ -1235,6 +1376,9 @@ def run_day_transaction(
         ],
         security_regime_proposal_ids=[
             proposal.proposal_id for proposal in security_regime_proposals
+        ],
+        security_regime_commit_ids=[
+            record.commit_id for record in security_regime_commits
         ],
         security_regime_persistence={
             node_id: item.to_dict()
@@ -1281,6 +1425,7 @@ def run_day_transaction(
         security_regime_persistence=security_regime_persistence_out,
         security_regime_evaluations=security_regime_evaluations,
         security_regime_proposals=security_regime_proposals,
+        security_regime_commits=security_regime_commits,
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,

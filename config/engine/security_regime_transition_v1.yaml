@@ -1,0 +1,34 @@
+schema_version: "1.0"
+status: "implementation-v0.17"
+purpose: "Atomic commit contract for matured security-force regime proposals."
+
+mode:
+  enabled: true
+  max_commits_per_node_per_day: 1
+  deescalation_enabled: false
+  commit_is_atomic_with_day_transaction: true
+  reset_persistence_after_commit: true
+
+commit:
+  rule_id: "SECURITY_REGIME_COMMIT_V1"
+  state_field: "regimes.security_force_regime"
+  original_state_must_remain_unchanged: true
+  committed_state_must_validate: true
+
+persistence:
+  no_history_allowed_only_when_input_day_is_zero: true
+  all_nodes_required_after_day_zero: true
+  committed_transition_resets_streaks: true
+  last_evaluated_day_tracks_committed_day: true
+
+trace:
+  commit_record: "security_regime_transition_committed"
+  persistence_record: "security_regime_persistence_committed"
+  checkpoint_includes_security_regime_commit_ids: true
+
+safety:
+  deescalation_requires_future_explicit_recovery_contract: true
+  regime_is_classifier_not_operational_instruction: true
+  political_identity_direct_transition_input: false
+  demographic_identity_direct_transition_input: false
+  religious_identity_direct_transition_input: false

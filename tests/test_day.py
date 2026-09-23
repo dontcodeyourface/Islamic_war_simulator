@@ -1910,3 +1910,326 @@ def test_security_regime_persistence_continues_across_atomic_days() -> None:
     assert esp_eval.evaluations[0].persistence_observed == 2
     assert esp_eval.evaluations[0].persistence_required == 8
     assert second.security_regime_proposals == ()
+
+
+
+def test_security_regime_commit_applies_atomically_and_resets_streaks() -> None:
+    logger.info(
+        "test_security_regime_commit_applies_atomically_and_resets_streaks"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1023
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+
+    for state in states.values():
+        state.regimes["security_force_regime"] = "COHESIVE"
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+    states["ESP"].latents["security_chain_cohesion"] = 0.70
+    states["ESP"].latents["operational_fatigue"] = 0.50
+
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+    )
+
+    assert len(result.security_regime_proposals) == 1
+    assert len(result.security_regime_commits) == 1
+    commit = result.security_regime_commits[0]
+    assert commit.node_id == "ESP"
+    assert commit.from_regime == "COHESIVE"
+    assert commit.to_regime == "STRAINED"
+
+    assert result.states["ESP"].regimes[
+        "security_force_regime"
+    ] == "STRAINED"
+    assert result.security_regime_persistence[
+        "ESP"
+    ].current_regime == "STRAINED"
+    assert result.security_regime_persistence["ESP"].streaks == ()
+
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+
+    esp_checkpoint = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "daily_checkpoint"
+        and item["node_id"] == "ESP"
+    )
+    assert esp_checkpoint["security_regime_transition_ids"] == [
+        commit.commit_id
+    ]
+    assert trace.records[-1]["security_regime_commit_ids"] == [
+        commit.commit_id
+    ]
+
+
+def test_security_regime_commit_retains_non_matured_persistence() -> None:
+    logger.info(
+        "test_security_regime_commit_retains_non_matured_persistence"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1024
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+
+    for state in states.values():
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.55
+        state.latents["constitutional_loyalty"] = 0.65
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+    )
+
+    assert result.security_regime_proposals == ()
+    assert result.security_regime_commits == ()
+    assert all(
+        item.current_regime == "STRAINED"
+        for item in result.security_regime_persistence.values()
+    )
+    assert all(
+        dict(item.streaks).get(
+            "SECURITY_STRAINED_SELECTIVE_NONCOMPLIANCE_V1"
+        ) == 1
+        for item in result.security_regime_persistence.values()
+    )
+    assert all(
+        state.regimes["security_force_regime"] == "STRAINED"
+        for state in result.states.values()
+    )
+
+
+def test_security_regime_transition_config_changes_transaction_identity() -> None:
+    logger.info(
+        "test_security_regime_transition_config_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1025)
+    runtime_b = _runtime(seed=1025)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    regime_config_a = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    regime_config_b = copy.deepcopy(regime_config_a)
+    transition_a = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    transition_b = copy.deepcopy(transition_a)
+    transition_b["status"] = "identity-test-variant"
+
+    for runtime in (runtime_a, runtime_b):
+        for state in runtime[0].values():
+            state.regimes["security_force_regime"] = "COHESIVE"
+            state.latents["security_chain_cohesion"] = 0.90
+            state.latents["operational_fatigue"] = 0.10
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config_a,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config_b,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+
+
+def test_invalid_security_regime_commit_rolls_back_day_transaction() -> None:
+    logger.info(
+        "test_invalid_security_regime_commit_rolls_back_day_transaction"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1026
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    broken_transition = copy.deepcopy(transition_config)
+    broken_transition["mode"]["max_commits_per_node_per_day"] = 2
+
+    for state in states.values():
+        state.regimes["security_force_regime"] = "COHESIVE"
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+    states["ESP"].latents["security_chain_cohesion"] = 0.70
+    states["ESP"].latents["operational_fatigue"] = 0.50
+
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    rng_before = rng.describe()
+    trace = TraceLedger()
+
+    with pytest.raises(
+        ValueError,
+        match="exactly one security-regime commit per node/day",
+    ):
+        run_day_transaction(
+            states=states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_security_regime_evaluator=True,
+            security_regime_config=regime_config,
+            security_regime_persistence=None,
+            security_regime_context_flags={},
+            enable_security_regime_commits=True,
+            security_regime_transition_config=broken_transition,
+        )
+
+    assert rng.describe() == rng_before
+    assert trace.records == []
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+
+
+def test_security_regime_commit_precedes_phase_evaluation_in_trace() -> None:
+    logger.info(
+        "test_security_regime_commit_precedes_phase_evaluation_in_trace"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1027
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    phase_config = load_yaml(
+        ROOT / "config/engine/phase_evaluator_v1.yaml"
+    )
+    phase_transition_config = load_yaml(
+        ROOT / "config/engine/phase_transition_v1.yaml"
+    )
+
+    for state in states.values():
+        state.regimes["security_force_regime"] = "COHESIVE"
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+    states["ESP"].latents["security_chain_cohesion"] = 0.70
+    states["ESP"].latents["operational_fatigue"] = 0.50
+
+    trace = TraceLedger()
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_phase_transitions=True,
+        phase_config=phase_config,
+        phase_transition_config=phase_transition_config,
+        phase_persistence=None,
+        phase_context_flags={},
+    )
+
+    assert result.security_regime_commits
+    commit_index = next(
+        i
+        for i, item in enumerate(trace.records)
+        if item["record_type"] == "security_regime_transition_committed"
+    )
+    phase_index = next(
+        i
+        for i, item in enumerate(trace.records)
+        if item["record_type"] == "phase_evaluation"
+    )
+    assert commit_index < phase_index
