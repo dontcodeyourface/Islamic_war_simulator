@@ -405,3 +405,109 @@ def test_failure_after_event_rng_consumption_rolls_back_rng_trace_and_state() ->
         node_id: state.state_hash()
         for node_id, state in sorted(states.items())
     } == state_hashes_before
+
+
+def test_recovery_is_aggregated_with_event_effects_in_single_resolution_pass() -> None:
+    logger.info(
+        "test_recovery_is_aggregated_with_event_effects_in_single_resolution_pass"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=818)
+    recovery_config = load_yaml(ROOT / "config/engine/recovery_v1.yaml")
+    _force_spain_morocco_and_spain_protest(states)
+
+    baseline = float(states["ESP"].metadata["initial_latents"]["public_order_stress"])
+    current = float(states["ESP"].latents["public_order_stress"])
+    assert current == pytest.approx(0.40)
+    expected_recovery = (baseline - current) * parameters["parameter_sets"][
+        "synthetic_smoke_v1"
+    ]["parameters"]["DYNAMIC_GAINS_SYN_V1"]["value"]["fast_recovery"]
+
+    trace = TraceLedger()
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_recovery=True,
+        recovery_config=recovery_config,
+    )
+
+    proposals = [
+        proposal
+        for proposal in result.proposals
+        if proposal.target_node == "ESP"
+        and proposal.variable == "public_order_stress"
+    ]
+    assert len(proposals) == 3
+    assert all(proposal.value_before == pytest.approx(current) for proposal in proposals)
+
+    event_delta = sum(
+        proposal.raw_delta
+        for proposal in proposals
+        if proposal.event_type != "ENDOGENOUS_RECOVERY_V1"
+    )
+    recovery_delta = next(
+        proposal.raw_delta
+        for proposal in proposals
+        if proposal.event_type == "ENDOGENOUS_RECOVERY_V1"
+    )
+    assert event_delta == pytest.approx(0.085)
+    assert recovery_delta == pytest.approx(expected_recovery)
+
+    resolution = next(
+        record
+        for record in result.resolutions
+        if record.target_node == "ESP"
+        and record.variable == "public_order_stress"
+    )
+    assert len(resolution.proposal_ids) == 3
+    assert resolution.raw_sum_delta == pytest.approx(event_delta + recovery_delta)
+    assert resolution.value_after == pytest.approx(
+        current + event_delta + recovery_delta
+    )
+
+
+def test_recovery_config_changes_transaction_identity() -> None:
+    logger.info("test_recovery_config_changes_transaction_identity")
+    runtime_a = _runtime(seed=919)
+    runtime_b = _runtime(seed=919)
+    parameters_a = _disable_all_events(runtime_a[4])
+    parameters_b = _disable_all_events(runtime_b[4])
+    recovery_a = load_yaml(ROOT / "config/engine/recovery_v1.yaml")
+    recovery_b = copy.deepcopy(recovery_a)
+    recovery_b["status"] = "identity-test-variant"
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=parameters_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_recovery=True,
+        recovery_config=recovery_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=parameters_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_recovery=True,
+        recovery_config=recovery_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
