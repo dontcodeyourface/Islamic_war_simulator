@@ -26,6 +26,13 @@ from .fractal_materialization import (
     empty_fractal_topology,
     materialize_l1_to_l2,
 )
+from .fractal_child_state import (
+    FractalChildStateInitializationRecord,
+    FractalChildStateStore,
+    FractalConservationAuditRecord,
+    empty_fractal_child_state_store,
+    initialize_fractal_child_states,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -137,6 +144,13 @@ class DayTransactionResult:
     fractal_materialization_commits: tuple[
         FractalMaterializationCommitRecord, ...
     ]
+    fractal_child_state_store: FractalChildStateStore | None
+    fractal_child_initialization_records: tuple[
+        FractalChildStateInitializationRecord, ...
+    ]
+    fractal_conservation_audits: tuple[
+        FractalConservationAuditRecord, ...
+    ]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -241,6 +255,18 @@ class DayTransactionResult:
             "fractal_materialization_commits": [
                 item.to_dict() for item in self.fractal_materialization_commits
             ],
+            "fractal_child_state_store": (
+                self.fractal_child_state_store.to_dict()
+                if self.fractal_child_state_store is not None
+                else None
+            ),
+            "fractal_child_initialization_records": [
+                item.to_dict()
+                for item in self.fractal_child_initialization_records
+            ],
+            "fractal_conservation_audits": [
+                item.to_dict() for item in self.fractal_conservation_audits
+            ],
         }
 
 
@@ -280,6 +306,53 @@ def _validate_day_inputs(
         state.validate(latent_registry)
 
     return next(iter(days))
+
+
+def _normalize_fractal_child_store_input(
+    *,
+    day_from: int,
+    child_store: FractalChildStateStore | None,
+) -> FractalChildStateStore:
+    logger.info(
+        "_normalize_fractal_child_store_input day_from=%s supplied=%s",
+        day_from,
+        child_store is not None,
+    )
+    if child_store is None:
+        if day_from != 0:
+            raise ValueError(
+                "Fractal child-state store is required after day zero "
+                "when child initialization is enabled"
+            )
+        return empty_fractal_child_state_store(day_from)
+    if child_store.last_initialized_day != day_from:
+        raise ValueError(
+            "Fractal child-state store day mismatch: "
+            f"expected {day_from}, got {child_store.last_initialized_day}"
+        )
+    for state in child_store.states:
+        if state.day != day_from:
+            raise ValueError(
+                f"Fractal child state {state.node_id} day mismatch: "
+                f"expected {day_from}, got {state.day}"
+            )
+    return child_store
+
+
+def _fractal_child_state_inputs_fingerprint(
+    *,
+    child_store: FractalChildStateStore,
+    initialization_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info(
+        "_fractal_child_state_inputs_fingerprint day=%s states=%s",
+        child_store.last_initialized_day,
+        len(child_store.states),
+    )
+    return {
+        "child_store": child_store.to_dict(),
+        "initialization_config_hash": canonical_hash(initialization_config),
+    }
 
 
 def _normalize_fractal_topology_input(
@@ -707,6 +780,7 @@ def _transaction_id(
     security_regime_recovery_inputs: dict[str, Any] | None = None,
     fractal_refinement_inputs: dict[str, Any] | None = None,
     fractal_materialization_inputs: dict[str, Any] | None = None,
+    fractal_child_state_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -734,6 +808,7 @@ def _transaction_id(
             "security_regime_recovery_inputs": security_regime_recovery_inputs,
             "fractal_refinement_inputs": fractal_refinement_inputs,
             "fractal_materialization_inputs": fractal_materialization_inputs,
+            "fractal_child_state_inputs": fractal_child_state_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1257,6 +1332,9 @@ def _checkpoint_node(
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...],
     phase_commits: tuple[PhaseCommitRecord, ...],
     fractal_refinement_actions: tuple[FractalRefinementActionProposal, ...],
+    fractal_child_initialization_records: tuple[
+        FractalChildStateInitializationRecord, ...
+    ],
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> None:
@@ -1308,6 +1386,13 @@ def _checkpoint_node(
             if item.node_id == node_id
         )
     )
+    node_child_initializations = tuple(
+        sorted(
+            item.initialization_id
+            for item in fractal_child_initialization_records
+            if item.parent_node_id == node_id
+        )
+    )
     node_spillovers = tuple(
         sorted(
             proposal.event_id
@@ -1329,6 +1414,7 @@ def _checkpoint_node(
         phase_transition_ids=node_phase_commits,
         security_regime_transition_ids=node_security_regime_commits,
         refinement_actions=node_refinement_actions,
+        fractal_child_initialization_ids=node_child_initializations,
     )
 
 
@@ -1381,6 +1467,9 @@ def run_day_transaction(
     fractal_materialization_config: dict[str, Any] | None = None,
     fractal_region_catalog: dict[str, Any] | None = None,
     fractal_topology: FractalTopologyState | None = None,
+    enable_fractal_child_state_initialization: bool = False,
+    fractal_child_state_config: dict[str, Any] | None = None,
+    fractal_child_state_store: FractalChildStateStore | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1411,6 +1500,8 @@ def run_day_transaction(
     security_regime_recovery_inputs: dict[str, Any] | None = None
     fractal_refinement_inputs: dict[str, Any] | None = None
     fractal_materialization_inputs: dict[str, Any] | None = None
+    fractal_child_state_inputs: dict[str, Any] | None = None
+    normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
         str, FractalRefinementPersistenceState | None
@@ -1426,6 +1517,38 @@ def run_day_transaction(
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_fractal_child_state_initialization:
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Fractal child-state initialization requires "
+                "fractal materialization"
+            )
+        if fractal_child_state_config is None:
+            raise ValueError(
+                "Fractal child-state initialization requires "
+                "fractal_child_state_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_child_state_initialization_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal child-state initialization is disabled by "
+                "the day transaction contract"
+            )
+        normalized_fractal_child_store = _normalize_fractal_child_store_input(
+            day_from=day_from,
+            child_store=fractal_child_state_store,
+        )
+        fractal_child_state_inputs = (
+            _fractal_child_state_inputs_fingerprint(
+                child_store=normalized_fractal_child_store,
+                initialization_config=fractal_child_state_config,
+            )
+        )
 
     if enable_fractal_materialization:
         if not enable_fractal_refinement_evaluator:
@@ -1730,6 +1853,7 @@ def run_day_transaction(
         security_regime_recovery_inputs=security_regime_recovery_inputs,
         fractal_refinement_inputs=fractal_refinement_inputs,
         fractal_materialization_inputs=fractal_materialization_inputs,
+        fractal_child_state_inputs=fractal_child_state_inputs,
     )
 
     working_rng = rng.clone()
@@ -2019,6 +2143,32 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    fractal_child_state_store_out: FractalChildStateStore | None = None
+    fractal_child_initialization_records: tuple[
+        FractalChildStateInitializationRecord, ...
+    ] = ()
+    fractal_conservation_audits: tuple[
+        FractalConservationAuditRecord, ...
+    ] = ()
+
+    if enable_fractal_child_state_initialization:
+        assert fractal_topology_out is not None
+        assert normalized_fractal_child_store is not None
+        assert fractal_child_state_config is not None
+        child_result = initialize_fractal_child_states(
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=normalized_fractal_child_store,
+            initialization_config=fractal_child_state_config,
+            engine_state_registry=engine_state_registry,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = child_result.store
+        fractal_child_initialization_records = (
+            child_result.initialization_records
+        )
+        fractal_conservation_audits = child_result.conservation_audits
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -2030,6 +2180,9 @@ def run_day_transaction(
             security_regime_commits=security_regime_commits,
             phase_commits=phase_commits,
             fractal_refinement_actions=fractal_refinement_actions,
+            fractal_child_initialization_records=(
+                fractal_child_initialization_records
+            ),
             manifest=manifest,
             trace=staged_trace,
         )
@@ -2054,6 +2207,18 @@ def run_day_transaction(
         fractal_materialization_commit_ids=[
             item.commit_id for item in fractal_materialization_commits
         ],
+        fractal_child_initialization_ids=[
+            item.initialization_id
+            for item in fractal_child_initialization_records
+        ],
+        fractal_conservation_audit_ids=[
+            item.audit_id for item in fractal_conservation_audits
+        ],
+        fractal_child_state_store=(
+            fractal_child_state_store_out.to_dict()
+            if fractal_child_state_store_out is not None
+            else None
+        ),
         fractal_topology=(
             fractal_topology_out.to_dict()
             if fractal_topology_out is not None
@@ -2168,4 +2333,9 @@ def run_day_transaction(
         fractal_refinement_actions=fractal_refinement_actions,
         fractal_topology=fractal_topology_out,
         fractal_materialization_commits=fractal_materialization_commits,
+        fractal_child_state_store=fractal_child_state_store_out,
+        fractal_child_initialization_records=(
+            fractal_child_initialization_records
+        ),
+        fractal_conservation_audits=fractal_conservation_audits,
     )
