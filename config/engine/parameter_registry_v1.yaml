@@ -194,6 +194,28 @@ parameter_sets:
             persistence_days: 21
         rationale: "Synthetic institutional regime classification."
 
+      EVENT_HAZARD_WEIGHTS_SYN_V1:
+        type: event_hazard_weight_set
+        value:
+          INTERSTATE_INCIDENT_V1:
+            base_score: 0.03
+            generated_threshold: 0.78
+            weights:
+              external_conflict_pressure_mean: 0.55
+              geographic_proximity: 0.15
+              land_border: 0.20
+              alliance_deterrence: -0.15
+          MASS_PROTEST_TRIGGER_V1:
+            base_score: 0.02
+            generated_threshold: 0.82
+            weights:
+              polarization: 0.30
+              inflation_pressure: 0.18
+              unemployment_pressure: 0.18
+              government_legitimacy_inverse: 0.24
+              social_cohesion: -0.20
+        rationale: "Engineering-only hazard-score weights used to test event generation and traceability. Not empirical causal coefficients."
+
       EVENT_HAZARD_PROBABILITY_SYN_V1:
         type: probability_conversion
         value:
@@ -304,6 +326,7 @@ parameter_sets:
       PHASE_TRANSITIONS_CAL_V1: null
       PHASE_RECOVERY_CAL_V1: null
       SECURITY_REGIMES_CAL_V1: null
+      EVENT_HAZARD_WEIGHTS_CAL_V1: null
       EVENT_HAZARD_PROBABILITY_CAL_V1: null
       DYNAMIC_GAINS_CAL_V1: null
       RECIPROCAL_RADICALIZATION_CAL_V1: null
