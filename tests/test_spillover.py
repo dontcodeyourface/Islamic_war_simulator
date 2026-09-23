@@ -8,7 +8,11 @@ from iwsim.config import load_yaml
 from iwsim.graph import build_country_graph
 from iwsim.initializer import initialize_hybrid_state
 from iwsim.rng import RNGManager
-from iwsim.spillover import (\n    empty_spillover_queue,\n    evaluate_graph_spillovers,\n    propose_matured_spillover_effects,\n)
+from iwsim.spillover import (
+    empty_spillover_queue,
+    evaluate_graph_spillovers,
+    propose_matured_spillover_effects,
+)
 from iwsim.trace import TraceLedger
 
 logger = logging.getLogger(__name__)
