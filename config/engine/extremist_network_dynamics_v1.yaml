@@ -49,6 +49,9 @@ forbidden_direct_inputs:
   - "religious_fraction_other"
   - "foreign_born_fraction"
   - "second_generation_fraction"
+  - "demographic_momentum"
+  - "migration_pressure"
+  - "dependency_pressure"
 
 rules:
   same_equation_for_all_families: true
