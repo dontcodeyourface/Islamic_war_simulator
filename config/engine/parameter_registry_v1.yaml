@@ -1,0 +1,285 @@
+schema_version: "1.0"
+status: "canonical-pre-implementation"
+date: "2026-09-23"
+purpose: "Authoritative versioned parameter registry for Engine Dynamics v1."
+
+rules:
+  authoritative_numeric_parameter_store: true
+  code_numeric_literals_for_model_behavior_forbidden: true
+  parameter_change_requires_version_or_parameter_set_hash_change: true
+  synthetic_parameters_are_not_real_world_estimates: true
+  calibrated_v1_missing_values_are_fatal: true
+
+parameter_sets:
+  synthetic_smoke_v1:
+    calibrated: false
+    purpose: "Engineering-only stability, replay and CI."
+    parameters:
+      MEM_HALF_LIVES_SYN_V1:
+        type: structured_time_constants
+        value:
+          immediate_days: 2
+          short_days: 8
+          medium_days: 34
+          structural_days: 144
+          long_days: 610
+        unit: days
+        rationale: "Multiscale engineering defaults inspired by Fibonacci spacing; not empirically calibrated."
+
+      EDGE_GEO_SCALE_SYN_V1:
+        type: scalar
+        value: 1000
+        unit: km
+        rationale: "Engineering proximity-decay scale."
+
+      GRAPH_TRANSMISSION_SYN_V1:
+        type: channel_map
+        value:
+          geographic_proximity: 0.010
+          land_border: 0.020
+          trade_dependency: 0.015
+          energy_dependency: 0.020
+          migration_link: 0.012
+          diaspora_link: 0.006
+          alliance_link: 0.018
+          information_link: 0.025
+          criminal_network_link: 0.012
+          extremist_network_link: 0.018
+        unit: daily_dimensionless_gain
+        rationale: "Low-gain smoke-test transmission coefficients to exercise typed graph propagation without assuming empirical probabilities."
+
+      GRAPH_LATENCIES_SYN_V1:
+        type: channel_interval_map
+        value:
+          geographic_proximity: [1,3]
+          land_border: [0,2]
+          trade_dependency: [2,13]
+          energy_dependency: [1,8]
+          migration_link: [3,34]
+          diaspora_link: [3,21]
+          alliance_link: [1,13]
+          information_link: [0,3]
+          criminal_network_link: [5,34]
+          extremist_network_link: [5,34]
+        unit: days
+        rationale: "Engineering latency intervals; calibration required."
+
+      PHASE_STABLE_TENSION_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 3
+          any:
+            external_conflict_pressure_gte: 0.35
+            polarization_gte: 0.45
+            public_order_stress_gte: 0.40
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_TENSION_EMERGENCY_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 3
+          all:
+            public_order_stress_gte: 0.50
+            government_legitimacy_lte: 0.65
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_EMERGENCY_MASS_UNREST_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 5
+          all:
+            public_order_stress_gte: 0.60
+            polarization_gte: 0.60
+            social_cohesion_lte: 0.55
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_MASS_UNREST_OPV_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 8
+          all:
+            organized_armed_actor_capacity_gte: 0.35
+            public_order_stress_gte: 0.65
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_OPV_INSURGENCY_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 13
+          all:
+            organized_armed_actor_capacity_gte: 0.50
+            security_chain_cohesion_lte: 0.60
+            territorial_control_lte: 0.90
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_INSURGENCY_DUAL_AUTHORITY_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 13
+          all:
+            territorial_control_lte: 0.75
+            center_region_cohesion_lte: 0.50
+            state_cohesion_lte: 0.55
+            competing_authority_present: true
+        rationale: "Synthetic phase transition threshold."
+
+      PHASE_CIVIL_WAR_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 21
+          all:
+            organized_armed_actor_capacity_gte: 0.65
+            security_chain_cohesion_lte: 0.45
+            territorial_control_lte: 0.70
+            administrative_capacity_lte: 0.60
+        rationale: "Synthetic phase transition threshold. Not an empirical definition of civil war."
+
+      PHASE_FRAGMENTATION_SYN_V1:
+        type: transition_threshold_set
+        value:
+          persistence_days: 34
+          all:
+            territorial_control_lte: 0.45
+            administrative_capacity_lte: 0.40
+            state_cohesion_lte: 0.35
+            command_cohesion_lte: 0.40
+            salary_payment_continuity_lte: 0.50
+        rationale: "Synthetic state-fragmentation threshold."
+
+      PHASE_RECOVERY_SYN_V1:
+        type: recovery_parameter_set
+        value:
+          persistence_multiplier: 1.5
+          minimum_recovery_days: 13
+          hysteresis_required: true
+        rationale: "Prevents noisy one-day de-escalation/re-escalation."
+
+      SECURITY_REGIMES_SYN_V1:
+        type: regime_threshold_set
+        value:
+          cohesive:
+            security_chain_cohesion_gte: 0.75
+            command_cohesion_gte: 0.75
+          strained:
+            security_chain_cohesion_lt: 0.75
+            operational_fatigue_gte: 0.45
+          selective_noncompliance:
+            security_chain_cohesion_lte: 0.60
+            constitutional_loyalty_lte: 0.70
+            persistence_days: 8
+          command_fracture:
+            command_cohesion_lte: 0.50
+            security_chain_cohesion_lte: 0.50
+            persistence_days: 13
+          localized_defection:
+            command_cohesion_lte: 0.40
+            center_region_cohesion_lte: 0.45
+            competing_authority_present: true
+            persistence_days: 13
+          multiple_commands:
+            command_cohesion_lte: 0.30
+            state_cohesion_lte: 0.35
+            multiple_authority_nodes_present: true
+            persistence_days: 21
+        rationale: "Synthetic institutional regime classification."
+
+      EVENT_HAZARD_PROBABILITY_SYN_V1:
+        type: probability_conversion
+        value:
+          p_floor: 0.0001
+          score_scale: 0.010
+          formula: "p_day = p_floor + score_scale * bounded_hazard_score"
+        unit: probability_per_day
+        rationale: "CI/smoke-test event frequency only; not a real-world estimate."
+
+      DYNAMIC_GAINS_SYN_V1:
+        type: update_gain_set
+        value:
+          fast_daily_gain: 0.035
+          medium_daily_gain: 0.012
+          structural_daily_gain: 0.003
+          long_daily_gain: 0.0005
+          fast_recovery: 0.025
+          medium_recovery: 0.008
+          structural_recovery: 0.002
+          long_recovery: 0.0003
+          max_single_day_latent_delta: 0.10
+          max_single_day_structural_delta: 0.025
+        unit: dimensionless_per_day
+        rationale: "Engineering values chosen to test bounded multi-timescale behavior."
+
+      RECIPROCAL_RADICALIZATION_SYN_V1:
+        type: feedback_gain_set
+        value:
+          cross_reaction_gain: 0.020
+          damping_gain: 0.025
+          narrative_amplification_gain: 0.012
+        unit: dimensionless_per_day
+        rationale: "Synthetic feedback gains; identity populations are explicitly excluded as direct propensity inputs."
+
+      FRACTAL_REFINEMENT_SYN_V1:
+        type: refinement_parameter_set
+        value:
+          weights:
+            violence: 0.30
+            institutional_stress: 0.25
+            infrastructure_stress: 0.15
+            network_activity: 0.20
+            displacement: 0.10
+          expand_threshold: 0.62
+          expand_persistence_days: 8
+          collapse_threshold: 0.38
+          collapse_persistence_days: 34
+        rationale: "Engineering adaptive-resolution trigger with hysteresis."
+
+      GENERIC_RATIO_K_SYN_V1:
+        type: scalar
+        value: 1.0
+        unit: normalized_ratio_scale
+        rationale: "Default synthetic saturation constant when a rule does not define a domain-specific ratio scale."
+
+      GENERIC_LOGISTIC_SYN_V1:
+        type: structured_transform_parameters
+        value:
+          slope: 8.0
+          midpoint: 0.5
+        rationale: "Generic smoke-test logistic parameters; domain-specific normalization should replace these when data units are known."
+
+      GENERIC_SIGNED_TANH_SCALE_SYN_V1:
+        type: scalar
+        value: 1.0
+        rationale: "Generic synthetic signed normalization scale."
+
+  calibrated_v1:
+    calibrated: true
+    status: "UNPOPULATED"
+    parameters:
+      MEM_HALF_LIVES_CAL_V1: null
+      EDGE_GEO_SCALE_CAL_V1: null
+      GRAPH_TRANSMISSION_CAL_V1: null
+      GRAPH_LATENCIES_CAL_V1: null
+      PHASE_TRANSITIONS_CAL_V1: null
+      PHASE_RECOVERY_CAL_V1: null
+      SECURITY_REGIMES_CAL_V1: null
+      EVENT_HAZARD_PROBABILITY_CAL_V1: null
+      DYNAMIC_GAINS_CAL_V1: null
+      RECIPROCAL_RADICALIZATION_CAL_V1: null
+      FRACTAL_REFINEMENT_CAL_V1: null
+    missing_policy: "fatal"
+
+trace_requirements:
+  each_run_records:
+    - parameter_set_id
+    - parameter_set_hash
+  each_equation_delta_records:
+    - equation_id
+    - parameter_ids
+  each_transition_records:
+    - transition_rule_id
+    - threshold_parameter_id
+  each_stochastic_event_records:
+    - hazard_id
+    - probability_conversion_parameter_id
+  each_refinement_records:
+    - equation_id
+    - refinement_parameter_id
