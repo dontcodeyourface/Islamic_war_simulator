@@ -232,6 +232,35 @@ parameter_sets:
           collapse_persistence_days: 34
         rationale: "Engineering adaptive-resolution trigger with hysteresis."
 
+      INIT_NORMALIZATION_SYN_V1:
+        type: initialization_normalization_set
+        value:
+          demographic_growth_scale_percent: 2.0
+          dependency_ratio_k: 0.75
+          inflation_high_percent: 10.0
+          unemployment_high_percent: 25.0
+          energy_stock_target_days: 90.0
+          energy_weights:
+            strategic_stock: 0.50
+            import_resilience: 0.30
+            domestic_refining: 0.20
+          petroleum_import_dependency_scores:
+            near_total_for_refined_fuel_supply: 0.10
+            very_high: 0.20
+            high: 0.35
+            medium: 0.55
+            low: 0.75
+            very_low: 0.90
+          prison_occupancy_full_control_percent: 100.0
+          prison_occupancy_zero_control_percent: 200.0
+        rationale: "Engineering-only Snapshot-to-EngineState normalization anchors for v0.2. Not empirically calibrated."
+
+      BASELINE_ANCHORS_SYN_V1:
+        type: baseline_anchor_set
+        value:
+          functionality_baseline: 1.0
+        rationale: "Functionality variables measured relative to the factual start-state baseline initialize at 1.0 unless evidence explicitly represents an already-degraded state."
+
       GENERIC_RATIO_K_SYN_V1:
         type: scalar
         value: 1.0
@@ -254,6 +283,8 @@ parameter_sets:
     calibrated: true
     status: "UNPOPULATED"
     parameters:
+      INIT_NORMALIZATION_CAL_V1: null
+      BASELINE_ANCHORS_CAL_V1: null
       MEM_HALF_LIVES_CAL_V1: null
       EDGE_GEO_SCALE_CAL_V1: null
       GRAPH_TRANSMISSION_CAL_V1: null

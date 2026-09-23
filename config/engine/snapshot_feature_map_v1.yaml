@@ -1,0 +1,92 @@
+schema_version: "1.0"
+status: "implementation-v0.2"
+purpose: "Country-independent mapping from Snapshot v1 evidence to a conservative subset of EngineState v1 latents."
+
+rules:
+  only_declared_paths_allowed: true
+  country_name_conditionals_forbidden: true
+  unavailable_evidence_falls_back_to_registered_prior: true
+  baseline_anchor_is_not_empirical_evidence: true
+
+parameter_ids:
+  synthetic_smoke_v1:
+    normalization: INIT_NORMALIZATION_SYN_V1
+    baseline_anchor: BASELINE_ANCHORS_SYN_V1
+  calibrated_v1:
+    normalization: INIT_NORMALIZATION_CAL_V1
+    baseline_anchor: BASELINE_ANCHORS_CAL_V1
+
+empirical_rules:
+  demographic_momentum:
+    rule_id: EMP_DEMOGRAPHIC_MOMENTUM_V1
+    kind: signed_growth_tanh
+    paths:
+      - demographic_dynamics.annual_population_growth_rate
+
+  dependency_pressure:
+    rule_id: EMP_DEPENDENCY_PRESSURE_V1
+    kind: age_dependency_ratio
+    strategies:
+      - total_path: population.total
+        working_path: population.age.age_15_64
+      - working_share_path: population.age.age_15_59
+
+  inflation_pressure:
+    rule_id: EMP_INFLATION_PRESSURE_V1
+    kind: percent_linear
+    paths:
+      - economy.inflation_rate
+    parameter_key: inflation_high_percent
+
+  unemployment_pressure:
+    rule_id: EMP_UNEMPLOYMENT_PRESSURE_V1
+    kind: percent_linear
+    paths:
+      - economy.unemployment_rate
+    parameter_key: unemployment_high_percent
+
+  energy_resilience:
+    rule_id: EMP_ENERGY_RESILIENCE_V1
+    kind: energy_composite
+    paths:
+      strategic_stock: energy_security.strategic_petroleum_stock_days
+      import_dependency: energy_security.petroleum_import_dependency
+      domestic_refining: energy_security.domestic_refining_available
+
+  food_resilience:
+    rule_id: EMP_FOOD_RESILIENCE_V1
+    kind: percent_complement
+    paths:
+      - food_water_security.cereal_import_dependency_ratio
+
+  water_resilience:
+    rule_id: EMP_WATER_RESILIENCE_V1
+    kind: percent_complement
+    paths:
+      - food_water_security.water_stress_percent
+
+  prison_control:
+    rule_id: EMP_PRISON_CONTROL_V1
+    kind: prison_occupancy_control
+    paths:
+      - prisons.occupancy_rate
+
+baseline_anchor_rules:
+  economic_output:
+    rule_id: BASELINE_ECONOMIC_OUTPUT_V1
+    value_key: functionality_baseline
+  electricity_functionality:
+    rule_id: BASELINE_ELECTRICITY_FUNCTION_V1
+    value_key: functionality_baseline
+  fuel_distribution_functionality:
+    rule_id: BASELINE_FUEL_DISTRIBUTION_V1
+    value_key: functionality_baseline
+  transport_logistics_functionality:
+    rule_id: BASELINE_TRANSPORT_FUNCTION_V1
+    value_key: functionality_baseline
+  telecom_internet_functionality:
+    rule_id: BASELINE_TELECOM_FUNCTION_V1
+    value_key: functionality_baseline
+  health_system_functionality:
+    rule_id: BASELINE_HEALTH_FUNCTION_V1
+    value_key: functionality_baseline

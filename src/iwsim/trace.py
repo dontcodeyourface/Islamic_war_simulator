@@ -27,6 +27,17 @@ class TraceLedger:
         prior_id: str | None,
         rng_stream: str | None,
         draw_index: int | None,
+        source_type: str = "prior",
+        normalization_rule_id: str | None = None,
+        parameter_ids: tuple[str, ...] = (),
+        snapshot_field_refs: tuple[str, ...] = (),
+        source_ids: tuple[str, ...] = (),
+        data_quality: str | None = None,
+        freshness: str | None = None,
+        uncertainty_multiplier: float | None = None,
+        empirical_fraction: float = 0.0,
+        prior_fraction: float = 1.0,
+        baseline_fraction: float = 0.0,
     ) -> None:
         logger.info(
             "TraceLedger.append_initialization node_id=%s variable=%s",
@@ -42,6 +53,17 @@ class TraceLedger:
             prior_id=prior_id,
             rng_stream=rng_stream,
             draw_index=draw_index,
+            source_type=source_type,
+            normalization_rule_id=normalization_rule_id,
+            parameter_ids=list(parameter_ids),
+            snapshot_field_refs=list(snapshot_field_refs),
+            source_ids=list(source_ids),
+            data_quality=data_quality,
+            freshness=freshness,
+            uncertainty_multiplier=uncertainty_multiplier,
+            empirical_fraction=empirical_fraction,
+            prior_fraction=prior_fraction,
+            baseline_fraction=baseline_fraction,
         )
 
     def append_daily_checkpoint(

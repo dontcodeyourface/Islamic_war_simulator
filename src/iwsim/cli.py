@@ -4,9 +4,10 @@ import argparse
 import logging
 from pathlib import Path
 
+from . import __version__
 from .config import canonical_hash, file_sha256, load_yaml
 from .engine import NoOpEngine
-from .initializer import initialize_synthetic_state
+from .initializer import initialize_hybrid_state
 from .io import write_json
 from .logging import configure_logging
 from .manifest import build_manifest
@@ -43,27 +44,32 @@ def run_smoke(args: argparse.Namespace) -> int:
     engine_state_path = root / "config/engine/engine_state_v1.yaml"
     normalization_path = root / "config/engine/normalization_parameters_v1.yaml"
     parameters_path = root / "config/engine/parameter_registry_v1.yaml"
+    feature_map_path = root / "config/engine/snapshot_feature_map_v1.yaml"
 
     snapshot = load_yaml(country_path)
     engine_state_registry = load_yaml(engine_state_path)
     normalization_registry = load_yaml(normalization_path)
     parameter_registry = load_yaml(parameters_path)
+    feature_map = load_yaml(feature_map_path)
 
     rng = RNGManager(master_seed=args.seed)
     trace = TraceLedger()
-    initial_state = initialize_synthetic_state(
+    initial_state = initialize_hybrid_state(
         snapshot=snapshot,
         engine_state_registry=engine_state_registry,
         normalization_registry=normalization_registry,
+        parameter_registry=parameter_registry,
+        feature_map=feature_map,
         rng=rng,
         trace=trace,
+        profile="synthetic_smoke_v1",
     )
 
     parameter_set = parameter_registry["parameter_sets"]["synthetic_smoke_v1"]
     scenario_payload = {"scenario_id": "SCN-SMOKE-NOOP", "version": "1"}
 
     manifest = build_manifest(
-        engine_version="0.1.0",
+        engine_version=__version__,
         git_commit=args.git_commit,
         snapshot_schema_version=str(snapshot["identity"]["snapshot_version"]),
         snapshot_bundle_hash=canonical_hash(snapshot),
@@ -80,7 +86,7 @@ def run_smoke(args: argparse.Namespace) -> int:
         start_date=str(snapshot["identity"]["snapshot_date"]),
         horizon_days=args.days,
         enabled_modules=("initializer", "trace", "noop_engine"),
-        normalization_version="1.0",
+        normalization_version="1.0-hybrid-v0.2",
         execution_order_version="EXEC_ORDER_V1",
     )
 
@@ -106,7 +112,12 @@ def run_smoke(args: argparse.Namespace) -> int:
             "final_hash": result.state_hashes[-1],
             "days": args.days,
             "rng": rng.describe(),
-            "profile_warning": "ENGINEERING TEST PROFILE / NOT CALIBRATED / NOT A REAL-WORLD PROBABILITY",
+            "profile_warning": "ENGINEERING TEST PROFILE / PARTIAL EMPIRICAL INITIALIZATION / NOT CALIBRATED / NOT A REAL-WORLD PROBABILITY",
+            "initialization_mix": {
+                "empirical_fraction": initial_state.metadata["empirical_fraction"],
+                "baseline_fraction": initial_state.metadata["baseline_fraction"],
+                "prior_fraction": initial_state.metadata["prior_fraction"],
+            },
         },
     )
     trace.to_jsonl(out / "trace.jsonl")
