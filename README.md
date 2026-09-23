@@ -50,7 +50,7 @@ Canonical runtime-state contract: [docs/ENGINE_STATE_V1.md](docs/ENGINE_STATE_V1
 
 Canonical normalization/parameter contract: [docs/NORMALIZATION_AND_PARAMETERS_V1.md](docs/NORMALIZATION_AND_PARAMETERS_V1.md), with [`config/engine/normalization_parameters_v1.yaml`](config/engine/normalization_parameters_v1.yaml) and the authoritative [`config/engine/parameter_registry_v1.yaml`](config/engine/parameter_registry_v1.yaml). Synthetic smoke-test parameters are explicitly separated from future calibrated parameters.
 
-Current executable infrastructure: [docs/ENGINE_IMPLEMENTATION_V0.1.md](docs/ENGINE_IMPLEMENTATION_V0.1.md). Snapshot-to-state initialization is now extended by [docs/SNAPSHOT_NORMALIZATION_V0.2.md](docs/SNAPSHOT_NORMALIZATION_V0.2.md): a conservative subset of latents is initialized from traced Snapshot v1 evidence, baseline-relative functionality uses explicit anchors, and unresolved latents retain registered synthetic priors. Conflict dynamics remain disabled.
+Current executable infrastructure: [docs/ENGINE_IMPLEMENTATION_V0.1.md](docs/ENGINE_IMPLEMENTATION_V0.1.md). Snapshot-to-state initialization is now extended by [docs/SNAPSHOT_NORMALIZATION_V0.2.md](docs/SNAPSHOT_NORMALIZATION_V0.2.md): a conservative subset of latents is initialized from traced Snapshot v1 evidence, baseline-relative functionality uses explicit anchors, and unresolved latents retain registered synthetic priors. Conflict dynamics remain disabled. The structural country graph is now defined by [docs/TYPED_STRUCTURAL_GRAPH_V0.3.md](docs/TYPED_STRUCTURAL_GRAPH_V0.3.md): typed geographic/border/alliance edges are deterministic, provenance-traced and included in each run's graph hash; contagion remains disabled.
 
 ---
 
