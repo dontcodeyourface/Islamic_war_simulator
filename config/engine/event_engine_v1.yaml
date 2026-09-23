@@ -20,7 +20,7 @@ occurrence_policy:
   random_shock:
     condition: "hazard_score < generated_threshold and random_draw < occurrence_probability"
     provenance_class: "RANDOM_SHOCK"
-    rng_stream: "events"
+    rng_stream_pattern: "events:<event_type>:<sorted_actor_ids>"
 
 trace_requirements:
   candidate:
@@ -61,4 +61,5 @@ rules:
   event_id_must_be_deterministic_from_replay_identity: true
   generated_event_must_not_consume_event_rng: true
   random_shock_must_record_rng_draw: true
+  unrelated_event_families_must_not_shift_each_others_rng_streams: true
   event_evaluation_must_not_mutate_engine_state: true
