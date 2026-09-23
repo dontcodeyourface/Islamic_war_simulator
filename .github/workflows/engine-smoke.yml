@@ -10,6 +10,9 @@ on:
       - "src/**"
       - "tests/**"
       - "config/engine/**"
+      - "config/graph/**"
+      - "config/geography/**"
+      - "config/countries/**"
       - "pyproject.toml"
       - ".github/workflows/engine-smoke.yml"
 
