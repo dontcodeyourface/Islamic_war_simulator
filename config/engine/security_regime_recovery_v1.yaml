@@ -1,0 +1,59 @@
+schema_version: "1.0"
+status: "implementation-v0.18"
+purpose: "Read-only one-step security-force regime recovery evaluator with hysteresis."
+
+mode:
+  read_only: true
+  recovery_commit_allowed: false
+  one_level_per_transition: true
+  suppress_after_same_day_escalation: true
+  evaluate_end_of_day_state: true
+
+transitions:
+  - rule_id: "SECURITY_RECOVERY_STRAINED_COHESIVE_V1"
+    from: "STRAINED"
+    to: "COHESIVE"
+    parameter_subkey: "strained_to_cohesive"
+
+  - rule_id: "SECURITY_RECOVERY_SELECTIVE_NONCOMPLIANCE_STRAINED_V1"
+    from: "SELECTIVE_NONCOMPLIANCE"
+    to: "STRAINED"
+    parameter_subkey: "selective_noncompliance_to_strained"
+
+  - rule_id: "SECURITY_RECOVERY_COMMAND_FRACTURE_SELECTIVE_NONCOMPLIANCE_V1"
+    from: "COMMAND_FRACTURE"
+    to: "SELECTIVE_NONCOMPLIANCE"
+    parameter_subkey: "command_fracture_to_selective_noncompliance"
+
+  - rule_id: "SECURITY_RECOVERY_LOCALIZED_DEFECTION_COMMAND_FRACTURE_V1"
+    from: "LOCALIZED_DEFECTION"
+    to: "COMMAND_FRACTURE"
+    parameter_subkey: "localized_defection_to_command_fracture"
+
+  - rule_id: "SECURITY_RECOVERY_MULTIPLE_COMMANDS_LOCALIZED_DEFECTION_V1"
+    from: "MULTIPLE_COMMANDS"
+    to: "LOCALIZED_DEFECTION"
+    parameter_subkey: "multiple_commands_to_localized_defection"
+
+condition_language:
+  latent_suffix_operators:
+    "_gte": ">="
+    "_lte": "<="
+    "_gt": ">"
+    "_lt": "<"
+  boolean_context_flags:
+    - "competing_authority_present"
+    - "multiple_authority_nodes_present"
+
+persistence:
+  consecutive_days_required: true
+  reset_on_failed_condition: true
+  reset_when_current_regime_changes: true
+  same_day_re_evaluation: "fail_closed"
+  skipped_day_re_evaluation: "fail_closed"
+
+safety:
+  political_identity_direct_transition_input: false
+  demographic_identity_direct_transition_input: false
+  religious_identity_direct_transition_input: false
+  regime_is_classifier_not_operational_instruction: true
