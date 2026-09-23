@@ -58,6 +58,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/recovery_v1.yaml",
     )
     day_smoke.add_argument(
+        "--reciprocal-radicalization-config",
+        default="config/engine/reciprocal_radicalization_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--spillover-config",
         default="config/engine/graph_spillover_v1.yaml",
     )
@@ -217,6 +221,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     day_config = load_yaml(root / args.day_config)
     phase_config = load_yaml(root / args.phase_config)
     recovery_config = load_yaml(root / args.recovery_config)
+    reciprocal_radicalization_config = load_yaml(
+        root / args.reciprocal_radicalization_config
+    )
     spillover_config = load_yaml(root / args.spillover_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
@@ -284,6 +291,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "owner_resolver",
             "day_transaction",
             "bounded_recovery",
+            "reciprocal_radicalization",
             "graph_spillover_trace",
             "graph_spillover_effects",
             "phase_evaluator",
@@ -317,6 +325,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         enable_phase_transitions=True,
         enable_recovery=True,
         recovery_config=recovery_config,
+        enable_reciprocal_radicalization=True,
+        reciprocal_radicalization_config=(
+            reciprocal_radicalization_config
+        ),
         enable_graph_spillover=True,
         spillover_config=spillover_config,
         spillover_queue=None,
@@ -361,6 +373,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "spillover_candidate_count": len(result.spillover_candidates),
             "matured_spillover_count": len(result.matured_spillovers),
             "spillover_proposal_count": len(result.spillover_proposals),
+            "reciprocal_radicalization_proposal_count": len(
+                result.reciprocal_radicalization_proposals
+            ),
             "spillover_queue": (
                 result.spillover_queue.to_dict()
                 if result.spillover_queue is not None
