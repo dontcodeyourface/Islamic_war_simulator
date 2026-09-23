@@ -95,6 +95,7 @@ trace:
   include_clamp_resolution_ids: true
   include_phase_commit_ids: true
   include_security_regime_commit_ids: true
+  include_refinement_action_ids: true
   include_applied_spillover_ids: true
 
 ordering:
