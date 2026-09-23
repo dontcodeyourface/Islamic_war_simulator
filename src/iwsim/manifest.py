@@ -4,6 +4,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
+from uuid import uuid4
 
 from .config import canonical_hash
 
@@ -58,7 +59,7 @@ def build_manifest(**kwargs: Any) -> RunManifest:
     )
     payload["created_at"] = created_at
     replay_key = build_replay_key(payload)
-    run_id = payload.pop("run_id", f"run-{replay_key[:20]}")
+    run_id = payload.pop("run_id", f"run-{uuid4()}")
     return RunManifest(
         run_id=run_id,
         replay_key=replay_key,
