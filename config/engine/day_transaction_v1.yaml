@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.14"
+status: "implementation-v0.15"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -20,6 +20,9 @@ mode:
   reciprocal_radicalization_allowed: true
   reciprocal_radicalization_requires_explicit_enable_flag: true
   reciprocal_radicalization_contract: "config/engine/reciprocal_radicalization_v1.yaml"
+  security_chain_dynamics_allowed: true
+  security_chain_dynamics_requires_explicit_enable_flag: true
+  security_chain_dynamics_contract: "config/engine/security_chain_dynamics_v1.yaml"
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
   recovery_contract: "config/engine/recovery_v1.yaml"
@@ -42,6 +45,7 @@ transaction_rules:
   spillover_queue_must_commit_only_after_success: true
   extremist_network_proposals_observe_beginning_state: true
   reciprocal_radicalization_observes_beginning_state: true
+  security_chain_proposals_observe_beginning_state: true
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
   proposals_resolved_once_per_day: true
@@ -68,7 +72,7 @@ ordering:
   country_nodes: "iso3_ascending"
   graph_spillover: "candidate_and_maturation_pass_before_events_effects_join_owner_resolution"
   occurred_events: "event_id_ascending"
-  proposals: "event_recovery_matured_spillover_network_and_reciprocal_feedback_collected_then_proposal_id_ascending_before_resolution"
+  proposals: "event_recovery_matured_spillover_network_reciprocal_and_security_collected_then_proposal_id_ascending_before_resolution"
   phase_evaluation: "after_state_resolution_and_clock_advance"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
 

@@ -184,6 +184,41 @@ def _set_reciprocal_test_state(states: dict) -> None:
     states["ESP"].latents["communal_fear"] = 1.0
 
 
+
+def _set_security_chain_test_state(states: dict) -> None:
+    logger.info("_set_security_chain_test_state")
+    for state in states.values():
+        state.latents["public_order_stress"] = 0.0
+        state.latents["external_conflict_pressure"] = 0.0
+        state.latents["organized_armed_actor_capacity"] = 0.0
+        state.latents["salary_payment_continuity"] = 1.0
+        state.latents["government_legitimacy"] = 1.0
+        state.latents["transport_logistics_functionality"] = 1.0
+        state.latents["police_effective_capacity"] = 1.0
+        state.latents["intelligence_effectiveness"] = 1.0
+        state.latents["administrative_capacity"] = 1.0
+        state.latents["social_cohesion"] = 1.0
+        state.latents["security_chain_cohesion"] = 1.0
+        state.latents["command_cohesion"] = 1.0
+        state.latents["constitutional_loyalty"] = 1.0
+        state.latents["operational_fatigue"] = 0.0
+
+    esp = states["ESP"]
+    esp.latents["public_order_stress"] = 1.0
+    esp.latents["external_conflict_pressure"] = 1.0
+    esp.latents["organized_armed_actor_capacity"] = 1.0
+    esp.latents["salary_payment_continuity"] = 0.0
+    esp.latents["government_legitimacy"] = 0.0
+    esp.latents["transport_logistics_functionality"] = 0.0
+    esp.latents["police_effective_capacity"] = 0.0
+    esp.latents["intelligence_effectiveness"] = 0.0
+    esp.latents["administrative_capacity"] = 0.0
+    esp.latents["social_cohesion"] = 0.0
+    esp.latents["security_chain_cohesion"] = 0.8
+    esp.latents["command_cohesion"] = 0.8
+    esp.latents["constitutional_loyalty"] = 0.8
+    esp.latents["operational_fatigue"] = 0.2
+
 def test_no_event_day_advances_all_nodes_once_without_mutating_inputs() -> None:
     logger.info("test_no_event_day_advances_all_nodes_once_without_mutating_inputs")
     states, graph, day_config, registry, parameters, rng, manifest = _runtime()
@@ -1453,6 +1488,193 @@ def test_reciprocal_config_changes_transaction_identity() -> None:
         trace=TraceLedger(),
         enable_reciprocal_radicalization=True,
         reciprocal_radicalization_config=config_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+
+
+
+def test_security_chain_dynamics_resolve_atomically() -> None:
+    logger.info("test_security_chain_dynamics_resolve_atomically")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1016
+    )
+    parameters = _disable_all_events(parameters)
+    security_config = load_yaml(
+        ROOT / "config/engine/security_chain_dynamics_v1.yaml"
+    )
+    _set_security_chain_test_state(states)
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_chain_dynamics=True,
+        security_chain_config=security_config,
+    )
+
+    assert result.events == ()
+    esp_proposals = [
+        item
+        for item in result.security_chain_proposals
+        if item.target_node == "ESP"
+    ]
+    assert len(esp_proposals) == 4
+    assert {
+        item.variable for item in esp_proposals
+    } == {
+        "security_chain_cohesion",
+        "command_cohesion",
+        "constitutional_loyalty",
+        "operational_fatigue",
+    }
+    assert all(
+        item.value_before == pytest.approx(0.8)
+        for item in esp_proposals
+        if item.variable != "operational_fatigue"
+    )
+    fatigue = next(
+        item
+        for item in esp_proposals
+        if item.variable == "operational_fatigue"
+    )
+    assert fatigue.value_before == pytest.approx(0.2)
+
+    assert result.states["ESP"].latents[
+        "security_chain_cohesion"
+    ] == pytest.approx(0.7904)
+    assert result.states["ESP"].latents[
+        "command_cohesion"
+    ] == pytest.approx(0.7904)
+    assert result.states["ESP"].latents[
+        "constitutional_loyalty"
+    ] == pytest.approx(0.7976)
+    assert result.states["ESP"].latents[
+        "operational_fatigue"
+    ] == pytest.approx(0.2096)
+
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+
+    assert set(
+        trace.records[-1]["security_chain_proposal_ids"]
+    ) == {
+        item.proposal_id for item in result.security_chain_proposals
+    }
+
+
+def test_same_day_event_does_not_feed_security_chain_until_next_tick() -> None:
+    logger.info(
+        "test_same_day_event_does_not_feed_security_chain_until_next_tick"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1017
+    )
+    security_config = load_yaml(
+        ROOT / "config/engine/security_chain_dynamics_v1.yaml"
+    )
+    _force_spain_morocco_and_spain_protest(states)
+
+    esp = states["ESP"]
+    esp.latents["public_order_stress"] = 0.40
+    esp.latents["organized_armed_actor_capacity"] = 0.0
+    esp.latents["salary_payment_continuity"] = 1.0
+    esp.latents["transport_logistics_functionality"] = 1.0
+    esp.latents["police_effective_capacity"] = 1.0
+    esp.latents["intelligence_effectiveness"] = 1.0
+    esp.latents["administrative_capacity"] = 1.0
+    esp.latents["security_chain_cohesion"] = 0.8
+    esp.latents["command_cohesion"] = 0.8
+    esp.latents["constitutional_loyalty"] = 0.8
+    esp.latents["operational_fatigue"] = 0.2
+
+    trace = TraceLedger()
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_chain_dynamics=True,
+        security_chain_config=security_config,
+    )
+
+    protest = [
+        event
+        for event in result.events
+        if event.event_type == "MASS_PROTEST_TRIGGER_V1"
+        and event.actors == ("ESP",)
+    ]
+    assert protest
+    assert result.states["ESP"].latents["public_order_stress"] > 0.40
+
+    security_eval = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "security_chain_dynamics_evaluation"
+        and item["node_id"] == "ESP"
+        and item["variable"] == "security_chain_cohesion"
+    )
+    assert security_eval["stress_inputs"]["public_order_stress"] == pytest.approx(
+        0.40
+    )
+
+
+def test_security_chain_config_changes_transaction_identity() -> None:
+    logger.info("test_security_chain_config_changes_transaction_identity")
+    runtime_a = _runtime(seed=1018)
+    runtime_b = _runtime(seed=1018)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    _set_security_chain_test_state(runtime_a[0])
+    _set_security_chain_test_state(runtime_b[0])
+    config_a = load_yaml(
+        ROOT / "config/engine/security_chain_dynamics_v1.yaml"
+    )
+    config_b = copy.deepcopy(config_a)
+    config_b["status"] = "identity-test-variant"
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_security_chain_dynamics=True,
+        security_chain_config=config_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_security_chain_dynamics=True,
+        security_chain_config=config_b,
     )
 
     assert result_a.transaction_id != result_b.transaction_id

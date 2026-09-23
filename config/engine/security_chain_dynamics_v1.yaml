@@ -1,0 +1,71 @@
+schema_version: "1.0"
+status: "implementation-v0.15"
+purpose: "Endogenous security-chain cohesion, command, loyalty and fatigue dynamics."
+
+equation_id: "SECURITY_CHAIN_DYNAMICS_V1"
+
+stress_inputs:
+  - key: "public_order_stress"
+    variable: "public_order_stress"
+    transform: "identity"
+  - key: "external_conflict_pressure"
+    variable: "external_conflict_pressure"
+    transform: "identity"
+  - key: "organized_armed_actor_capacity"
+    variable: "organized_armed_actor_capacity"
+    transform: "identity"
+  - key: "salary_payment_discontinuity"
+    variable: "salary_payment_continuity"
+    transform: "one_minus"
+  - key: "government_legitimacy_inverse"
+    variable: "government_legitimacy"
+    transform: "one_minus"
+  - key: "transport_logistics_degradation"
+    variable: "transport_logistics_functionality"
+    transform: "one_minus"
+
+resilience_inputs:
+  - key: "government_legitimacy"
+    variable: "government_legitimacy"
+    transform: "identity"
+  - key: "salary_payment_continuity"
+    variable: "salary_payment_continuity"
+    transform: "identity"
+  - key: "police_effective_capacity"
+    variable: "police_effective_capacity"
+    transform: "identity"
+  - key: "intelligence_effectiveness"
+    variable: "intelligence_effectiveness"
+    transform: "identity"
+  - key: "administrative_capacity"
+    variable: "administrative_capacity"
+    transform: "identity"
+  - key: "social_cohesion"
+    variable: "social_cohesion"
+    transform: "identity"
+
+targets:
+  - variable: "security_chain_cohesion"
+    direction: "resilience"
+    gain_key: "medium_daily_gain"
+    max_delta_key: "max_single_day_latent_delta"
+  - variable: "command_cohesion"
+    direction: "resilience"
+    gain_key: "medium_daily_gain"
+    max_delta_key: "max_single_day_latent_delta"
+  - variable: "constitutional_loyalty"
+    direction: "resilience"
+    gain_key: "structural_daily_gain"
+    max_delta_key: "max_single_day_structural_delta"
+  - variable: "operational_fatigue"
+    direction: "stress"
+    gain_key: "medium_daily_gain"
+    max_delta_key: "max_single_day_latent_delta"
+
+safety_and_integrity:
+  political_party_preference_as_fracture_input: false
+  religious_identity_as_fracture_input: false
+  ethnicity_as_fracture_input: false
+  beginning_of_day_state_only: true
+  proposals_only: true
+  owner_resolver_required: true
