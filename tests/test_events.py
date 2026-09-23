@@ -113,7 +113,10 @@ def test_interstate_incident_generated_path_does_not_consume_rng() -> None:
     assert result.event is not None
     assert result.event.dry_run is True
     assert result.event.rng_stream is None
-    assert "events" not in rng.describe()["streams"]
+    assert not any(
+        stream_name.startswith("events:")
+        for stream_name in rng.describe()["streams"]
+    )
     assert not any(record["record_type"] == "event_rng_draw" for record in trace.records)
     assert esp.state_hash() == before_esp
     assert mar.state_hash() == before_mar
@@ -154,7 +157,7 @@ def test_interstate_incident_random_shock_path_records_rng() -> None:
     assert result.provenance_class == "RANDOM_SHOCK"
     assert result.random_draw is not None
     assert result.event is not None
-    assert result.event.rng_stream == "events"
+    assert result.event.rng_stream == "events:INTERSTATE_INCIDENT_V1:ESP--MAR"
 
     draws = [
         record
@@ -272,3 +275,63 @@ def test_random_event_candidate_replays_exactly() -> None:
 
     assert a.to_dict() == b.to_dict()
     assert trace_a.records == trace_b.records
+
+
+def test_unrelated_event_family_does_not_shift_interstate_rng() -> None:
+    logger.info("test_unrelated_event_family_does_not_shift_interstate_rng")
+    graph, parameters = _graph_and_parameters()
+    parameters = copy.deepcopy(parameters)
+    probability = parameters["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "EVENT_HAZARD_PROBABILITY_SYN_V1"
+    ]["value"]
+    probability["p_floor"] = 0.0
+    probability["score_scale"] = 0.01
+
+    esp_a = _state("config/countries/spain.yaml", 21)
+    mar_a = _state("config/countries/morocco.yaml", 22)
+    esp_b = _state("config/countries/spain.yaml", 21)
+    mar_b = _state("config/countries/morocco.yaml", 22)
+    for state in (esp_a, mar_a, esp_b, mar_b):
+        state.latents["external_conflict_pressure"] = 0.2
+
+    manifest = _manifest(graph.graph_hash())
+
+    rng_a = RNGManager(789)
+    first = evaluate_interstate_incident(
+        day=5,
+        state_a=esp_a,
+        state_b=mar_a,
+        edge=edge_by_nodes(graph, "ESP", "MAR"),
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng_a,
+        manifest=manifest,
+        trace=TraceLedger(),
+    )
+
+    rng_b = RNGManager(789)
+    _ = evaluate_mass_protest(
+        day=5,
+        state=esp_b,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng_b,
+        manifest=manifest,
+        trace=TraceLedger(),
+    )
+    second = evaluate_interstate_incident(
+        day=5,
+        state_a=esp_b,
+        state_b=mar_b,
+        edge=edge_by_nodes(graph, "ESP", "MAR"),
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng_b,
+        manifest=manifest,
+        trace=TraceLedger(),
+    )
+
+    assert first.random_draw == pytest.approx(second.random_draw)
+    assert first.occurrence_probability == pytest.approx(
+        second.occurrence_probability
+    )
