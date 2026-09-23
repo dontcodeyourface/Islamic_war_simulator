@@ -50,6 +50,8 @@ Canonical runtime-state contract: [docs/ENGINE_STATE_V1.md](docs/ENGINE_STATE_V1
 
 Canonical normalization/parameter contract: [docs/NORMALIZATION_AND_PARAMETERS_V1.md](docs/NORMALIZATION_AND_PARAMETERS_V1.md), with [`config/engine/normalization_parameters_v1.yaml`](config/engine/normalization_parameters_v1.yaml) and the authoritative [`config/engine/parameter_registry_v1.yaml`](config/engine/parameter_registry_v1.yaml). Synthetic smoke-test parameters are explicitly separated from future calibrated parameters.
 
+Current executable infrastructure: [docs/ENGINE_IMPLEMENTATION_V0.1.md](docs/ENGINE_IMPLEMENTATION_V0.1.md). It provides deterministic initialization/replay plumbing only; the 60 latents still use synthetic smoke-test priors and no conflict dynamics are enabled.
+
 ---
 
 ## 2. Core analytical rule
