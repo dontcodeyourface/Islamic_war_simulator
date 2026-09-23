@@ -260,3 +260,67 @@ def test_feedback_config_has_no_civilian_identity_propensity_inputs() -> None:
         "mosque_count",
     )
     assert not any(item in serialized for item in forbidden)
+
+
+
+def test_safety_flags_fail_closed_when_identity_propensity_is_enabled() -> None:
+    logger.info(
+        "test_safety_flags_fail_closed_when_identity_propensity_is_enabled"
+    )
+    state, registry, parameters, feedback_config = _state_fixture()
+    broken = copy.deepcopy(feedback_config)
+    broken["safety_and_integrity"][
+        "religious_population_share_as_propensity_input"
+    ] = True
+
+    with pytest.raises(ValueError, match="Safety invariant"):
+        propose_reciprocal_radicalization_effects(
+            states={"TST": state},
+            feedback_config=broken,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+        )
+
+
+def test_canonical_institutional_damping_set_cannot_be_replaced() -> None:
+    logger.info("test_canonical_institutional_damping_set_cannot_be_replaced")
+    state, registry, parameters, feedback_config = _state_fixture()
+    broken = copy.deepcopy(feedback_config)
+    broken["shared_inputs"]["damping_variables"] = [
+        "social_cohesion",
+        "government_legitimacy",
+        "police_effective_capacity",
+        "demographic_momentum",
+    ]
+
+    with pytest.raises(ValueError, match="canonical institutional set"):
+        propose_reciprocal_radicalization_effects(
+            states={"TST": state},
+            feedback_config=broken,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+        )
+
+
+def test_network_pair_cannot_be_replaced_by_civilian_or_unrelated_state() -> None:
+    logger.info(
+        "test_network_pair_cannot_be_replaced_by_civilian_or_unrelated_state"
+    )
+    state, registry, parameters, feedback_config = _state_fixture()
+    broken = copy.deepcopy(feedback_config)
+    broken["directions"][0]["source_variable"] = "polarization"
+    broken["directions"][1]["target_variable"] = "polarization"
+
+    with pytest.raises(ValueError, match="canonical violent-network state"):
+        propose_reciprocal_radicalization_effects(
+            states={"TST": state},
+            feedback_config=broken,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+        )
