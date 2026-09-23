@@ -12,6 +12,10 @@ from iwsim.graph import build_country_graph
 from iwsim.initializer import initialize_hybrid_state
 from iwsim.manifest import build_manifest
 from iwsim.rng import RNGManager
+from iwsim.security_regime import SecurityRegimePersistenceState
+from iwsim.security_regime_recovery import (
+    SecurityRegimeRecoveryPersistenceState,
+)
 from iwsim.trace import TraceLedger
 
 logger = logging.getLogger(__name__)
@@ -3487,3 +3491,137 @@ def test_fractal_child_state_config_changes_transaction_identity() -> None:
     assert result_a.transaction_id != result_b.transaction_id
     assert result_a.states == result_b.states
     assert result_a.fractal_child_state_store == result_b.fractal_child_state_store
+
+
+
+def test_security_recovery_commit_matures_on_day_13_and_resets_memories() -> None:
+    logger.info(
+        "test_security_recovery_commit_matures_on_day_13_and_resets_memories"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1048
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+    recovery_transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_transition_v1.yaml"
+    )
+
+    escalation_persistence = {}
+    recovery_persistence = {}
+    for node_id, state in states.items():
+        state.day = 12
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.50
+        state.latents["command_cohesion"] = 0.50
+        state.latents["constitutional_loyalty"] = 0.90
+        state.latents["operational_fatigue"] = 0.80
+        escalation_persistence[node_id] = SecurityRegimePersistenceState(
+            node_id=node_id,
+            current_regime="STRAINED",
+            last_evaluated_day=12,
+            streaks=(),
+        )
+        recovery_persistence[node_id] = (
+            SecurityRegimeRecoveryPersistenceState(
+                node_id=node_id,
+                current_regime="STRAINED",
+                last_evaluated_day=12,
+                streaks=(),
+            )
+        )
+
+    esp = states["ESP"]
+    esp.latents["security_chain_cohesion"] = 0.85
+    esp.latents["command_cohesion"] = 0.85
+    esp.latents["operational_fatigue"] = 0.20
+    recovery_persistence["ESP"] = SecurityRegimeRecoveryPersistenceState(
+        node_id="ESP",
+        current_regime="STRAINED",
+        last_evaluated_day=12,
+        streaks=(("SECURITY_RECOVERY_STRAINED_COHESIVE_V1", 12),),
+    )
+
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=escalation_persistence,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=recovery_config,
+        security_regime_recovery_persistence=recovery_persistence,
+        enable_security_regime_recovery_commits=True,
+        security_regime_recovery_transition_config=(
+            recovery_transition_config
+        ),
+    )
+
+    assert result.security_regime_commits == ()
+    assert len(result.security_regime_recovery_proposals) == 1
+    assert len(result.security_regime_recovery_commits) == 1
+    commit = result.security_regime_recovery_commits[0]
+    assert commit.node_id == "ESP"
+    assert commit.from_regime == "STRAINED"
+    assert commit.to_regime == "COHESIVE"
+
+    assert result.states["ESP"].day == 13
+    assert result.states["ESP"].regimes[
+        "security_force_regime"
+    ] == "COHESIVE"
+    assert result.security_regime_persistence[
+        "ESP"
+    ] == SecurityRegimePersistenceState(
+        node_id="ESP",
+        current_regime="COHESIVE",
+        last_evaluated_day=13,
+        streaks=(),
+    )
+    assert result.security_regime_recovery_persistence[
+        "ESP"
+    ] == SecurityRegimeRecoveryPersistenceState(
+        node_id="ESP",
+        current_regime="COHESIVE",
+        last_evaluated_day=13,
+        streaks=(),
+    )
+
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+
+    esp_checkpoint = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "daily_checkpoint"
+        and item["node_id"] == "ESP"
+    )
+    assert esp_checkpoint[
+        "security_regime_recovery_transition_ids"
+    ] == [commit.commit_id]
+    assert trace.records[-1][
+        "security_regime_recovery_commit_ids"
+    ] == [commit.commit_id]
