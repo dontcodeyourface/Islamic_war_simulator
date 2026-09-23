@@ -202,3 +202,53 @@ def test_hybrid_initialization_mix_sums_to_one() -> None:
         + state.metadata["prior_fraction"]
     )
     assert total == pytest.approx(1.0)
+
+
+def test_country_prior_streams_are_order_independent() -> None:
+    logger.info("test_country_prior_streams_are_order_independent")
+    snapshot_esp = load_yaml(ROOT / "config/countries/spain.yaml")
+    snapshot_mar = load_yaml(ROOT / "config/countries/morocco.yaml")
+    state_registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    normalization = load_yaml(ROOT / "config/engine/normalization_parameters_v1.yaml")
+    parameters = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
+    feature_map = load_yaml(ROOT / "config/engine/snapshot_feature_map_v1.yaml")
+
+    rng_a = RNGManager(2026)
+    trace_a = TraceLedger()
+    esp_a = initialize_hybrid_state(
+        snapshot=snapshot_esp,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_a,
+        trace=trace_a,
+        profile="synthetic_smoke_v1",
+    )
+
+    rng_b = RNGManager(2026)
+    trace_b = TraceLedger()
+    _ = initialize_hybrid_state(
+        snapshot=snapshot_mar,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_b,
+        trace=trace_b,
+        profile="synthetic_smoke_v1",
+    )
+    esp_b = initialize_hybrid_state(
+        snapshot=snapshot_esp,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=rng_b,
+        trace=trace_b,
+        profile="synthetic_smoke_v1",
+    )
+
+    assert esp_a.to_dict() == esp_b.to_dict()
+    assert "uncertainty_sampling:ESP" in rng_a.describe()["streams"]
+    assert "uncertainty_sampling:ESP" in rng_b.describe()["streams"]
