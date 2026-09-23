@@ -8,14 +8,19 @@ distance_matrix_path: "config/geography/country_distance_matrix_v1.yaml"
 nodes:
   ESP:
     snapshot_path: "config/countries/spain.yaml"
+    distance_matrix_name: "Spain"
   MAR:
     snapshot_path: "config/countries/morocco.yaml"
+    distance_matrix_name: "Morocco"
   FRA:
     snapshot_path: "config/countries/france.yaml"
+    distance_matrix_name: "France"
   DEU:
     snapshot_path: "config/countries/germany.yaml"
+    distance_matrix_name: "Germany"
   GBR:
     snapshot_path: "config/countries/united_kingdom.yaml"
+    distance_matrix_name: "United_Kingdom"
 
 channels:
   geographic_proximity:
