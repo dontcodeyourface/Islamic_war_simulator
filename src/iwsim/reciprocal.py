@@ -73,12 +73,18 @@ class ReciprocalRadicalizationComponents:
         }
 
 
-def _parameter_id(profile: str) -> str:
-    logger.info("_parameter_id profile=%s", profile)
+def _parameter_ids(profile: str) -> tuple[str, str]:
+    logger.info("_parameter_ids profile=%s", profile)
     if profile == "synthetic_smoke_v1":
-        return "RECIPROCAL_RADICALIZATION_SYN_V1"
+        return (
+            "RECIPROCAL_RADICALIZATION_SYN_V1",
+            "DYNAMIC_GAINS_SYN_V1",
+        )
     if profile == "calibrated_v1":
-        return "RECIPROCAL_RADICALIZATION_CAL_V1"
+        return (
+            "RECIPROCAL_RADICALIZATION_CAL_V1",
+            "DYNAMIC_GAINS_CAL_V1",
+        )
     raise ValueError(f"Unknown parameter profile: {profile}")
 
 
@@ -86,9 +92,13 @@ def _parameter_value(
     parameter_registry: dict[str, Any],
     *,
     profile: str,
-) -> tuple[dict[str, Any], str]:
-    logger.info("_parameter_value profile=%s", profile)
-    parameter_id = _parameter_id(profile)
+    parameter_id: str,
+) -> dict[str, Any]:
+    logger.info(
+        "_parameter_value profile=%s parameter_id=%s",
+        profile,
+        parameter_id,
+    )
     parameter = parameter_registry["parameter_sets"][profile]["parameters"].get(
         parameter_id
     )
@@ -103,7 +113,7 @@ def _parameter_value(
             f"Reciprocal-radicalization parameter {parameter_id} "
             "must contain a mapping value"
         )
-    return value, parameter_id
+    return value
 
 
 def _owner_map(engine_state_registry: dict[str, Any]) -> dict[str, str]:
@@ -353,11 +363,26 @@ def propose_reciprocal_radicalization_effects(
         fear_variable,
         narrative_variable,
     ) = _validate_config(feedback_config)
-    gains, parameter_id = _parameter_value(
+    parameter_id, gains_parameter_id = _parameter_ids(profile)
+    gains = _parameter_value(
         parameter_registry,
         profile=profile,
+        parameter_id=parameter_id,
+    )
+    dynamic_gains = _parameter_value(
+        parameter_registry,
+        profile=profile,
+        parameter_id=gains_parameter_id,
     )
     cross_gain, damping_gain, narrative_gain = _validate_gains(gains)
+    max_delta_key = "max_single_day_latent_delta"
+    if max_delta_key not in dynamic_gains:
+        raise KeyError(
+            f"Missing reciprocal-radicalization daily cap {max_delta_key}"
+        )
+    max_delta = float(dynamic_gains[max_delta_key])
+    if not math.isfinite(max_delta) or max_delta < 0.0:
+        raise ValueError("Reciprocal-radicalization daily cap must be finite and non-negative")
     owners = _owner_map(engine_state_registry)
     proposals: list[DeltaProposal] = []
 
@@ -387,16 +412,23 @@ def propose_reciprocal_radicalization_effects(
                 state=state,
                 variable=target_variable,
             )
-            cross_component = cross_gain * source_pressure * communal_fear
+            saturation = 1.0 - target_pressure
+            cross_component = (
+                cross_gain * source_pressure * communal_fear * saturation
+            )
             narrative_component = (
-                narrative_gain * narrative_strength * target_pressure
+                narrative_gain
+                * narrative_strength
+                * source_pressure
+                * saturation
             )
             damping_component = damping_gain * damping_score * target_pressure
-            raw_delta = (
+            unbounded_delta = (
                 cross_component
                 + narrative_component
                 - damping_component
             )
+            raw_delta = min(max_delta, max(-max_delta, unbounded_delta))
             components = ReciprocalRadicalizationComponents(
                 node_id=node_id,
                 direction_id=direction["direction_id"],
@@ -444,13 +476,15 @@ def propose_reciprocal_radicalization_effects(
                 raw_delta=raw_delta,
                 proposed_unbounded_value=value_before + raw_delta,
                 equation_id=direction["equation_id"],
-                parameter_ids=(parameter_id,),
+                parameter_ids=(parameter_id, gains_parameter_id),
                 apply_status="PROPOSED_NOT_APPLIED",
                 dry_run=True,
             )
             trace.append(
                 "reciprocal_radicalization_delta_proposal",
                 direction_id=direction["direction_id"],
+                max_delta_key=max_delta_key,
+                unbounded_delta=unbounded_delta,
                 **proposal.to_dict(),
             )
             trace.append("delta_proposal", **proposal.to_dict())
