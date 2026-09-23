@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from iwsim.config import load_yaml
-from iwsim.initializer import initialize_synthetic_state
+from iwsim.initializer import initialize_hybrid_state, initialize_synthetic_state
 from iwsim.rng import RNGManager
 from iwsim.state import extract_latent_registry
 from iwsim.trace import TraceLedger
@@ -81,3 +81,124 @@ def test_initialization_trace_rng_indices_are_unique_and_monotonic() -> None:
     ]
     assert draw_indices == sorted(draw_indices)
     assert len(draw_indices) == len(set(draw_indices))
+
+
+def _initialize_hybrid(country_file: str, seed: int):
+    logger.info("_initialize_hybrid country_file=%s seed=%s", country_file, seed)
+    snapshot = load_yaml(ROOT / country_file)
+    state_registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    normalization = load_yaml(ROOT / "config/engine/normalization_parameters_v1.yaml")
+    parameters = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
+    feature_map = load_yaml(ROOT / "config/engine/snapshot_feature_map_v1.yaml")
+    trace = TraceLedger()
+    state = initialize_hybrid_state(
+        snapshot=snapshot,
+        engine_state_registry=state_registry,
+        normalization_registry=normalization,
+        parameter_registry=parameters,
+        feature_map=feature_map,
+        rng=RNGManager(seed),
+        trace=trace,
+        profile="synthetic_smoke_v1",
+    )
+    return state, trace, state_registry
+
+
+def _initialization_record(trace: TraceLedger, variable: str):
+    logger.info("_initialization_record variable=%s", variable)
+    matches = [
+        record
+        for record in trace.records
+        if record["record_type"] == "initialization"
+        and record["variable"] == variable
+    ]
+    assert len(matches) == 1
+    return matches[0]
+
+
+def test_spain_hybrid_initialization_uses_snapshot_evidence() -> None:
+    logger.info("test_spain_hybrid_initialization_uses_snapshot_evidence")
+    state, trace, registry = _initialize_hybrid("config/countries/spain.yaml", 100)
+
+    assert state.latents["demographic_momentum"] == pytest.approx(0.421899, rel=1e-5)
+    assert state.latents["dependency_pressure"] == pytest.approx(0.42145, rel=2e-3)
+    assert state.latents["inflation_pressure"] == pytest.approx(0.27)
+    assert state.latents["unemployment_pressure"] == pytest.approx(0.416)
+    assert state.latents["energy_resilience"] == pytest.approx(0.76)
+    assert state.latents["food_resilience"] == pytest.approx(0.539)
+    assert state.latents["water_resilience"] == pytest.approx(0.5675)
+    assert state.latents["economic_output"] == pytest.approx(1.0)
+    assert state.latents["electricity_functionality"] == pytest.approx(1.0)
+
+    assert state.metadata["empirical_latent_count"] == 7
+    assert state.metadata["baseline_latent_count"] == 6
+    assert state.metadata["prior_latent_count"] == 47
+    assert (
+        state.metadata["empirical_latent_count"]
+        + state.metadata["baseline_latent_count"]
+        + state.metadata["prior_latent_count"]
+        == 60
+    )
+
+    record = _initialization_record(trace, "energy_resilience")
+    assert record["source_type"] == "empirical"
+    assert record["prior_id"] is None
+    assert "energy_security.strategic_petroleum_stock_days" in record["snapshot_field_refs"]
+    assert "ES-CORES-RESERVES-2025" in record["source_ids"]
+    assert "INIT_NORMALIZATION_SYN_V1" in record["parameter_ids"]
+
+    prior_record = _initialization_record(trace, "government_legitimacy")
+    assert prior_record["source_type"] == "prior"
+    assert prior_record["prior_id"] is not None
+
+    baseline_record = _initialization_record(trace, "economic_output")
+    assert baseline_record["source_type"] == "baseline_anchor"
+    assert baseline_record["empirical_fraction"] == 0.0
+    assert baseline_record["baseline_fraction"] == 1.0
+
+    state.validate(extract_latent_registry(registry))
+
+
+def test_morocco_hybrid_initialization_uses_snapshot_evidence() -> None:
+    logger.info("test_morocco_hybrid_initialization_uses_snapshot_evidence")
+    state, trace, registry = _initialize_hybrid("config/countries/morocco.yaml", 100)
+
+    assert state.latents["demographic_momentum"] == pytest.approx(0.401134, rel=1e-5)
+    assert state.latents["dependency_pressure"] == pytest.approx(0.4736, rel=2e-3)
+    assert state.latents["inflation_pressure"] == pytest.approx(0.07)
+    assert state.latents["unemployment_pressure"] == pytest.approx(0.36)
+    assert state.latents["energy_resilience"] == pytest.approx(0.324444, rel=1e-5)
+    assert state.latents["water_resilience"] == pytest.approx(0.4925)
+    assert state.latents["prison_control"] == pytest.approx(0.467)
+    assert state.metadata["empirical_latent_count"] == 7
+    assert state.metadata["baseline_latent_count"] == 6
+    assert state.metadata["prior_latent_count"] == 47
+
+    food_record = _initialization_record(trace, "food_resilience")
+    assert food_record["source_type"] == "prior"
+    assert food_record["prior_id"] is not None
+
+    prison_record = _initialization_record(trace, "prison_control")
+    assert prison_record["source_type"] == "empirical"
+    assert prison_record["source_ids"] == ["MA-PRISON-POP-2025"]
+
+    state.validate(extract_latent_registry(registry))
+
+
+def test_hybrid_initialization_replays_exactly() -> None:
+    logger.info("test_hybrid_initialization_replays_exactly")
+    state_a, trace_a, _ = _initialize_hybrid("config/countries/spain.yaml", 55)
+    state_b, trace_b, _ = _initialize_hybrid("config/countries/spain.yaml", 55)
+    assert state_a.to_dict() == state_b.to_dict()
+    assert trace_a.records == trace_b.records
+
+
+def test_hybrid_initialization_mix_sums_to_one() -> None:
+    logger.info("test_hybrid_initialization_mix_sums_to_one")
+    state, _, _ = _initialize_hybrid("config/countries/spain.yaml", 55)
+    total = (
+        state.metadata["empirical_fraction"]
+        + state.metadata["baseline_fraction"]
+        + state.metadata["prior_fraction"]
+    )
+    assert total == pytest.approx(1.0)
