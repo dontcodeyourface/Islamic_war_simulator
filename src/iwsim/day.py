@@ -2197,7 +2197,7 @@ def run_day_transaction(
             security_regime_recovery_evaluations,
             security_regime_recovery_proposals,
         ) = _evaluate_security_regime_recoveries(
-            states=security_recovered_states,
+            states=security_committed_states,
             persistence=normalized_security_regime_recovery_persistence,
             context_flags=normalized_security_regime_context_flags,
             recovery_config=security_regime_recovery_config,
@@ -2231,7 +2231,7 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
-        phase_persistence_out: dict[str, PhasePersistenceState] = {}
+    phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
     phase_commits: tuple[PhaseCommitRecord, ...] = ()
@@ -2247,7 +2247,7 @@ def run_day_transaction(
             phase_arbitrations,
             phase_commits,
         ) = _evaluate_and_commit_phases(
-            states=security_committed_states,
+            states=security_recovered_states,
             phase_persistence=normalized_phase_persistence,
             phase_context_flags=normalized_phase_context_flags,
             phase_config=phase_config,
