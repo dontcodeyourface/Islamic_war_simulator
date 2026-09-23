@@ -203,6 +203,8 @@ def initialize_synthetic_state(
             "initialization_profile": "synthetic_smoke_v1",
             "empirical_fraction": 0.0,
             "prior_fraction": 1.0,
+            "baseline_latents": tuple(sorted(latents.items())),
+            "baseline_latents_version": "ENGINESTATE_T0_V1",
         },
     )
     state.validate(latent_registry)
@@ -352,6 +354,8 @@ def initialize_hybrid_state(
             "empirical_latent_count": empirical_count,
             "baseline_latent_count": baseline_count,
             "prior_latent_count": prior_count,
+            "baseline_latents": tuple(sorted(latents.items())),
+            "baseline_latents_version": "ENGINESTATE_T0_V1",
         },
     )
     state.validate(latent_registry)
