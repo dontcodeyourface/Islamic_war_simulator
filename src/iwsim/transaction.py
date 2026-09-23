@@ -132,6 +132,7 @@ def _transaction_id(
     state_hashes_before: tuple[tuple[str, str], ...],
     graph: StructuralGraph,
     rule_id: str,
+    phase_runtime_hash: str | None,
 ) -> str:
     logger.info("_transaction_id day_from=%s", day_from)
     digest = canonical_hash(
@@ -141,9 +142,44 @@ def _transaction_id(
             "day_from": day_from,
             "graph_hash": graph.graph_hash(),
             "state_hashes_before": dict(state_hashes_before),
+            "phase_runtime_hash": phase_runtime_hash,
         }
     )
     return f"daytx-{digest[:24]}"
+
+
+
+
+def _phase_runtime_hash(
+    *,
+    phase_enabled: bool,
+    phase_persistence: dict[str, PhasePersistenceState | None],
+    phase_context_flags: dict[str, dict[str, bool]] | None,
+) -> str | None:
+    logger.info("_phase_runtime_hash phase_enabled=%s", phase_enabled)
+    if not phase_enabled:
+        return None
+    persistence_payload = {
+        node_id: (
+            persistence.to_dict()
+            if persistence is not None
+            else None
+        )
+        for node_id, persistence in sorted(phase_persistence.items())
+    }
+    context_payload = {
+        node_id: {
+            key: bool(value)
+            for key, value in sorted(flags.items())
+        }
+        for node_id, flags in sorted((phase_context_flags or {}).items())
+    }
+    return canonical_hash(
+        {
+            "phase_persistence": persistence_payload,
+            "phase_context_flags": context_payload,
+        }
+    )
 
 
 def _evaluate_event_spec(
@@ -443,12 +479,18 @@ def execute_day_transaction(
             "DAY_TRANSACTION_V1",
         )
     )
+    phase_runtime_hash = _phase_runtime_hash(
+        phase_enabled=phase_enabled,
+        phase_persistence=previous_phase_persistence,
+        phase_context_flags=phase_context_flags,
+    )
     transaction_id = _transaction_id(
         manifest=manifest,
         day_from=day_from,
         state_hashes_before=state_hashes_before,
         graph=graph,
         rule_id=transaction_rule_id,
+        phase_runtime_hash=phase_runtime_hash,
     )
 
     working_rng = rng.clone()
@@ -464,6 +506,7 @@ def execute_day_transaction(
         day_to=day_to,
         state_hashes_before=dict(state_hashes_before),
         graph_hash=graph.graph_hash(),
+        phase_runtime_hash=phase_runtime_hash,
         rng_before=rng_before,
     )
 
@@ -591,6 +634,7 @@ def execute_day_transaction(
             node_id: persistence.to_dict()
             for node_id, persistence in sorted(phase_persistence_out.items())
         },
+        phase_runtime_hash_before=phase_runtime_hash,
         rng_after=working_rng.describe(),
     )
 
