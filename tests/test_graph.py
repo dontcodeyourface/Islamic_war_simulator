@@ -62,7 +62,10 @@ def test_alliance_channel_uses_formal_membership_and_explicit_relationships() ->
 
     esp_fra = edge_by_nodes(graph, "ESP", "FRA")
     assert esp_fra.channels["alliance_link"].value == pytest.approx(1.0)
-    assert "shared_membership:NATO" in esp_fra.channels[
+    assert "snapshot:ESP:alliances.memberships:NATO" in esp_fra.channels[
+        "alliance_link"
+    ].evidence_refs
+    assert "snapshot:FRA:alliances.memberships:NATO" in esp_fra.channels[
         "alliance_link"
     ].evidence_refs
 
@@ -117,3 +120,12 @@ def test_graph_hash_changes_if_graph_configuration_changes() -> None:
     assert edge_by_nodes(altered, "ESP", "MAR").channels[
         "alliance_link"
     ].value == pytest.approx(0.0)
+
+
+def test_graph_hash_provenance_contains_all_snapshot_inputs() -> None:
+    logger.info("test_graph_hash_provenance_contains_all_snapshot_inputs")
+    graph = _build_graph()
+    hashes = dict(graph.source_hashes)
+    for node_id in ("DEU", "ESP", "FRA", "GBR", "MAR"):
+        assert f"snapshot:{node_id}" in hashes
+        assert len(hashes[f"snapshot:{node_id}"]) == 64
