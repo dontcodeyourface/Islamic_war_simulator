@@ -74,6 +74,10 @@ class TraceLedger:
         node_id: str,
         state_hash_before: str,
         state_hash_after: str,
+        candidate_count: int = 0,
+        event_ids_applied: tuple[str, ...] = (),
+        proposal_ids: tuple[str, ...] = (),
+        resolution_ids: tuple[str, ...] = (),
     ) -> None:
         logger.info(
             "TraceLedger.append_daily_checkpoint run_id=%s day=%s node_id=%s",
@@ -88,8 +92,11 @@ class TraceLedger:
             node_id=node_id,
             state_hash_before=state_hash_before,
             state_hash_after=state_hash_after,
+            candidate_count=candidate_count,
             module_deltas=[],
-            event_ids_applied=[],
+            event_ids_applied=list(event_ids_applied),
+            proposal_ids=list(proposal_ids),
+            resolution_ids=list(resolution_ids),
             spillover_ids_applied=[],
             agent_action_ids=[],
             refinement_actions=[],
