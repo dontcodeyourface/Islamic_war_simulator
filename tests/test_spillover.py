@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from iwsim.config import load_yaml
 from iwsim.graph import build_country_graph
 from iwsim.initializer import initialize_hybrid_state
 from iwsim.rng import RNGManager
-from iwsim.spillover import evaluate_graph_spillovers, empty_spillover_queue
+from iwsim.spillover import (\n    empty_spillover_queue,\n    evaluate_graph_spillovers,\n    propose_matured_spillover_effects,\n)
 from iwsim.trace import TraceLedger
 
 logger = logging.getLogger(__name__)
@@ -223,3 +224,77 @@ def test_calibrated_spillover_profile_fails_closed() -> None:
         assert "Missing spillover parameter" in str(exc)
     else:
         raise AssertionError("calibrated_v1 must fail closed while unpopulated")
+
+
+
+def test_matured_state_spillovers_become_traceable_delta_proposals() -> None:
+    logger.info("test_matured_state_spillovers_become_traceable_delta_proposals")
+    states, graph, parameters, config = _runtime()
+    registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    patched = copy.deepcopy(parameters)
+    latencies = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "GRAPH_LATENCIES_SYN_V1"
+    ]["value"]
+    latencies["geographic_proximity"] = [0, 0]
+    latencies["land_border"] = [0, 0]
+
+    before = {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    }
+    result = evaluate_graph_spillovers(
+        day=1,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    ready = tuple(
+        item
+        for item in result.matured
+        if item.status == "MATURED_READY_FOR_PROPOSAL"
+    )
+    assert ready
+    assert all(item.apply_to_state for item in ready)
+    assert all(
+        item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        for item in ready
+    )
+
+    trace = TraceLedger()
+    proposals = propose_matured_spillover_effects(
+        matured=result.matured,
+        states=states,
+        engine_state_registry=registry,
+        trace=trace,
+    )
+
+    assert len(proposals) == len(ready)
+    assert all(item.event_type == "GRAPH_SPILLOVER_V1" for item in proposals)
+    assert all(item.owner_module == "external_system" for item in proposals)
+    assert all(
+        item.value_before
+        == states[item.target_node].latents[item.variable]
+        for item in proposals
+    )
+    assert {item.event_id for item in proposals} == {
+        item.spillover_id for item in ready
+    }
+    assert {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    } == before
+
+    spillover_delta_records = [
+        item for item in trace.records
+        if item["record_type"] == "spillover_delta_proposal"
+    ]
+    delta_records = [
+        item for item in trace.records
+        if item["record_type"] == "delta_proposal"
+    ]
+    assert len(spillover_delta_records) == len(proposals)
+    assert len(delta_records) == len(proposals)
