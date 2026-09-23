@@ -62,6 +62,8 @@ Owner-resolution infrastructure: [docs/OWNER_RESOLVER_V0.6.md](docs/OWNER_RESOLV
 
 Atomic day infrastructure: [docs/DAY_TRANSACTION_V0.7.md](docs/DAY_TRANSACTION_V0.7.md), backed by [`config/engine/day_transaction_v1.yaml`](config/engine/day_transaction_v1.yaml). The engine can now execute one atomic synchronous multi-country day from event evaluation through owner resolution and clock advance, with transactional RNG/trace rollback; phase transitions, recovery and graph spillover effects remain disabled.
 
+Read-only phase-evaluation infrastructure: [docs/PHASE_EVALUATOR_V0.8.md](docs/PHASE_EVALUATOR_V0.8.md), backed by [`config/engine/phase_evaluator_v1.yaml`](config/engine/phase_evaluator_v1.yaml). End-of-day EngineState can now be evaluated against persistence-aware national phase rules to emit traceable transition proposals without mutating the phase; arbitration and phase commit remain disabled.
+
 ---
 
 ## 2. Core analytical rule

@@ -1,0 +1,127 @@
+schema_version: "1.0"
+status: "implementation-v0.8"
+purpose: "Read-only national phase evaluator with persistence tracking."
+
+mode:
+  read_only: true
+  phase_commit_allowed: false
+  multiple_outgoing_proposals_allowed: true
+  deescalation_enabled: false
+  evaluate_end_of_day_state: true
+
+phase_order:
+  - STABLE
+  - TENSION
+  - EMERGENCY
+  - MASS_UNREST
+  - ORGANIZED_POLITICAL_VIOLENCE
+  - INSURGENCY
+  - DUAL_AUTHORITY
+  - CIVIL_WAR
+  - STATE_FRAGMENTATION
+
+transitions:
+  - rule_id: "PHASE_STABLE_TENSION_V1"
+    from: ["STABLE"]
+    to: "TENSION"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_STABLE_TENSION_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_TENSION_EMERGENCY_V1"
+    from: ["TENSION"]
+    to: "EMERGENCY"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_TENSION_EMERGENCY_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_EMERGENCY_MASS_UNREST_V1"
+    from: ["EMERGENCY"]
+    to: "MASS_UNREST"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_EMERGENCY_MASS_UNREST_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_MASS_UNREST_OPV_V1"
+    from: ["MASS_UNREST"]
+    to: "ORGANIZED_POLITICAL_VIOLENCE"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_MASS_UNREST_OPV_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_OPV_INSURGENCY_V1"
+    from: ["ORGANIZED_POLITICAL_VIOLENCE"]
+    to: "INSURGENCY"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_OPV_INSURGENCY_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_INSURGENCY_DUAL_AUTHORITY_V1"
+    from: ["INSURGENCY"]
+    to: "DUAL_AUTHORITY"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_INSURGENCY_DUAL_AUTHORITY_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_INSURGENCY_CIVIL_WAR_V1"
+    from: ["INSURGENCY"]
+    to: "CIVIL_WAR"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_CIVIL_WAR_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_DUAL_AUTHORITY_CIVIL_WAR_V1"
+    from: ["DUAL_AUTHORITY"]
+    to: "CIVIL_WAR"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_CIVIL_WAR_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+  - rule_id: "PHASE_CIVIL_WAR_FRAGMENTATION_V1"
+    from: ["CIVIL_WAR"]
+    to: "STATE_FRAGMENTATION"
+    parameter_id:
+      synthetic_smoke_v1: "PHASE_FRAGMENTATION_SYN_V1"
+      calibrated_v1: "PHASE_TRANSITIONS_CAL_V1"
+
+condition_language:
+  latent_suffix_operators:
+    "_gte": ">="
+    "_lte": "<="
+    "_gt": ">"
+    "_lt": "<"
+  boolean_context_flags:
+    - "competing_authority_present"
+    - "multiple_authority_nodes_present"
+  condition_groups:
+    - "all"
+    - "any"
+
+persistence:
+  consecutive_days_required: true
+  reset_on_failed_condition: true
+  reset_when_current_phase_changes: true
+  same_day_re_evaluation: "fail_closed"
+  skipped_day_re_evaluation: "fail_closed"
+
+trace:
+  evaluation_record: "phase_evaluation"
+  proposal_record: "phase_transition_proposal"
+  required_fields:
+    - node_id
+    - day
+    - from_phase
+    - to_phase
+    - rule_id
+    - parameter_id
+    - condition_mode
+    - condition_results
+    - persistence_required
+    - persistence_observed
+    - matured
+    - apply_status
+
+safety:
+  demographic_identity_direct_transition_input: false
+  political_identity_direct_transition_input: false
+  phase_is_classifier_not_operational_instruction: true
