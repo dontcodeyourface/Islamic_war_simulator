@@ -285,6 +285,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "day_transaction",
             "bounded_recovery",
             "graph_spillover_trace",
+            "graph_spillover_effects",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -359,6 +360,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             ],
             "spillover_candidate_count": len(result.spillover_candidates),
             "matured_spillover_count": len(result.matured_spillovers),
+            "spillover_proposal_count": len(result.spillover_proposals),
             "spillover_queue": (
                 result.spillover_queue.to_dict()
                 if result.spillover_queue is not None

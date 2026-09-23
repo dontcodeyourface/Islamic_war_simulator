@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.11"
+status: "implementation-v0.12"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -13,7 +13,7 @@ mode:
   graph_spillover_trace_allowed: true
   graph_spillover_requires_explicit_enable_flag: true
   graph_spillover_contract: "config/engine/graph_spillover_v1.yaml"
-  graph_spillover_effects_allowed: false
+  graph_spillover_effects_allowed: true
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
   recovery_contract: "config/engine/recovery_v1.yaml"
@@ -32,6 +32,7 @@ transaction_rules:
   all_candidates_observe_beginning_of_day_state: true
   all_proposals_use_beginning_of_day_values: true
   graph_spillover_trace_observes_beginning_state: true
+  matured_spillover_proposals_use_current_beginning_state: true
   spillover_queue_must_commit_only_after_success: true
   recovery_and_event_proposals_share_beginning_state: true
   proposals_resolved_once_per_day: true
@@ -51,13 +52,14 @@ trace:
   include_resolution_ids: true
   include_clamp_resolution_ids: true
   include_phase_commit_ids: true
+  include_applied_spillover_ids: true
 
 ordering:
   graph_edges: "edge_id_ascending"
   country_nodes: "iso3_ascending"
-  graph_spillover: "before_event_candidates_trace_only"
+  graph_spillover: "candidate_and_maturation_pass_before_events_effects_join_owner_resolution"
   occurred_events: "event_id_ascending"
-  proposals: "event_then_recovery_collected_then_proposal_id_ascending_before_resolution"
+  proposals: "event_recovery_and_matured_spillover_collected_then_proposal_id_ascending_before_resolution"
   phase_evaluation: "after_state_resolution_and_clock_advance"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
 

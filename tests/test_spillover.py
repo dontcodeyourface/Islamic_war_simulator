@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 from pathlib import Path
 
@@ -7,7 +8,11 @@ from iwsim.config import load_yaml
 from iwsim.graph import build_country_graph
 from iwsim.initializer import initialize_hybrid_state
 from iwsim.rng import RNGManager
-from iwsim.spillover import evaluate_graph_spillovers, empty_spillover_queue
+from iwsim.spillover import (
+    empty_spillover_queue,
+    evaluate_graph_spillovers,
+    propose_matured_spillover_effects,
+)
 from iwsim.trace import TraceLedger
 
 logger = logging.getLogger(__name__)
@@ -223,3 +228,208 @@ def test_calibrated_spillover_profile_fails_closed() -> None:
         assert "Missing spillover parameter" in str(exc)
     else:
         raise AssertionError("calibrated_v1 must fail closed while unpopulated")
+
+
+
+def test_matured_state_spillovers_become_traceable_delta_proposals() -> None:
+    logger.info("test_matured_state_spillovers_become_traceable_delta_proposals")
+    states, graph, parameters, config = _runtime()
+    registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    patched = copy.deepcopy(parameters)
+    latencies = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "GRAPH_LATENCIES_SYN_V1"
+    ]["value"]
+    latencies["geographic_proximity"] = [0, 0]
+    latencies["land_border"] = [0, 0]
+
+    before = {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    }
+    result = evaluate_graph_spillovers(
+        day=1,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    ready = tuple(
+        item
+        for item in result.matured
+        if item.status == "MATURED_READY_FOR_PROPOSAL"
+    )
+    assert ready
+    assert all(item.apply_to_state for item in ready)
+    assert all(
+        item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        for item in ready
+    )
+
+    trace = TraceLedger()
+    proposals = propose_matured_spillover_effects(
+        matured=result.matured,
+        states=states,
+        engine_state_registry=registry,
+        trace=trace,
+    )
+
+    assert len(proposals) == len(ready)
+    assert all(item.event_type == "GRAPH_SPILLOVER_V1" for item in proposals)
+    assert all(item.owner_module == "external_system" for item in proposals)
+    assert all(
+        item.value_before
+        == states[item.target_node].latents[item.variable]
+        for item in proposals
+    )
+    assert {item.event_id for item in proposals} == {
+        item.spillover_id for item in ready
+    }
+    assert {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    } == before
+
+    spillover_delta_records = [
+        item for item in trace.records
+        if item["record_type"] == "spillover_delta_proposal"
+    ]
+    delta_records = [
+        item for item in trace.records
+        if item["record_type"] == "delta_proposal"
+    ]
+    assert len(spillover_delta_records) == len(proposals)
+    assert len(delta_records) == len(proposals)
+
+
+
+def test_spillover_effect_is_frozen_at_creation_across_latency() -> None:
+    logger.info("test_spillover_effect_is_frozen_at_creation_across_latency")
+    states, graph, parameters, config = _runtime()
+    registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    patched = copy.deepcopy(parameters)
+    latencies = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "GRAPH_LATENCIES_SYN_V1"
+    ]["value"]
+    latencies["geographic_proximity"] = [1, 1]
+    latencies["land_border"] = [1, 1]
+
+    for state in states.values():
+        state.latents["external_conflict_pressure"] = 0.0
+    states["ESP"].latents["external_conflict_pressure"] = 0.8
+
+    day_one = evaluate_graph_spillovers(
+        day=1,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    chosen = next(
+        item
+        for item in day_one.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+        and item.status == "SCHEDULED"
+    )
+    frozen_effect = chosen.bounded_effect
+    assert frozen_effect is not None
+    assert chosen.source_pressure == 0.8
+
+    states["ESP"].latents["external_conflict_pressure"] = 0.0
+    states["MAR"].latents["external_conflict_pressure"] = 0.25
+
+    day_two = evaluate_graph_spillovers(
+        day=2,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=day_one.queue,
+        trace=TraceLedger(),
+    )
+    matured = next(
+        item
+        for item in day_two.matured
+        if item.spillover_id == chosen.spillover_id
+    )
+    assert matured.bounded_effect == frozen_effect
+    assert matured.source_pressure == 0.8
+    assert states["ESP"].latents["external_conflict_pressure"] == 0.0
+
+    proposals = propose_matured_spillover_effects(
+        matured=day_two.matured,
+        states=states,
+        engine_state_registry=registry,
+        trace=TraceLedger(),
+    )
+    proposal = next(
+        item for item in proposals if item.event_id == chosen.spillover_id
+    )
+    assert proposal.raw_delta == frozen_effect
+    assert proposal.value_before == 0.25
+    assert proposal.proposed_unbounded_value == 0.25 + frozen_effect
+
+
+
+def test_spillover_id_changes_when_state_effect_policy_changes() -> None:
+    logger.info("test_spillover_id_changes_when_state_effect_policy_changes")
+    states_a, graph_a, parameters_a, config_a = _runtime()
+    states_b, graph_b, parameters_b, config_b = _runtime()
+    config_b = copy.deepcopy(config_b)
+    regional_rule = next(
+        item
+        for item in config_b["rules"]
+        if item["rule_id"] == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+    )
+    regional_rule["apply_to_state"] = False
+
+    result_a = evaluate_graph_spillovers(
+        day=1,
+        states=states_a,
+        graph=graph_a,
+        spillover_config=config_a,
+        parameter_registry=parameters_a,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    result_b = evaluate_graph_spillovers(
+        day=1,
+        states=states_b,
+        graph=graph_b,
+        spillover_config=config_b,
+        parameter_registry=parameters_b,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+
+    candidate_a = next(
+        item
+        for item in result_a.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+    )
+    candidate_b = next(
+        item
+        for item in result_b.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+    )
+
+    assert candidate_a.apply_to_state is True
+    assert candidate_b.apply_to_state is False
+    assert candidate_a.spillover_id != candidate_b.spillover_id

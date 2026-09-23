@@ -30,6 +30,7 @@ from .spillover import (
     SpilloverQueueState,
     empty_spillover_queue,
     evaluate_graph_spillovers,
+    propose_matured_spillover_effects,
 )
 from .state import EngineState, extract_latent_registry
 from .trace import TraceLedger
@@ -71,6 +72,7 @@ class DayTransactionResult:
     spillover_queue: SpilloverQueueState | None
     spillover_candidates: tuple[GraphSpilloverRecord, ...]
     matured_spillovers: tuple[GraphSpilloverRecord, ...]
+    spillover_proposals: tuple[DeltaProposal, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -104,6 +106,9 @@ class DayTransactionResult:
             ],
             "matured_spillovers": [
                 item.to_dict() for item in self.matured_spillovers
+            ],
+            "spillover_proposals": [
+                item.to_dict() for item in self.spillover_proposals
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -531,6 +536,7 @@ def _checkpoint_node(
     state_after: EngineState,
     events: tuple[SimEvent, ...],
     resolutions: tuple[ResolutionRecord, ...],
+    spillover_proposals: tuple[DeltaProposal, ...],
     phase_commits: tuple[PhaseCommitRecord, ...],
     manifest: RunManifest,
     trace: TraceLedger,
@@ -569,6 +575,14 @@ def _checkpoint_node(
             if record.node_id == node_id
         )
     )
+    node_spillovers = tuple(
+        sorted(
+            proposal.event_id
+            for proposal in spillover_proposals
+            if proposal.target_node == node_id
+            and proposal.event_type == "GRAPH_SPILLOVER_V1"
+        )
+    )
     trace.append_daily_checkpoint(
         run_id=manifest.run_id,
         day=state_after.day,
@@ -577,6 +591,7 @@ def _checkpoint_node(
         state_hash_after=state_after.state_hash(),
         module_deltas=node_resolutions,
         event_ids_applied=node_events,
+        spillover_ids_applied=node_spillovers,
         constraint_clamps=clamp_resolutions,
         phase_transition_ids=node_phase_commits,
     )
@@ -636,6 +651,13 @@ def run_day_transaction(
             raise ValueError(
                 "Graph spillover trace is disabled by the day transaction contract"
             )
+        if bool(spillover_config.get("mode", {}).get("state_effects_allowed", False)):
+            if not bool(
+                day_config.get("mode", {}).get("graph_spillover_effects_allowed", False)
+            ):
+                raise ValueError(
+                    "Graph spillover effects are disabled by the day transaction contract"
+                )
         normalized_spillover_queue = _normalize_spillover_queue_inputs(
             day_from=day_from,
             spillover_queue=spillover_queue,
@@ -743,6 +765,15 @@ def run_day_transaction(
         profile=profile,
         trace=staged_trace,
     )
+    spillover_proposals: tuple[DeltaProposal, ...] = ()
+    if enable_graph_spillover and matured_spillovers:
+        spillover_proposals = propose_matured_spillover_effects(
+            matured=matured_spillovers,
+            states=states,
+            engine_state_registry=engine_state_registry,
+            trace=staged_trace,
+        )
+
     recovery_proposals: tuple[DeltaProposal, ...] = ()
     if enable_recovery:
         assert recovery_config is not None
@@ -756,7 +787,7 @@ def run_day_transaction(
         )
     proposals = tuple(
         sorted(
-            (*event_proposals, *recovery_proposals),
+            (*event_proposals, *recovery_proposals, *spillover_proposals),
             key=lambda proposal: proposal.proposal_id,
         )
     )
@@ -809,6 +840,7 @@ def run_day_transaction(
             state_after=final_states[node_id],
             events=events,
             resolutions=resolution.records,
+            spillover_proposals=spillover_proposals,
             phase_commits=phase_commits,
             manifest=manifest,
             trace=staged_trace,
@@ -833,6 +865,9 @@ def run_day_transaction(
         ],
         matured_spillover_ids=[
             record.spillover_id for record in matured_spillovers
+        ],
+        applied_spillover_ids=[
+            proposal.event_id for proposal in spillover_proposals
         ],
         spillover_queue=(
             spillover_queue_out.to_dict()
@@ -864,6 +899,7 @@ def run_day_transaction(
         spillover_queue=spillover_queue_out,
         spillover_candidates=spillover_candidates,
         matured_spillovers=matured_spillovers,
+        spillover_proposals=spillover_proposals,
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,

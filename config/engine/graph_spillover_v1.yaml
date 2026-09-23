@@ -1,10 +1,10 @@
 schema_version: "1.0"
-status: "implementation-v0.11-trace-only"
-purpose: "Traceable deterministic graph-spillover candidates and latency queues."
+status: "implementation-v0.12-state-effects"
+purpose: "Traceable deterministic graph-spillover candidates, latency queues and selected state effects."
 
 mode:
-  trace_only: true
-  state_effects_allowed: false
+  trace_only: false
+  state_effects_allowed: true
   deterministic_latency_contract: "DETERMINISTIC_HASH_INTERVAL_V1"
   unresolved_channel_policy: "record_not_schedule"
   zero_edge_policy: "record_not_schedule"
@@ -12,6 +12,7 @@ mode:
 
 rules:
   - rule_id: "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+    apply_to_state: true
     source_variable: "external_conflict_pressure"
     target_variable: "external_conflict_pressure"
     channels:
@@ -19,30 +20,35 @@ rules:
       - "land_border"
 
   - rule_id: "POLARIZATION_INFORMATION_TRACE_V1"
+    apply_to_state: false
     source_variable: "polarization"
     target_variable: "polarization"
     channels:
       - "information_link"
 
   - rule_id: "CRIMINAL_NETWORK_TRACE_V1"
+    apply_to_state: false
     source_variable: "criminal_network_power"
     target_variable: "criminal_network_power"
     channels:
       - "criminal_network_link"
 
   - rule_id: "VIOLENT_ISLAMIST_NETWORK_TRACE_V1"
+    apply_to_state: false
     source_variable: "violent_islamist_pressure"
     target_variable: "violent_islamist_pressure"
     channels:
       - "extremist_network_link"
 
   - rule_id: "VIOLENT_ULTRANATIONALIST_NETWORK_TRACE_V1"
+    apply_to_state: false
     source_variable: "violent_ultranationalist_pressure"
     target_variable: "violent_ultranationalist_pressure"
     channels:
       - "extremist_network_link"
 
   - rule_id: "REVOLUTIONARY_EXTREMIST_NETWORK_TRACE_V1"
+    apply_to_state: false
     source_variable: "revolutionary_extremist_pressure"
     target_variable: "revolutionary_extremist_pressure"
     channels:
