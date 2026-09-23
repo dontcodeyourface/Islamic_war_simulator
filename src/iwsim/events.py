@@ -286,6 +286,7 @@ def evaluate_candidate(
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    dry_run: bool = True,
 ) -> EventCandidateResult:
     logger.info(
         "evaluate_candidate event_type=%s day=%s actors=%s",
@@ -367,7 +368,7 @@ def evaluate_candidate(
             scenario_id=manifest.scenario_id,
             run_id=manifest.run_id,
             rng_stream=(None if provenance_class == "GENERATED" else rng_stream),
-            dry_run=True,
+            dry_run=dry_run,
         )
         trace.append(
             "event_created",
@@ -388,7 +389,7 @@ def evaluate_candidate(
         provenance_class=provenance_class,
         feature_values=dict(sorted(features.items())),
         parameter_ids=[weight_parameter_id, probability_parameter_id],
-        dry_run=True,
+        dry_run=dry_run,
     )
     return EventCandidateResult(
         event_type=event_type,
@@ -414,6 +415,7 @@ def evaluate_interstate_incident(
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    dry_run: bool = True,
 ) -> EventCandidateResult:
     logger.info(
         "evaluate_interstate_incident day=%s a=%s b=%s",
@@ -434,6 +436,7 @@ def evaluate_interstate_incident(
         rng=rng,
         manifest=manifest,
         trace=trace,
+        dry_run=dry_run,
     )
 
 
@@ -446,6 +449,7 @@ def evaluate_mass_protest(
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    dry_run: bool = True,
 ) -> EventCandidateResult:
     logger.info(
         "evaluate_mass_protest day=%s node_id=%s",
@@ -465,4 +469,5 @@ def evaluate_mass_protest(
         rng=rng,
         manifest=manifest,
         trace=trace,
+        dry_run=dry_run,
     )
