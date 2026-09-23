@@ -352,6 +352,7 @@ def initialize_hybrid_state(
             "empirical_latent_count": empirical_count,
             "baseline_latent_count": baseline_count,
             "prior_latent_count": prior_count,
+            "initial_latents": dict(sorted(latents.items())),
         },
     )
     state.validate(latent_registry)

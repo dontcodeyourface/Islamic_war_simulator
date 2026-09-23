@@ -54,6 +54,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/phase_evaluator_v1.yaml",
     )
     day_smoke.add_argument(
+        "--recovery-config",
+        default="config/engine/recovery_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -208,6 +212,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     graph_config = load_yaml(root / args.graph_config)
     day_config = load_yaml(root / args.day_config)
     phase_config = load_yaml(root / args.phase_config)
+    recovery_config = load_yaml(root / args.recovery_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -273,6 +278,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "event_effects",
             "owner_resolver",
             "day_transaction",
+            "bounded_recovery",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -302,6 +308,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         manifest=manifest,
         trace=trace,
         enable_phase_transitions=True,
+        enable_recovery=True,
+        recovery_config=recovery_config,
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,

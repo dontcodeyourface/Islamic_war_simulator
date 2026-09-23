@@ -1,0 +1,36 @@
+schema_version: "1.0"
+status: "implementation-v0.10"
+purpose: "Deterministic bounded recovery toward immutable initial latent memory."
+
+baseline_source: "state.metadata.initial_latents"
+parameter_family:
+  synthetic_smoke_v1: "DYNAMIC_GAINS_SYN_V1"
+  calibrated_v1: "DYNAMIC_GAINS_CAL_V1"
+
+targets:
+  - variable: "communal_fear"
+    gain_key: "fast_recovery"
+    max_delta_key: "max_single_day_latent_delta"
+    equation_id: "RECOVERY_COMMUNAL_FEAR_V1"
+  - variable: "public_order_stress"
+    gain_key: "fast_recovery"
+    max_delta_key: "max_single_day_latent_delta"
+    equation_id: "RECOVERY_PUBLIC_ORDER_STRESS_V1"
+  - variable: "electricity_functionality"
+    gain_key: "medium_recovery"
+    max_delta_key: "max_single_day_structural_delta"
+    equation_id: "RECOVERY_ELECTRICITY_FUNCTIONALITY_V1"
+  - variable: "telecom_internet_functionality"
+    gain_key: "medium_recovery"
+    max_delta_key: "max_single_day_structural_delta"
+    equation_id: "RECOVERY_TELECOM_FUNCTIONALITY_V1"
+
+rules:
+  proposal_layer_only: true
+  owner_resolver_required: true
+  same_beginning_of_day_value_as_events: true
+  skip_zero_delta: true
+  path_dependent_variables_forbidden:
+    - "organized_armed_actor_capacity"
+    - "territorial_control"
+    - "state_cohesion"
