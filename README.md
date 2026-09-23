@@ -64,6 +64,8 @@ Atomic day infrastructure: [docs/DAY_TRANSACTION_V0.7.md](docs/DAY_TRANSACTION_V
 
 Read-only phase-evaluation infrastructure: [docs/PHASE_EVALUATOR_V0.8.md](docs/PHASE_EVALUATOR_V0.8.md), backed by [`config/engine/phase_evaluator_v1.yaml`](config/engine/phase_evaluator_v1.yaml). End-of-day EngineState can now be evaluated against persistence-aware national phase rules to emit traceable transition proposals without mutating the phase; arbitration and phase commit remain disabled.
 
+Atomic phase-transition infrastructure: [docs/PHASE_TRANSITION_V0.9.md](docs/PHASE_TRANSITION_V0.9.md), backed by [`config/engine/phase_transition_v1.yaml`](config/engine/phase_transition_v1.yaml). Mature phase proposals can now be deterministically arbitrated and committed atomically with phase-persistence history inside the daily transaction; de-escalation remains disabled.
+
 ---
 
 ## 2. Core analytical rule
