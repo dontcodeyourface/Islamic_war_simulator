@@ -4,6 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from . import __version__
 from .config import canonical_hash, file_sha256, load_yaml
 from .engine import NoOpEngine
 from .initializer import initialize_hybrid_state
@@ -68,7 +69,7 @@ def run_smoke(args: argparse.Namespace) -> int:
     scenario_payload = {"scenario_id": "SCN-SMOKE-NOOP", "version": "1"}
 
     manifest = build_manifest(
-        engine_version="0.1.0",
+        engine_version=__version__,
         git_commit=args.git_commit,
         snapshot_schema_version=str(snapshot["identity"]["snapshot_version"]),
         snapshot_bundle_hash=canonical_hash(snapshot),
