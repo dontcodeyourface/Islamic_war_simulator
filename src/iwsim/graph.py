@@ -543,10 +543,10 @@ def build_country_graph(
             metadata = (
                 ("distance_metric", str(distance_matrix["metric"])),
                 ("distance_method", str(distance_matrix["method"])),
-                ("shared_formal_memberships", list(shared_memberships)),
+                ("shared_formal_memberships", tuple(shared_memberships)),
                 (
                     "unresolved_directed_channels",
-                    list(DIRECTED_CHANNELS),
+                    tuple(DIRECTED_CHANNELS),
                 ),
             )
 
