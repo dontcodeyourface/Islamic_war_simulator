@@ -1150,3 +1150,45 @@ def test_same_day_event_does_not_feed_network_dynamics_until_next_tick() -> None
         and item["target_node"] == "ESP"
     )
     assert esp_network_trace["driver_inputs"]["communal_fear"] == pytest.approx(0.20)
+
+
+
+def test_extremist_network_config_changes_transaction_identity() -> None:
+    logger.info("test_extremist_network_config_changes_transaction_identity")
+    runtime_a = _runtime(seed=1012)
+    runtime_b = _runtime(seed=1012)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    config_a = load_yaml(ROOT / "config/engine/extremist_network_dynamics_v1.yaml")
+    config_b = copy.deepcopy(config_a)
+    config_b["status"] = "identity-test-variant"
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_extremist_network_dynamics=True,
+        extremist_network_config=config_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_extremist_network_dynamics=True,
+        extremist_network_config=config_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
