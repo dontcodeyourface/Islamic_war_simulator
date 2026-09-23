@@ -82,6 +82,7 @@ class TraceLedger:
         constraint_clamps: tuple[str, ...] = (),
         phase_transition_ids: tuple[str, ...] = (),
         security_regime_transition_ids: tuple[str, ...] = (),
+        fractal_child_initialization_ids: tuple[str, ...] = (),
     ) -> None:
         logger.info(
             "TraceLedger.append_daily_checkpoint run_id=%s day=%s node_id=%s",
@@ -105,6 +106,9 @@ class TraceLedger:
             phase_transition_ids=list(phase_transition_ids),
             security_regime_transition_ids=list(
                 security_regime_transition_ids
+            ),
+            fractal_child_initialization_ids=list(
+                fractal_child_initialization_ids
             ),
         )
 
