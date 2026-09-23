@@ -200,7 +200,12 @@ def _normalize_alliance_link(
     for membership in shared:
         if membership in membership_scores:
             candidates.append(float(membership_scores[membership]))
-            evidence_refs.append(f"shared_membership:{membership}")
+            evidence_refs.extend(
+                [
+                    f"snapshot:{a}:alliances.memberships:{membership}",
+                    f"snapshot:{b}:alliances.memberships:{membership}",
+                ]
+            )
 
     relationship_scores = params["explicit_relationship_scores"]
     for relationship in _explicit_relationships_for_pair(graph_config, a, b):
@@ -296,17 +301,16 @@ def build_structural_graph(
 
     edges.sort(key=lambda item: item.edge_id())
     nodes = tuple(sorted(snapshots))
-    source_hashes = tuple(
-        sorted(
-            {
-                "graph_config": canonical_hash(graph_config),
-                "distance_matrix": canonical_hash(distance_matrix),
-                "parameter_profile": canonical_hash(
-                    parameter_registry["parameter_sets"][profile]
-                ),
-            }.items()
-        )
-    )
+    source_hash_map = {
+        "graph_config": canonical_hash(graph_config),
+        "distance_matrix": canonical_hash(distance_matrix),
+        "parameter_profile": canonical_hash(
+            parameter_registry["parameter_sets"][profile]
+        ),
+    }
+    for node_id, snapshot in sorted(snapshots.items()):
+        source_hash_map[f"snapshot:{node_id}"] = canonical_hash(snapshot)
+    source_hashes = tuple(sorted(source_hash_map.items()))
     return StructuralGraph(
         schema_version="1.0",
         nodes=nodes,
