@@ -1,0 +1,40 @@
+schema_version: "1.0"
+status: "implementation-v0.3"
+snapshot_date: "2026-09-23"
+purpose: "Country-independent structural graph seed for active Snapshot-v1 countries."
+
+distance_matrix_path: "config/geography/country_distance_matrix_v1.yaml"
+
+nodes:
+  ESP:
+    country_name: "Spain"
+    snapshot_path: "config/countries/spain.yaml"
+  MAR:
+    country_name: "Morocco"
+    snapshot_path: "config/countries/morocco.yaml"
+  FRA:
+    country_name: "France"
+    snapshot_path: "config/countries/france.yaml"
+  DEU:
+    country_name: "Germany"
+    snapshot_path: "config/countries/germany.yaml"
+  GBR:
+    country_name: "United_Kingdom"
+    snapshot_path: "config/countries/united_kingdom.yaml"
+
+explicit_relationships:
+  - relationship_id: "ESP_MAR_CT_COOP_V1"
+    a: "ESP"
+    b: "MAR"
+    channel: "alliance_link"
+    relationship_type: "documented_bilateral_counterterrorism_cooperation"
+    source_ids: ["MA-DGST-SPAIN-COOP-2025"]
+    notes: "Security cooperation is not equivalent to NATO/EU membership."
+
+rules:
+  undirected_baseline_edges: true
+  only_distance_matrix_pairs_are_materialized: true
+  missing_optional_channel_is_null_not_zero: true
+  alliance_membership_source_path: "alliances.memberships"
+  country_specific_logic_forbidden: true
+  future_directional_channels_may_override_undirected_baseline: true
