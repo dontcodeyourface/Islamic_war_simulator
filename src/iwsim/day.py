@@ -39,6 +39,12 @@ from .security_regime_transition import (
     commit_security_regime_transition,
     retain_security_regime_persistence,
 )
+from .security_regime_recovery import (
+    SecurityRegimeRecoveryEvaluationResult,
+    SecurityRegimeRecoveryPersistenceState,
+    SecurityRegimeRecoveryProposal,
+    evaluate_security_regime_recovery,
+)
 from .spillover import (
     GraphSpilloverRecord,
     SpilloverQueueState,
@@ -94,6 +100,13 @@ class DayTransactionResult:
     security_regime_evaluations: tuple[SecurityRegimeEvaluationResult, ...]
     security_regime_proposals: tuple[SecurityRegimeTransitionProposal, ...]
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...]
+    security_regime_recovery_persistence: dict[
+        str, SecurityRegimeRecoveryPersistenceState
+    ]
+    security_regime_recovery_evaluations: tuple[
+        SecurityRegimeRecoveryEvaluationResult, ...
+    ]
+    security_regime_recovery_proposals: tuple[SecurityRegimeRecoveryProposal, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -155,6 +168,20 @@ class DayTransactionResult:
             ],
             "security_regime_commits": [
                 item.to_dict() for item in self.security_regime_commits
+            ],
+            "security_regime_recovery_persistence": {
+                node_id: item.to_dict()
+                for node_id, item in sorted(
+                    self.security_regime_recovery_persistence.items()
+                )
+            },
+            "security_regime_recovery_evaluations": [
+                item.to_dict()
+                for item in self.security_regime_recovery_evaluations
+            ],
+            "security_regime_recovery_proposals": [
+                item.to_dict()
+                for item in self.security_regime_recovery_proposals
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -310,6 +337,82 @@ def _normalize_security_regime_persistence_inputs(
     return normalized
 
 
+def _normalize_security_regime_recovery_persistence_inputs(
+    *,
+    states: dict[str, EngineState],
+    day_from: int,
+    persistence: (
+        dict[str, SecurityRegimeRecoveryPersistenceState | None] | None
+    ),
+) -> dict[str, SecurityRegimeRecoveryPersistenceState | None]:
+    logger.info(
+        "_normalize_security_regime_recovery_persistence_inputs "
+        "day_from=%s supplied=%s",
+        day_from,
+        persistence is not None,
+    )
+    if persistence is None:
+        if day_from != 0:
+            raise ValueError(
+                "Security regime recovery persistence is required after day zero "
+                "when recovery evaluation is enabled"
+            )
+        return {node_id: None for node_id in sorted(states)}
+
+    if set(persistence) != set(states):
+        raise ValueError(
+            "Security regime recovery persistence nodes must equal state nodes"
+        )
+
+    normalized: dict[str, SecurityRegimeRecoveryPersistenceState | None] = {}
+    for node_id in sorted(states):
+        item = persistence[node_id]
+        if item is None:
+            if day_from != 0:
+                raise ValueError(
+                    f"Missing security regime recovery persistence for "
+                    f"{node_id} after day zero"
+                )
+            normalized[node_id] = None
+            continue
+        if item.node_id != node_id:
+            raise ValueError(
+                f"Security regime recovery persistence node mismatch "
+                f"key={node_id} value={item.node_id}"
+            )
+        if item.last_evaluated_day != day_from:
+            raise ValueError(
+                f"Security regime recovery persistence day mismatch for "
+                f"{node_id}: expected {day_from}, got {item.last_evaluated_day}"
+            )
+        current = states[node_id].regimes["security_force_regime"]
+        if item.current_regime != current:
+            raise ValueError(
+                f"Security regime recovery persistence mismatch for {node_id}: "
+                f"{item.current_regime} != {current}"
+            )
+        normalized[node_id] = item
+    return normalized
+
+
+def _security_regime_recovery_inputs_fingerprint(
+    *,
+    persistence: dict[str, SecurityRegimeRecoveryPersistenceState | None],
+    recovery_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info(
+        "_security_regime_recovery_inputs_fingerprint nodes=%s",
+        len(persistence),
+    )
+    return {
+        "persistence": {
+            node_id: item.to_dict() if item is not None else None
+            for node_id, item in sorted(persistence.items())
+        },
+        "recovery_config_hash": canonical_hash(recovery_config),
+    }
+
+
 def _security_regime_inputs_fingerprint(
     *,
     persistence: dict[str, SecurityRegimePersistenceState | None],
@@ -402,6 +505,7 @@ def _transaction_id(
     reciprocal_inputs: dict[str, Any] | None = None,
     security_inputs: dict[str, Any] | None = None,
     security_regime_inputs: dict[str, Any] | None = None,
+    security_regime_recovery_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -426,6 +530,7 @@ def _transaction_id(
             "reciprocal_inputs": reciprocal_inputs,
             "security_inputs": security_inputs,
             "security_regime_inputs": security_regime_inputs,
+            "security_regime_recovery_inputs": security_regime_recovery_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -778,6 +883,55 @@ def _commit_security_regimes(
     )
 
 
+def _evaluate_security_regime_recoveries(
+    *,
+    states: dict[str, EngineState],
+    persistence: dict[str, SecurityRegimeRecoveryPersistenceState | None],
+    context_flags: dict[str, dict[str, bool]],
+    recovery_config: dict[str, Any],
+    parameter_registry: dict[str, Any],
+    profile: str,
+    manifest: RunManifest,
+    escalation_commits: tuple[SecurityRegimeCommitRecord, ...],
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, SecurityRegimeRecoveryPersistenceState],
+    tuple[SecurityRegimeRecoveryEvaluationResult, ...],
+    tuple[SecurityRegimeRecoveryProposal, ...],
+]:
+    logger.info(
+        "_evaluate_security_regime_recoveries states=%s commits=%s",
+        len(states),
+        len(escalation_commits),
+    )
+    committed_nodes = {item.node_id for item in escalation_commits}
+    persistence_out: dict[str, SecurityRegimeRecoveryPersistenceState] = {}
+    evaluations: list[SecurityRegimeRecoveryEvaluationResult] = []
+    proposals: list[SecurityRegimeRecoveryProposal] = []
+
+    for node_id in sorted(states):
+        result = evaluate_security_regime_recovery(
+            state=states[node_id],
+            persistence=persistence[node_id],
+            context_flags=context_flags.get(node_id, {}),
+            recovery_config=recovery_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=trace,
+            same_day_escalation_committed=node_id in committed_nodes,
+        )
+        persistence_out[node_id] = result.persistence
+        evaluations.append(result)
+        proposals.extend(result.proposals)
+
+    return (
+        persistence_out,
+        tuple(evaluations),
+        tuple(sorted(proposals, key=lambda item: item.proposal_id)),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -890,6 +1044,11 @@ def run_day_transaction(
     security_regime_context_flags: dict[str, dict[str, bool]] | None = None,
     enable_security_regime_commits: bool = False,
     security_regime_transition_config: dict[str, Any] | None = None,
+    enable_security_regime_recovery_evaluator: bool = False,
+    security_regime_recovery_config: dict[str, Any] | None = None,
+    security_regime_recovery_persistence: (
+        dict[str, SecurityRegimeRecoveryPersistenceState | None] | None
+    ) = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -917,14 +1076,53 @@ def run_day_transaction(
     reciprocal_inputs: dict[str, Any] | None = None
     security_inputs: dict[str, Any] | None = None
     security_regime_inputs: dict[str, Any] | None = None
+    security_regime_recovery_inputs: dict[str, Any] | None = None
     normalized_security_regime_persistence: dict[
         str, SecurityRegimePersistenceState | None
+    ] = {}
+    normalized_security_regime_recovery_persistence: dict[
+        str, SecurityRegimeRecoveryPersistenceState | None
     ] = {}
     normalized_security_regime_context_flags = {
         node_id: dict(flags)
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_security_regime_recovery_evaluator:
+        if not enable_security_regime_evaluator or not enable_security_regime_commits:
+            raise ValueError(
+                "Security regime recovery evaluator requires escalation "
+                "evaluator and commit to establish same-day precedence"
+            )
+        if security_regime_recovery_config is None:
+            raise ValueError(
+                "Security regime recovery evaluator requires "
+                "security_regime_recovery_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "security_regime_recovery_evaluator_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Security regime recovery evaluator is disabled by the "
+                "day transaction contract"
+            )
+        normalized_security_regime_recovery_persistence = (
+            _normalize_security_regime_recovery_persistence_inputs(
+                states=states,
+                day_from=day_from,
+                persistence=security_regime_recovery_persistence,
+            )
+        )
+        security_regime_recovery_inputs = (
+            _security_regime_recovery_inputs_fingerprint(
+                persistence=normalized_security_regime_recovery_persistence,
+                recovery_config=security_regime_recovery_config,
+            )
+        )
 
     if enable_security_regime_commits:
         if not enable_security_regime_evaluator:
@@ -1116,6 +1314,7 @@ def run_day_transaction(
         reciprocal_inputs=reciprocal_inputs,
         security_inputs=security_inputs,
         security_regime_inputs=security_regime_inputs,
+        security_regime_recovery_inputs=security_regime_recovery_inputs,
     )
 
     working_rng = rng.clone()
@@ -1299,6 +1498,34 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    security_regime_recovery_persistence_out: dict[
+        str, SecurityRegimeRecoveryPersistenceState
+    ] = {}
+    security_regime_recovery_evaluations: tuple[
+        SecurityRegimeRecoveryEvaluationResult, ...
+    ] = ()
+    security_regime_recovery_proposals: tuple[
+        SecurityRegimeRecoveryProposal, ...
+    ] = ()
+
+    if enable_security_regime_recovery_evaluator:
+        assert security_regime_recovery_config is not None
+        (
+            security_regime_recovery_persistence_out,
+            security_regime_recovery_evaluations,
+            security_regime_recovery_proposals,
+        ) = _evaluate_security_regime_recoveries(
+            states=security_committed_states,
+            persistence=normalized_security_regime_recovery_persistence,
+            context_flags=normalized_security_regime_context_flags,
+            recovery_config=security_regime_recovery_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            escalation_commits=security_regime_commits,
+            trace=staged_trace,
+        )
+
     phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
@@ -1380,6 +1607,16 @@ def run_day_transaction(
         security_regime_commit_ids=[
             record.commit_id for record in security_regime_commits
         ],
+        security_regime_recovery_proposal_ids=[
+            proposal.proposal_id
+            for proposal in security_regime_recovery_proposals
+        ],
+        security_regime_recovery_persistence={
+            node_id: item.to_dict()
+            for node_id, item in sorted(
+                security_regime_recovery_persistence_out.items()
+            )
+        },
         security_regime_persistence={
             node_id: item.to_dict()
             for node_id, item in sorted(
@@ -1426,6 +1663,15 @@ def run_day_transaction(
         security_regime_evaluations=security_regime_evaluations,
         security_regime_proposals=security_regime_proposals,
         security_regime_commits=security_regime_commits,
+        security_regime_recovery_persistence=(
+            security_regime_recovery_persistence_out
+        ),
+        security_regime_recovery_evaluations=(
+            security_regime_recovery_evaluations
+        ),
+        security_regime_recovery_proposals=(
+            security_regime_recovery_proposals
+        ),
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,

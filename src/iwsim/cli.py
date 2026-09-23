@@ -82,6 +82,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/security_regime_transition_v1.yaml",
     )
     day_smoke.add_argument(
+        "--security-regime-recovery-config",
+        default="config/engine/security_regime_recovery_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -247,6 +251,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     security_regime_transition_config = load_yaml(
         root / args.security_regime_transition_config
     )
+    security_regime_recovery_config = load_yaml(
+        root / args.security_regime_recovery_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -320,6 +327,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "security_chain_dynamics",
             "security_regime_evaluator",
             "security_regime_commit",
+            "security_regime_recovery_evaluator",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -370,6 +378,11 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         security_regime_transition_config=(
             security_regime_transition_config
         ),
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=(
+            security_regime_recovery_config
+        ),
+        security_regime_recovery_persistence=None,
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
@@ -431,6 +444,15 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 node_id: item.to_dict()
                 for node_id, item in sorted(
                     result.security_regime_persistence.items()
+                )
+            },
+            "security_regime_recovery_proposal_count": len(
+                result.security_regime_recovery_proposals
+            ),
+            "security_regime_recovery_persistence": {
+                node_id: item.to_dict()
+                for node_id, item in sorted(
+                    result.security_regime_recovery_persistence.items()
                 )
             },
             "spillover_queue": (
