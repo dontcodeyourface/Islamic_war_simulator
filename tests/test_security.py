@@ -225,3 +225,41 @@ def test_calibrated_security_chain_profile_fails_closed() -> None:
             profile="calibrated_v1",
             trace=TraceLedger(),
         )
+
+
+
+def test_security_chain_input_mapping_cannot_be_swapped() -> None:
+    logger.info("test_security_chain_input_mapping_cannot_be_swapped")
+    state, registry, parameters, config = _state_fixture()
+    broken = copy.deepcopy(config)
+    broken["stress_inputs"][0]["variable"] = "polarization"
+
+    with pytest.raises(ValueError, match="stress inputs must remain canonical"):
+        propose_security_chain_dynamics(
+            states={"TST": state},
+            security_config=broken,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+        )
+
+
+def test_security_chain_weight_keys_must_match_contract() -> None:
+    logger.info("test_security_chain_weight_keys_must_match_contract")
+    state, registry, parameters, config = _state_fixture()
+    broken = copy.deepcopy(parameters)
+    weights = broken["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "SECURITY_CHAIN_DYNAMICS_SYN_V1"
+    ]["value"]["stress_weights"]
+    weights["unexpected_driver"] = 0.0
+
+    with pytest.raises(ValueError, match="weight keys must match configured inputs"):
+        propose_security_chain_dynamics(
+            states={"TST": state},
+            security_config=config,
+            engine_state_registry=registry,
+            parameter_registry=broken,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+        )
