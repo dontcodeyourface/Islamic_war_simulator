@@ -199,7 +199,7 @@ parameter_sets:
         value:
           INTERSTATE_INCIDENT_V1:
             base_score: 0.03
-            generated_threshold: 0.78
+            generated_threshold: 0.72
             weights:
               external_conflict_pressure_mean: 0.55
               geographic_proximity: 0.15
