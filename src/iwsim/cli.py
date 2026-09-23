@@ -157,7 +157,11 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     parameter_registry = load_yaml(root / "config/engine/parameter_registry_v1.yaml")
     feature_map = load_yaml(root / "config/engine/snapshot_feature_map_v1.yaml")
     graph_config = load_yaml(root / "config/graph/base_country_graph_v1.yaml")
-    transaction_config = load_yaml(root / "config/engine/day_transaction_v1.yaml")
+    transaction_config = load_yaml(root / "config/engine/day_transaction_v2.yaml")
+    phase_config = load_yaml(root / "config/engine/phase_evaluator_v1.yaml")
+    phase_resolver_config = load_yaml(
+        root / "config/engine/phase_transition_resolver_v1.yaml"
+    )
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
     graph = build_structural_graph(
@@ -219,6 +223,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "event_effect_proposals",
             "owner_resolver",
             "day_transaction",
+            "phase_evaluator",
+            "phase_resolver",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -235,6 +241,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         rng=rng,
         manifest=manifest,
         trace=trace,
+        phase_config=phase_config,
+        phase_resolver_config=phase_resolver_config,
+        phase_persistence={node_id: None for node_id in sorted(states)},
+        phase_context_flags={},
     )
 
     out = Path(args.out)
@@ -261,6 +271,14 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "candidate_count": len(result.candidate_results),
             "proposal_count": len(result.proposals),
             "resolution_count": len(result.resolutions),
+            "phase_commit_count": len(result.phase_commits),
+            "phase_commits": [
+                commit.to_dict() for commit in result.phase_commits
+            ],
+            "phase_persistence": {
+                node_id: persistence.to_dict()
+                for node_id, persistence in sorted(result.phase_persistence.items())
+            },
             "state_hashes_before": dict(result.state_hashes_before),
             "state_hashes_after": dict(result.state_hashes_after),
             "rng": rng.describe(),
