@@ -58,6 +58,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/recovery_v1.yaml",
     )
     day_smoke.add_argument(
+        "--spillover-config",
+        default="config/engine/graph_spillover_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -213,6 +217,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     day_config = load_yaml(root / args.day_config)
     phase_config = load_yaml(root / args.phase_config)
     recovery_config = load_yaml(root / args.recovery_config)
+    spillover_config = load_yaml(root / args.spillover_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -279,6 +284,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "owner_resolver",
             "day_transaction",
             "bounded_recovery",
+            "graph_spillover_trace",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -310,6 +316,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         enable_phase_transitions=True,
         enable_recovery=True,
         recovery_config=recovery_config,
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
@@ -348,6 +357,13 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "phase_commit_ids": [
                 record.commit_id for record in result.phase_commits
             ],
+            "spillover_candidate_count": len(result.spillover_candidates),
+            "matured_spillover_count": len(result.matured_spillovers),
+            "spillover_queue": (
+                result.spillover_queue.to_dict()
+                if result.spillover_queue is not None
+                else None
+            ),
             "phase_persistence": {
                 node_id: persistence.to_dict()
                 for node_id, persistence in sorted(result.phase_persistence.items())
