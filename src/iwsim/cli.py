@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
+    day_smoke.add_argument(
+        "--recovery-config",
+        default="config/engine/recovery_v1.yaml",
+    )
     day_smoke.add_argument("--seed", type=int, default=42)
     day_smoke.add_argument("--out", default="run_output/day-smoke")
     day_smoke.add_argument("--git-commit", default="UNKNOWN")
@@ -209,6 +213,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     day_config = load_yaml(root / args.day_config)
     phase_config = load_yaml(root / args.phase_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
+    recovery_config = load_yaml(root / args.recovery_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
     snapshots: dict[str, dict[str, object]] = {}
@@ -276,6 +281,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
+            "recovery",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -306,6 +312,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
         phase_context_flags={},
+        enable_recovery=True,
+        recovery_config=recovery_config,
     )
 
     out = Path(args.out)
@@ -339,6 +347,11 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "resolution_count": len(result.resolutions),
             "phase_commit_ids": [
                 record.commit_id for record in result.phase_commits
+            ],
+            "recovery_proposal_ids": [
+                proposal.proposal_id
+                for proposal in result.proposals
+                if proposal.event_type == "ENDOGENOUS_RECOVERY_V1"
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
