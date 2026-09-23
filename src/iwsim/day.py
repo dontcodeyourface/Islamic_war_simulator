@@ -65,6 +65,11 @@ from .security_regime_recovery import (
     SecurityRegimeRecoveryProposal,
     evaluate_security_regime_recovery,
 )
+from .security_regime_recovery_transition import (
+    SecurityRegimeRecoveryCommitRecord,
+    commit_security_regime_recovery,
+    retain_security_regime_recovery_persistence,
+)
 from .spillover import (
     GraphSpilloverRecord,
     SpilloverQueueState,
@@ -127,6 +132,9 @@ class DayTransactionResult:
         SecurityRegimeRecoveryEvaluationResult, ...
     ]
     security_regime_recovery_proposals: tuple[SecurityRegimeRecoveryProposal, ...]
+    security_regime_recovery_commits: tuple[
+        SecurityRegimeRecoveryCommitRecord, ...
+    ]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -222,6 +230,10 @@ class DayTransactionResult:
             "security_regime_recovery_proposals": [
                 item.to_dict()
                 for item in self.security_regime_recovery_proposals
+            ],
+            "security_regime_recovery_commits": [
+                item.to_dict()
+                for item in self.security_regime_recovery_commits
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -671,6 +683,7 @@ def _security_regime_recovery_inputs_fingerprint(
     *,
     persistence: dict[str, SecurityRegimeRecoveryPersistenceState | None],
     recovery_config: dict[str, Any],
+    transition_config: dict[str, Any] | None,
 ) -> dict[str, Any]:
     logger.info(
         "_security_regime_recovery_inputs_fingerprint nodes=%s",
@@ -682,6 +695,11 @@ def _security_regime_recovery_inputs_fingerprint(
             for node_id, item in sorted(persistence.items())
         },
         "recovery_config_hash": canonical_hash(recovery_config),
+        "transition_config_hash": (
+            canonical_hash(transition_config)
+            if transition_config is not None
+            else None
+        ),
     }
 
 
@@ -1210,6 +1228,90 @@ def _evaluate_security_regime_recoveries(
     )
 
 
+def _commit_security_regime_recoveries(
+    *,
+    states: dict[str, EngineState],
+    escalation_persistence: dict[str, SecurityRegimePersistenceState],
+    recovery_persistence: dict[str, SecurityRegimeRecoveryPersistenceState],
+    proposals: tuple[SecurityRegimeRecoveryProposal, ...],
+    transition_config: dict[str, Any],
+    engine_state_registry: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, EngineState],
+    dict[str, SecurityRegimePersistenceState],
+    dict[str, SecurityRegimeRecoveryPersistenceState],
+    tuple[SecurityRegimeRecoveryCommitRecord, ...],
+]:
+    logger.info(
+        "_commit_security_regime_recoveries states=%s proposals=%s",
+        len(states),
+        len(proposals),
+    )
+    proposals_by_node: dict[str, list[SecurityRegimeRecoveryProposal]] = {
+        node_id: [] for node_id in states
+    }
+    for proposal in proposals:
+        if proposal.node_id not in proposals_by_node:
+            raise ValueError(
+                f"Security recovery proposal targets unknown node "
+                f"{proposal.node_id}"
+            )
+        proposals_by_node[proposal.node_id].append(proposal)
+
+    committed_states: dict[str, EngineState] = {}
+    escalation_out: dict[str, SecurityRegimePersistenceState] = {}
+    recovery_out: dict[str, SecurityRegimeRecoveryPersistenceState] = {}
+    commits: list[SecurityRegimeRecoveryCommitRecord] = []
+
+    for node_id in sorted(states):
+        node_proposals = sorted(
+            proposals_by_node[node_id],
+            key=lambda item: item.proposal_id,
+        )
+        if len(node_proposals) > 1:
+            raise ValueError(
+                f"Multiple matured security recovery proposals for {node_id}"
+            )
+
+        if not node_proposals:
+            committed_states[node_id] = states[node_id]
+            escalation_out[node_id] = escalation_persistence[node_id]
+            recovery_out[node_id] = (
+                retain_security_regime_recovery_persistence(
+                    persistence=recovery_persistence[node_id],
+                    trace=trace,
+                )
+            )
+            continue
+
+        (
+            committed_state,
+            commit_record,
+            committed_escalation_persistence,
+            committed_recovery_persistence,
+        ) = commit_security_regime_recovery(
+            state=states[node_id],
+            proposal=node_proposals[0],
+            transition_config=transition_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=trace,
+        )
+        committed_states[node_id] = committed_state
+        escalation_out[node_id] = committed_escalation_persistence
+        recovery_out[node_id] = committed_recovery_persistence
+        commits.append(commit_record)
+
+    return (
+        committed_states,
+        escalation_out,
+        recovery_out,
+        tuple(sorted(commits, key=lambda item: item.commit_id)),
+    )
+
+
 def _evaluate_fractal_refinements(
     *,
     states: dict[str, EngineState],
@@ -1330,6 +1432,9 @@ def _checkpoint_node(
     resolutions: tuple[ResolutionRecord, ...],
     spillover_proposals: tuple[DeltaProposal, ...],
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...],
+    security_regime_recovery_commits: tuple[
+        SecurityRegimeRecoveryCommitRecord, ...
+    ],
     phase_commits: tuple[PhaseCommitRecord, ...],
     fractal_refinement_actions: tuple[FractalRefinementActionProposal, ...],
     fractal_child_initialization_records: tuple[
@@ -1369,6 +1474,13 @@ def _checkpoint_node(
         sorted(
             record.commit_id
             for record in security_regime_commits
+            if record.node_id == node_id
+        )
+    )
+    node_security_regime_recovery_commits = tuple(
+        sorted(
+            record.commit_id
+            for record in security_regime_recovery_commits
             if record.node_id == node_id
         )
     )
@@ -1413,6 +1525,9 @@ def _checkpoint_node(
         constraint_clamps=clamp_resolutions,
         phase_transition_ids=node_phase_commits,
         security_regime_transition_ids=node_security_regime_commits,
+        security_regime_recovery_transition_ids=(
+            node_security_regime_recovery_commits
+        ),
         refinement_actions=node_refinement_actions,
         fractal_child_initialization_ids=node_child_initializations,
     )
@@ -1458,6 +1573,8 @@ def run_day_transaction(
     security_regime_recovery_persistence: (
         dict[str, SecurityRegimeRecoveryPersistenceState | None] | None
     ) = None,
+    enable_security_regime_recovery_commits: bool = False,
+    security_regime_recovery_transition_config: dict[str, Any] | None = None,
     enable_fractal_refinement_evaluator: bool = False,
     fractal_refinement_config: dict[str, Any] | None = None,
     fractal_refinement_persistence: (
@@ -1625,6 +1742,27 @@ def run_day_transaction(
                 )
             )
 
+    if enable_security_regime_recovery_commits:
+        if not enable_security_regime_recovery_evaluator:
+            raise ValueError(
+                "Security regime recovery commits require recovery evaluator"
+            )
+        if security_regime_recovery_transition_config is None:
+            raise ValueError(
+                "Security regime recovery commits require "
+                "security_regime_recovery_transition_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "security_regime_recovery_commit_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Security regime recovery commit is disabled by the "
+                "day transaction contract"
+            )
+
     if enable_security_regime_recovery_evaluator:
         if not enable_security_regime_evaluator or not enable_security_regime_commits:
             raise ValueError(
@@ -1657,6 +1795,11 @@ def run_day_transaction(
             _security_regime_recovery_inputs_fingerprint(
                 persistence=normalized_security_regime_recovery_persistence,
                 recovery_config=security_regime_recovery_config,
+                transition_config=(
+                    security_regime_recovery_transition_config
+                    if enable_security_regime_recovery_commits
+                    else None
+                ),
             )
         )
 
@@ -2054,7 +2197,7 @@ def run_day_transaction(
             security_regime_recovery_evaluations,
             security_regime_recovery_proposals,
         ) = _evaluate_security_regime_recoveries(
-            states=security_committed_states,
+            states=security_recovered_states,
             persistence=normalized_security_regime_recovery_persistence,
             context_flags=normalized_security_regime_context_flags,
             recovery_config=security_regime_recovery_config,
@@ -2065,11 +2208,34 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
-    phase_persistence_out: dict[str, PhasePersistenceState] = {}
+    security_regime_recovery_commits: tuple[
+        SecurityRegimeRecoveryCommitRecord, ...
+    ] = ()
+    security_recovered_states = security_committed_states
+
+    if enable_security_regime_recovery_commits:
+        assert security_regime_recovery_transition_config is not None
+        (
+            security_recovered_states,
+            security_regime_persistence_out,
+            security_regime_recovery_persistence_out,
+            security_regime_recovery_commits,
+        ) = _commit_security_regime_recoveries(
+            states=security_committed_states,
+            escalation_persistence=security_regime_persistence_out,
+            recovery_persistence=security_regime_recovery_persistence_out,
+            proposals=security_regime_recovery_proposals,
+            transition_config=security_regime_recovery_transition_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
+        phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
     phase_commits: tuple[PhaseCommitRecord, ...] = ()
-    final_states = security_committed_states
+    final_states = security_recovered_states
 
     if enable_phase_transitions:
         assert phase_config is not None
@@ -2178,6 +2344,9 @@ def run_day_transaction(
             resolutions=resolution.records,
             spillover_proposals=spillover_proposals,
             security_regime_commits=security_regime_commits,
+            security_regime_recovery_commits=(
+                security_regime_recovery_commits
+            ),
             phase_commits=phase_commits,
             fractal_refinement_actions=fractal_refinement_actions,
             fractal_child_initialization_records=(
@@ -2259,6 +2428,10 @@ def run_day_transaction(
             proposal.proposal_id
             for proposal in security_regime_recovery_proposals
         ],
+        security_regime_recovery_commit_ids=[
+            record.commit_id
+            for record in security_regime_recovery_commits
+        ],
         security_regime_recovery_persistence={
             node_id: item.to_dict()
             for node_id, item in sorted(
@@ -2319,6 +2492,9 @@ def run_day_transaction(
         ),
         security_regime_recovery_proposals=(
             security_regime_recovery_proposals
+        ),
+        security_regime_recovery_commits=(
+            security_regime_recovery_commits
         ),
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
