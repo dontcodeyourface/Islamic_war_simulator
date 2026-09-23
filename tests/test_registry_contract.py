@@ -28,3 +28,32 @@ def test_parameter_references_are_declared() -> None:
     assert "DYNAMIC_GAINS_SYN_V1" in synthetic
     assert "EVENT_HAZARD_PROBABILITY_SYN_V1" in synthetic
     assert parameters["parameter_sets"]["calibrated_v1"]["missing_policy"] == "fatal"
+
+
+def test_snapshot_feature_map_targets_known_latents_and_parameters() -> None:
+    logger.info("test_snapshot_feature_map_targets_known_latents_and_parameters")
+    state_registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    feature_map = load_yaml(ROOT / "config/engine/snapshot_feature_map_v1.yaml")
+    parameter_registry = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
+
+    latents = set(extract_latent_registry(state_registry))
+    mapped_latents = set(feature_map["empirical_rules"]) | set(
+        feature_map["baseline_anchor_rules"]
+    )
+    assert mapped_latents <= latents
+
+    for profile, parameter_ids in feature_map["parameter_ids"].items():
+        profile_parameters = parameter_registry["parameter_sets"][profile]["parameters"]
+        for parameter_id in parameter_ids.values():
+            if profile == "calibrated_v1":
+                assert parameter_id in profile_parameters
+            else:
+                assert profile_parameters[parameter_id] is not None
+
+
+def test_feature_map_contains_no_country_specific_keys() -> None:
+    logger.info("test_feature_map_contains_no_country_specific_keys")
+    feature_map = load_yaml(ROOT / "config/engine/snapshot_feature_map_v1.yaml")
+    serialized = str(feature_map).lower()
+    for forbidden in ("spain", "morocco", "france", "germany", "united_kingdom"):
+        assert forbidden not in serialized
