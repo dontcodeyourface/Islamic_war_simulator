@@ -13,6 +13,12 @@ from .events import (
     evaluate_mass_protest,
 )
 from .extremism import propose_extremist_network_dynamics
+from .fractal import (
+    FractalRefinementActionProposal,
+    FractalRefinementEvaluationResult,
+    FractalRefinementPersistenceState,
+    evaluate_fractal_refinement,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -111,6 +117,15 @@ class DayTransactionResult:
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
     phase_commits: tuple[PhaseCommitRecord, ...]
+    fractal_refinement_persistence: dict[
+        str, FractalRefinementPersistenceState
+    ]
+    fractal_refinement_evaluations: tuple[
+        FractalRefinementEvaluationResult, ...
+    ]
+    fractal_refinement_actions: tuple[
+        FractalRefinementActionProposal, ...
+    ]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -194,6 +209,19 @@ class DayTransactionResult:
                 item.to_dict() for item in self.phase_arbitrations
             ],
             "phase_commits": [item.to_dict() for item in self.phase_commits],
+            "fractal_refinement_persistence": {
+                node_id: item.to_dict()
+                for node_id, item in sorted(
+                    self.fractal_refinement_persistence.items()
+                )
+            },
+            "fractal_refinement_evaluations": [
+                item.to_dict()
+                for item in self.fractal_refinement_evaluations
+            ],
+            "fractal_refinement_actions": [
+                item.to_dict() for item in self.fractal_refinement_actions
+            ],
         }
 
 
@@ -233,6 +261,76 @@ def _validate_day_inputs(
         state.validate(latent_registry)
 
     return next(iter(days))
+
+
+def _normalize_fractal_refinement_persistence_inputs(
+    *,
+    states: dict[str, EngineState],
+    day_from: int,
+    persistence: (
+        dict[str, FractalRefinementPersistenceState | None] | None
+    ),
+) -> dict[str, FractalRefinementPersistenceState | None]:
+    logger.info(
+        "_normalize_fractal_refinement_persistence_inputs "
+        "day_from=%s supplied=%s",
+        day_from,
+        persistence is not None,
+    )
+    if persistence is None:
+        if day_from != 0:
+            raise ValueError(
+                "Fractal refinement persistence is required after day zero "
+                "when fractal evaluation is enabled"
+            )
+        return {node_id: None for node_id in sorted(states)}
+
+    if set(persistence) != set(states):
+        raise ValueError(
+            "Fractal refinement persistence nodes must equal state nodes"
+        )
+
+    normalized: dict[str, FractalRefinementPersistenceState | None] = {}
+    for node_id in sorted(states):
+        item = persistence[node_id]
+        if item is None:
+            if day_from != 0:
+                raise ValueError(
+                    f"Missing fractal refinement persistence for "
+                    f"{node_id} after day zero"
+                )
+            normalized[node_id] = None
+            continue
+        if item.node_id != node_id:
+            raise ValueError(
+                f"Fractal refinement persistence node mismatch "
+                f"key={node_id} value={item.node_id}"
+            )
+        if item.last_evaluated_day != day_from:
+            raise ValueError(
+                f"Fractal refinement persistence day mismatch for {node_id}: "
+                f"expected {day_from}, got {item.last_evaluated_day}"
+            )
+        normalized[node_id] = item
+    return normalized
+
+
+def _fractal_refinement_inputs_fingerprint(
+    *,
+    persistence: dict[str, FractalRefinementPersistenceState | None],
+    refinement_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info(
+        "_fractal_refinement_inputs_fingerprint nodes=%s",
+        len(persistence),
+    )
+    return {
+        "persistence": {
+            node_id: item.to_dict() if item is not None else None
+            for node_id, item in sorted(persistence.items())
+        },
+        "refinement_config_hash": canonical_hash(refinement_config),
+    }
 
 
 def _normalize_phase_persistence_inputs(
@@ -506,6 +604,7 @@ def _transaction_id(
     security_inputs: dict[str, Any] | None = None,
     security_regime_inputs: dict[str, Any] | None = None,
     security_regime_recovery_inputs: dict[str, Any] | None = None,
+    fractal_refinement_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -531,6 +630,7 @@ def _transaction_id(
             "security_inputs": security_inputs,
             "security_regime_inputs": security_regime_inputs,
             "security_regime_recovery_inputs": security_regime_recovery_inputs,
+            "fractal_refinement_inputs": fractal_refinement_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -932,6 +1032,46 @@ def _evaluate_security_regime_recoveries(
     )
 
 
+def _evaluate_fractal_refinements(
+    *,
+    states: dict[str, EngineState],
+    persistence: dict[str, FractalRefinementPersistenceState | None],
+    refinement_config: dict[str, Any],
+    parameter_registry: dict[str, Any],
+    profile: str,
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, FractalRefinementPersistenceState],
+    tuple[FractalRefinementEvaluationResult, ...],
+    tuple[FractalRefinementActionProposal, ...],
+]:
+    logger.info("_evaluate_fractal_refinements states=%s", len(states))
+    persistence_out: dict[str, FractalRefinementPersistenceState] = {}
+    evaluations: list[FractalRefinementEvaluationResult] = []
+    actions: list[FractalRefinementActionProposal] = []
+
+    for node_id in sorted(states):
+        result = evaluate_fractal_refinement(
+            state=states[node_id],
+            persistence=persistence[node_id],
+            refinement_config=refinement_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=trace,
+        )
+        persistence_out[node_id] = result.persistence
+        evaluations.append(result)
+        actions.extend(result.proposals)
+
+    return (
+        persistence_out,
+        tuple(evaluations),
+        tuple(sorted(actions, key=lambda item: item.action_id)),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -942,6 +1082,7 @@ def _checkpoint_node(
     spillover_proposals: tuple[DeltaProposal, ...],
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...],
     phase_commits: tuple[PhaseCommitRecord, ...],
+    fractal_refinement_actions: tuple[FractalRefinementActionProposal, ...],
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> None:
@@ -986,6 +1127,13 @@ def _checkpoint_node(
             if record.node_id == node_id
         )
     )
+    node_refinement_actions = tuple(
+        sorted(
+            item.action_id
+            for item in fractal_refinement_actions
+            if item.node_id == node_id
+        )
+    )
     node_spillovers = tuple(
         sorted(
             proposal.event_id
@@ -1006,6 +1154,7 @@ def _checkpoint_node(
         constraint_clamps=clamp_resolutions,
         phase_transition_ids=node_phase_commits,
         security_regime_transition_ids=node_security_regime_commits,
+        refinement_actions=node_refinement_actions,
     )
 
 
@@ -1049,6 +1198,11 @@ def run_day_transaction(
     security_regime_recovery_persistence: (
         dict[str, SecurityRegimeRecoveryPersistenceState | None] | None
     ) = None,
+    enable_fractal_refinement_evaluator: bool = False,
+    fractal_refinement_config: dict[str, Any] | None = None,
+    fractal_refinement_persistence: (
+        dict[str, FractalRefinementPersistenceState | None] | None
+    ) = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1077,6 +1231,10 @@ def run_day_transaction(
     security_inputs: dict[str, Any] | None = None
     security_regime_inputs: dict[str, Any] | None = None
     security_regime_recovery_inputs: dict[str, Any] | None = None
+    fractal_refinement_inputs: dict[str, Any] | None = None
+    normalized_fractal_refinement_persistence: dict[
+        str, FractalRefinementPersistenceState | None
+    ] = {}
     normalized_security_regime_persistence: dict[
         str, SecurityRegimePersistenceState | None
     ] = {}
@@ -1088,6 +1246,36 @@ def run_day_transaction(
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_fractal_refinement_evaluator:
+        if fractal_refinement_config is None:
+            raise ValueError(
+                "Fractal refinement evaluator requires "
+                "fractal_refinement_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_refinement_evaluator_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal refinement evaluator is disabled by the "
+                "day transaction contract"
+            )
+        normalized_fractal_refinement_persistence = (
+            _normalize_fractal_refinement_persistence_inputs(
+                states=states,
+                day_from=day_from,
+                persistence=fractal_refinement_persistence,
+            )
+        )
+        fractal_refinement_inputs = (
+            _fractal_refinement_inputs_fingerprint(
+                persistence=normalized_fractal_refinement_persistence,
+                refinement_config=fractal_refinement_config,
+            )
+        )
 
     if enable_security_regime_recovery_evaluator:
         if not enable_security_regime_evaluator or not enable_security_regime_commits:
@@ -1315,6 +1503,7 @@ def run_day_transaction(
         security_inputs=security_inputs,
         security_regime_inputs=security_regime_inputs,
         security_regime_recovery_inputs=security_regime_recovery_inputs,
+        fractal_refinement_inputs=fractal_refinement_inputs,
     )
 
     working_rng = rng.clone()
@@ -1554,6 +1743,32 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    fractal_refinement_persistence_out: dict[
+        str, FractalRefinementPersistenceState
+    ] = {}
+    fractal_refinement_evaluations: tuple[
+        FractalRefinementEvaluationResult, ...
+    ] = ()
+    fractal_refinement_actions: tuple[
+        FractalRefinementActionProposal, ...
+    ] = ()
+
+    if enable_fractal_refinement_evaluator:
+        assert fractal_refinement_config is not None
+        (
+            fractal_refinement_persistence_out,
+            fractal_refinement_evaluations,
+            fractal_refinement_actions,
+        ) = _evaluate_fractal_refinements(
+            states=final_states,
+            persistence=normalized_fractal_refinement_persistence,
+            refinement_config=fractal_refinement_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -1564,6 +1779,7 @@ def run_day_transaction(
             spillover_proposals=spillover_proposals,
             security_regime_commits=security_regime_commits,
             phase_commits=phase_commits,
+            fractal_refinement_actions=fractal_refinement_actions,
             manifest=manifest,
             trace=staged_trace,
         )
@@ -1582,6 +1798,15 @@ def run_day_transaction(
         phase_commit_ids=[
             record.commit_id for record in phase_commits
         ],
+        fractal_refinement_action_ids=[
+            item.action_id for item in fractal_refinement_actions
+        ],
+        fractal_refinement_persistence={
+            node_id: item.to_dict()
+            for node_id, item in sorted(
+                fractal_refinement_persistence_out.items()
+            )
+        },
         spillover_candidate_ids=[
             record.spillover_id for record in spillover_candidates
         ],
@@ -1676,4 +1901,11 @@ def run_day_transaction(
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,
         phase_commits=phase_commits,
+        fractal_refinement_persistence=(
+            fractal_refinement_persistence_out
+        ),
+        fractal_refinement_evaluations=(
+            fractal_refinement_evaluations
+        ),
+        fractal_refinement_actions=fractal_refinement_actions,
     )

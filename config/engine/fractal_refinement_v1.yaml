@@ -1,0 +1,84 @@
+schema_version: "1.0"
+status: "implementation-v0.19"
+purpose: "Read-only adaptive fractal refinement/de-refinement evaluator."
+
+equation_id: "REFINEMENT_TRIGGER_V1"
+
+mode:
+  read_only: true
+  node_materialization_allowed: false
+  one_level_per_action: true
+
+supported_levels:
+  - "L1_COUNTRY"
+  - "L2_REGION"
+
+components:
+  violence:
+    reduction: "mean"
+    sources:
+      - variable: "public_order_stress"
+        transform: "identity"
+      - variable: "terrorism_threat_pressure"
+        transform: "identity"
+      - variable: "organized_armed_actor_capacity"
+        transform: "identity"
+
+  institutional_stress:
+    reduction: "mean"
+    sources:
+      - variable: "government_legitimacy"
+        transform: "one_minus"
+      - variable: "state_cohesion"
+        transform: "one_minus"
+      - variable: "security_chain_cohesion"
+        transform: "one_minus"
+      - variable: "regional_fragmentation_pressure"
+        transform: "identity"
+
+  infrastructure_stress:
+    reduction: "mean"
+    sources:
+      - variable: "electricity_functionality"
+        transform: "one_minus"
+      - variable: "fuel_distribution_functionality"
+        transform: "one_minus"
+      - variable: "transport_logistics_functionality"
+        transform: "one_minus"
+      - variable: "telecom_internet_functionality"
+        transform: "one_minus"
+      - variable: "water_resilience"
+        transform: "one_minus"
+
+  network_activity:
+    reduction: "mean"
+    sources:
+      - variable: "criminal_network_power"
+        transform: "identity"
+      - variable: "violent_islamist_pressure"
+        transform: "identity"
+      - variable: "violent_ultranationalist_pressure"
+        transform: "identity"
+      - variable: "revolutionary_extremist_pressure"
+        transform: "identity"
+
+  displacement:
+    reduction: "mean"
+    sources:
+      - variable: "displacement_pressure"
+        transform: "identity"
+
+lineage_policy:
+  initialization_weight_policy_id: "FRACTAL_CHILD_INIT_WEIGHTS_V1"
+  inherited_uncertainty_policy_id: "FRACTAL_UNCERTAINTY_WIDENING_V1"
+  aggregation_rule_id: "FRACTAL_PARENT_REAGGREGATION_V1"
+
+persistence:
+  consecutive_days_required: true
+  reset_on_failed_condition: true
+  same_day_re_evaluation: "fail_closed"
+  skipped_day_re_evaluation: "fail_closed"
+
+safety:
+  civilian_identity_direct_refinement_input: false
+  refinement_is_resolution_not_outcome: true

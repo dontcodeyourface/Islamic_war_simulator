@@ -86,6 +86,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/security_regime_recovery_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-refinement-config",
+        default="config/engine/fractal_refinement_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -254,6 +258,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     security_regime_recovery_config = load_yaml(
         root / args.security_regime_recovery_config
     )
+    fractal_refinement_config = load_yaml(
+        root / args.fractal_refinement_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -331,6 +338,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
+            "fractal_refinement_evaluator",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -387,6 +395,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
         phase_context_flags={},
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=fractal_refinement_config,
+        fractal_refinement_persistence=None,
     )
 
     out = Path(args.out)
@@ -453,6 +464,18 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 node_id: item.to_dict()
                 for node_id, item in sorted(
                     result.security_regime_recovery_persistence.items()
+                )
+            },
+            "fractal_refinement_action_count": len(
+                result.fractal_refinement_actions
+            ),
+            "fractal_refinement_action_ids": [
+                item.action_id for item in result.fractal_refinement_actions
+            ],
+            "fractal_refinement_persistence": {
+                node_id: item.to_dict()
+                for node_id, item in sorted(
+                    result.fractal_refinement_persistence.items()
                 )
             },
             "spillover_queue": (
