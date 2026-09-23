@@ -120,7 +120,7 @@ def test_resolved_and_unresolved_channel_semantics_are_distinct() -> None:
     information = [
         item
         for item in result.candidates
-        if item.rule_id == "INFORMATION_PRESSURE_TRACE_V1"
+        if item.rule_id == "POLARIZATION_INFORMATION_TRACE_V1"
     ]
 
     assert len(proximity) == 20
