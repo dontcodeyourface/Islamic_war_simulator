@@ -264,6 +264,25 @@ parameter_sets:
         unit: dimensionless_per_day
         rationale: "Engineering values chosen to test bounded multi-timescale behavior."
 
+      EXTREMIST_NETWORK_DYNAMICS_SYN_V1:
+        type: parallel_network_dynamics
+        value:
+          driver_weights:
+            polarization: 0.25
+            communal_fear: 0.20
+            civilizational_narrative_strength: 0.20
+            foreign_support_nonstate: 0.20
+            prison_control_inverse: 0.15
+          damping_weights:
+            police_effective_capacity: 0.30
+            intelligence_effectiveness: 0.30
+            government_legitimacy: 0.20
+            social_cohesion: 0.20
+          gain_key: "medium_daily_gain"
+          max_delta_key: "max_single_day_latent_delta"
+        unit: dimensionless_per_day
+        rationale: "Engineering-only symmetric violent-network pressure dynamics. Population, religion and ordinary political vote shares are excluded as direct propensity inputs."
+
       RECIPROCAL_RADICALIZATION_SYN_V1:
         type: feedback_gain_set
         value:
@@ -354,6 +373,7 @@ parameter_sets:
       OWNER_RESOLVER_POLICY_CAL_V1: null
       EVENT_EFFECT_PROPOSALS_CAL_V1: null
       DYNAMIC_GAINS_CAL_V1: null
+      EXTREMIST_NETWORK_DYNAMICS_CAL_V1: null
       RECIPROCAL_RADICALIZATION_CAL_V1: null
       FRACTAL_REFINEMENT_CAL_V1: null
     missing_policy: "fatal"
