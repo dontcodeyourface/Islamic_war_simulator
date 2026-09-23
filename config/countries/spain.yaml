@@ -2,7 +2,7 @@ identity:
   country_name: "Spain"
   iso2: "ES"
   iso3: "ESP"
-  snapshot_version: "0.5"
+  snapshot_version: "1.0"
   snapshot_date: "2026-09-23"
 
 population:
@@ -127,6 +127,197 @@ population:
       derived: false
       imputed: false
       notes: "World Bank/UN WPP age-distribution estimate."
+
+demographic_dynamics:
+  annual_population_growth_rate:
+    value: 0.90
+    unit: "percent"
+    reference_date: "2025-07-01_to_2026-07-01"
+    source_ids: ["ES-INE-POP-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Resident population reached 49,801,559 on 2026-07-01; year-on-year increase 444,205 persons / 0.90%."
+  natural_increase:
+    value: -116056
+    unit: "persons"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Negative natural balance; overall population growth is therefore driven by migration and demographic composition."
+  annual_births:
+    value: 318005
+    unit: "live_births"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  crude_birth_rate:
+    value: 6.49
+    unit: "births_per_1000_population"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  total_fertility_rate:
+    value: 1.10
+    unit: "children_per_woman"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  urban_fertility_rate: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  rural_fertility_rate: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  christian_fertility_rate_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No reliable national fertility series cross-tabulated by Christian identity located."
+  muslim_fertility_rate_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Nationality, country of birth and foreign-mother fertility are not used as proxies for Muslim fertility."
+  christian_population_growth_rate_direct: {value: null, unit: "percent_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires directly measured longitudinal religious-demography data."}
+  muslim_population_growth_rate_direct: {value: null, unit: "percent_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires directly measured longitudinal religious-demography data."}
+  muslim_fertility_national_proxy: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "National TFR is not a valid proxy in a religiously heterogeneous country."}
+  demographic_projection_2030: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Projection layer deferred to engine/scenario calibration."}
+  demographic_projection_2050: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religion_specific_methodology:
+    value: "direct_measurement_only"
+    unit: "policy"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Christian/Muslim fertility or growth cannot be inferred from nationality, immigrant generation or country of origin."
+
+demographic_differentials:
+  native_national_tfr:
+    value: 1.07
+    unit: "children_per_woman_spanish_nationality"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Nationality category, not religion."
+  foreign_national_tfr:
+    value: 1.27
+    unit: "children_per_woman_foreign_nationality"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Foreign nationality is heterogeneous and must not be used as a Muslim proxy."
+  foreign_born_mother_birth_share:
+    value: 33.3
+    unit: "percent_of_births"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "105,814 births were to mothers born abroad."
+  foreign_national_mother_birth_share:
+    value: 25.6
+    unit: "percent_of_births"
+    reference_date: "2024"
+    source_ids: ["ES-INE-FERTILITY-2024"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "81,339 births were to mothers with foreign nationality."
+  muslim_non_muslim_tfr_gap_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No Spain-specific direct religious TFR series located."
+  muslim_christian_tfr_gap_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No Spain-specific direct Muslim-versus-Christian fertility series located."
+  muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  non_muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  christian_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_switching_net_effect: {value: null, unit: "persons_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Must be measured separately from fertility and migration."}
+  religious_demographic_momentum:
+    value: "muslim_population_younger_and_higher_fertility_at_European_aggregate_but_Spain_specific_direct_gap_unavailable"
+    unit: "categorical"
+    reference_date: "2015-2020_Europe_reference"
+    source_ids: ["PEW-EU-MUSLIM-FERTILITY-2017"]
+    quality: "low"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Context only. Europe-wide Pew estimate was 2.6 Muslim vs 1.6 non-Muslim TFR; this is not assigned as Spain's rate."
+  migration_demographic_momentum:
+    value: "positive"
+    unit: "categorical"
+    reference_date: "2024-2026"
+    source_ids: ["ES-INE-FERTILITY-2024","ES-INE-POP-2026"]
+    quality: "high"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Population growth is occurring despite negative natural increase, and 33.3% of births were to foreign-born mothers in 2024."
+  methodology:
+    value: "Separate direct religion, nationality, country-of-birth and migration effects. Never substitute one for another."
+    unit: "text"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
 
 religion:
   christian_share:
@@ -986,7 +1177,321 @@ economy:
   trade_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   sanctions_vulnerability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
 
+energy_security:
+  proven_crude_oil_reserves_barrels:
+    value: 150000000
+    unit: "barrels"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Secondary compiled proved-reserve estimate; strategic petroleum stocks below are operationally more relevant."
+  domestic_oil_production_bpd:
+    value: 77267
+    unit: "barrels_per_day_petroleum_liquids"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Secondary compiled energy series."
+  petroleum_consumption_bpd:
+    value: 1334159
+    unit: "barrels_per_day_petroleum_products"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Used as broad civilian/economic baseline, not wartime burn."
+  petroleum_consumption_annual: {value: null, unit: "tonnes_or_barrels", reference_date: null, source_ids: ["ES-CORES-RESERVES-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "CORES consumption series exists; exact harmonized annual value not imported in v1 freeze."}
+  petroleum_import_dependency:
+    value: "very_high"
+    unit: "categorical"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Domestic petroleum production covers only a small fraction of consumption."
+  strategic_petroleum_stock_days:
+    value: 106.3
+    unit: "days_equivalent_approx"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-CORES-RESERVES-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "43.1 days held by CORES + 63.2 days computable industry stocks at year-end 2025. Subsequent 2026 emergency releases mean this is a dated baseline, not a September-2026 live stock."
+  petroleum_security_obligation_days:
+    value: 92
+    unit: "days"
+    reference_date: "2026"
+    source_ids: ["ES-CORES-OBLIGATION-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "42 days strategic CORES + normally 50 days industry, subject to temporary emergency reductions."
+  refinery_capacity: {value: null, unit: "tonnes_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Required field retained; exact current effective capacity to be refreshed from refinery/CORES data."}
+  domestic_refining_available: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["ES-CORES-OBLIGATION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Spain has operating domestic refineries and distributed strategic storage."}
+  electricity_installed_capacity_mw:
+    value: 142500
+    unit: "MW"
+    reference_date: "2025-12-31"
+    source_ids: ["ES-REE-ELECTRICITY-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Excluding self-consumption capacity."
+  electricity_annual_demand_gwh:
+    value: 256086
+    unit: "GWh"
+    reference_date: "2025"
+    source_ids: ["ES-REE-ELECTRICITY-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "System demand excluding self-consumption adjustment."
+  electricity_annual_generation_gwh: {value: null, unit: "GWh", reference_date: "2025", source_ids: ["ES-REE-ELECTRICITY-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Can be populated in a later data refresh without changing v1 schema."}
+  electricity_net_import_export_gwh:
+    value: -12794
+    unit: "GWh_net_import_positive_export_negative"
+    reference_date: "2025"
+    source_ids: ["ES-REE-ELECTRICITY-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Spain was a net electricity exporter; negative sign follows snapshot convention."
+  renewable_installed_share: {value: null, unit: "percent", reference_date: null, source_ids: ["ES-REE-ELECTRICITY-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Generation share differs from installed-capacity share; no silent substitution."}
+  electricity_storage_capacity_mw: {value: 3427, unit: "MW", reference_date: "2025-12-31", source_ids: ["ES-REE-ELECTRICITY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Storage capacity reported by Red Eléctrica."}
+  gas_supply_resilience: {value: null, unit: "latent_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Schema frozen; numerical normalization deferred."}
+  fuel_supply_resilience: {value: "high_stock_buffer_high_import_dependency", unit: "categorical", reference_date: "2025-2026", source_ids: ["ES-CORES-RESERVES-2025","ES-CORES-OBLIGATION-2026"], quality: "medium", estimated: true, derived: true, imputed: false, notes: "Large security stocks mitigate, but do not remove, import dependence."}
+
+food_water_security:
+  cereal_production_tonnes: {value: 20077300, unit: "tonnes", reference_date: "2024/25_campaign", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "high", estimated: true, derived: false, imputed: false, notes: "MAPA campaign estimate."}
+  cereal_imports_tonnes: {value: 16520000, unit: "tonnes", reference_date: "2024/25_campaign", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+  cereal_internal_use_tonnes: {value: 35869400, unit: "tonnes", reference_date: "2024/25_campaign", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+  cereal_end_stocks_tonnes: {value: 3278500, unit: "tonnes", reference_date: "2024/25_campaign_end", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+  cereal_import_dependency_ratio:
+    value: 46.1
+    unit: "gross_imports_as_percent_of_internal_use"
+    reference_date: "2024/25_campaign"
+    source_ids: ["ES-MAPA-CEREALS-2024-25"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "16.52 Mt imports / 35.8694 Mt internal use. Gross ratio; not net import dependence."
+  food_import_dependency: {value: null, unit: "percent_or_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Cereal dependence is populated; whole-food dependence is not."}
+  strategic_food_stock_days: {value: null, unit: "days", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No single official national strategic-food-days series located."}
+  renewable_freshwater_per_capita_m3: {value: null, unit: "m3_per_person_year", reference_date: null, source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Water-stress indicator is imported; exact Spain per-capita internal resource value deferred."}
+  water_stress_percent: {value: 43.25, unit: "percent", reference_date: "2022", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "high", freshness_class: "aging", estimated: false, derived: false, imputed: false, notes: "Freshwater withdrawals as share of available freshwater resources."}
+  annual_freshwater_withdrawal_m3: {value: null, unit: "m3", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  desalination_capacity_m3_day: {value: null, unit: "m3_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Important future refresh field, especially for Mediterranean/island resilience."}
+  potable_water_access_percent: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  food_supply_resilience: {value: "mixed_domestic_production_and_large_import_capacity", unit: "categorical", reference_date: "2024/25", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+  water_supply_resilience: {value: "structurally_water_stressed_with_regional_variation", unit: "categorical", reference_date: "2022-2026", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+
+sustainment:
+  civilian_petroleum_baseline: {value: 1334159, unit: "barrels_per_day_2025", reference_date: "2025", source_ids: ["GLOBAL-OIL-RESERVES-2025"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "National economy/civilian baseline, not a wartime allocation."}
+  civilian_food_baseline: {value: 35869400, unit: "tonnes_cereal_internal_use_2024_25", reference_date: "2024/25", source_ids: ["ES-MAPA-CEREALS-2024-25"], quality: "high", estimated: true, derived: false, imputed: false, notes: "Cereal internal use is a partial food/feed/industrial baseline, not total diet."}
+  civilian_water_baseline: {value: null, unit: "m3_per_day_or_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Country snapshot records water system capacity/stress; crisis per-capita minimums belong to global engine policy."}
+  military_fuel_consumption_public: {value: null, unit: "fuel_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No fixed value. Scenario-derived."}
+  military_food_consumption_public: {value: null, unit: "food_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No fixed value. Scenario-derived."}
+  military_water_consumption_public: {value: null, unit: "water_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Climate, activity and logistics dependent; scenario-derived."}
+  military_munitions_consumption_public: {value: null, unit: "munition_units_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No tactical burn-rate constant in snapshot."}
+  military_sustainment_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: "Derived from force mix, readiness, tempo, geography, climate, logistics and duration."}
+  munitions_burn_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: "Country snapshot stores production/replenishment capacity, not attack-level consumption."}
+  methodological_note: {value: "Snapshot v1 freezes national stocks/capacities and observed civilian baselines; military wartime consumption belongs to the future engine.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+critical_infrastructure:
+  electricity_resilience: {value: "large_diversified_interconnected_system", unit: "categorical", reference_date: "2025", source_ids: ["ES-REE-ELECTRICITY-2025"], quality: "medium", estimated: true, derived: true, imputed: false, notes: "No outage-probability score assigned."}
+  fuel_storage_resilience: {value: "distributed_strategic_and_industry_stocks", unit: "categorical", reference_date: "2025-2026", source_ids: ["ES-CORES-RESERVES-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  telecom_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Frozen field; detailed scoring deferred."}
+  internet_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  water_system_resilience: {value: "regionally_heterogeneous_under_water_stress", unit: "categorical", reference_date: "2022-2026", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+  port_capacity: {value: "multiple_major_Atlantic_and_Mediterranean_ports", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Existing geography section stores major ports; no tactical routing."}
+  airport_capacity: {value: "multiple_major_international_airports", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  road_rail_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  data_center_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  critical_spare_parts_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  infrastructure_repair_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+regional_government_topology:
+  subnational_autonomy: {value: "17_autonomous_communities_plus_2_autonomous_cities", unit: "structure", reference_date: "2026", source_ids: ["ES-STATE-TOPOLOGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Spain is highly decentralized under its constitutional autonomous-community system."}
+  regional_police_control: {value: "mixed_state_and_autonomous_police_systems", unit: "categorical", reference_date: "2026", source_ids: ["ES-STATE-TOPOLOGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Relevant for later fractal decomposition; no loyalty inference."}
+  regional_fiscal_control: {value: "heterogeneous_by_autonomous_community", unit: "categorical", reference_date: "2026", source_ids: ["ES-STATE-TOPOLOGY"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  regional_emergency_powers: {value: "shared_multilevel_governance", unit: "categorical", reference_date: "2026", source_ids: ["ES-STATE-TOPOLOGY"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  regional_identity_pressure: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-dependent, not permanently scored."}
+  center_region_conflict: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-dependent."}
+  regional_government_legitimacy: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-dependent."}
+  decomposition_priority: {value: "high_if_center_region_or_security_stress_rises", unit: "fractal_policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+
+administrative_continuity:
+  court_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Runtime stress variable."}
+  prosecution_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  civil_registry_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  tax_collection_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_salary_payment_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  emergency_governance_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+information_environment:
+  mainstream_media_trust: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Runtime/calibration layer."}
+  social_media_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  misinformation_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_information_operations_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  encrypted_network_adoption: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_communications_credibility: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+health_emergency:
+  hospital_bed_capacity: {value: null, unit: "beds", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Schema frozen; quantitative health data can be refreshed later."}
+  emergency_bed_capacity: {value: null, unit: "beds", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  trauma_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ambulance_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  medicine_import_dependency: {value: null, unit: "percent_or_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_health_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+external_social_finance:
+  diaspora_size: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Diaspora does not imply conflict alignment."}
+  remittances_gdp_share: {value: null, unit: "percent_GDP", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_private_funding: {value: null, unit: "index_or_currency", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cross_border_family_networks: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  external_political_financing_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "External social/financial ties are resilience/influence channels; no diaspora is assigned automatically to a faction.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+migration_welfare_policy:
+  general_means_tested_benefit_access:
+    value: "eligible_under_general_rules_if_legal_residence_and_economic_requirements_are_met"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-IMV-LAW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Ingreso Minimo Vital is not an immigrant-only benefit."
+  legal_residence_requirement:
+    value: "IMV_normally_requires_legal_effective_continuous_residence_for_at_least_one_year"
+    unit: "legal_rule"
+    reference_date: "2026-04-10"
+    source_ids: ["ES-IMV-LAW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Statutory exceptions exist, including trafficking and gender-violence victims."
+  asylum_reception_system:
+    value: "Sistema_de_Acogida_de_Proteccion_Internacional"
+    unit: "program"
+    reference_date: "2025-2026"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Covers basic needs for applicants/beneficiaries lacking sufficient resources."
+  asylum_reception_capacity:
+    value: 33936
+    unit: "places_available"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "SAPI only."
+  asylum_reception_people_served_annual:
+    value: 69573
+    unit: "persons"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "International-protection reception system."
+  asylum_reception_budget_annual:
+    value: 558857239.38
+    unit: "EUR_budget"
+    reference_date: "2025"
+    source_ids: ["ES-SAPI-BUDGET-2025"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Annual SAPI budget; budget may finance costs incurred across more than one allocation period."
+  humanitarian_reception_program:
+    value: "available_for_vulnerable_irregular_arrivals_without_resources"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes accommodation, food, basic healthcare, orientation and transfers subject to program eligibility."
+  humanitarian_cash_assistance:
+    value: "basic_cash_assistance_available_within_program"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No universal fixed amount is stored."
+  housing_support: {value: "reception_accommodation_available_for_eligible_asylum_and_humanitarian_cases", unit: "categorical", reference_date: "2025-2026", source_ids: ["ES-SAPI-2025","ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  child_family_benefit_access: {value: "general_system_subject_to_program_specific_eligibility", unit: "categorical", reference_date: "2026", source_ids: ["ES-IMV-LAW-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Do not treat family benefits as immigrant-specific without beneficiary data."}
+  healthcare_access: {value: null, unit: "legal_or_program_access", reference_date: null, source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Basic healthcare is included in humanitarian reception; broader healthcare entitlement is not summarized here."}
+  education_access: {value: null, unit: "legal_access", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  language_integration_support: {value: "available_in_reception_programs", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026","ES-SAPI-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  employment_integration_support: {value: "available_in_international_protection_integration_pathways", unit: "categorical", reference_date: "2026", source_ids: ["ES-SAPI-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  migrant_specific_cash_transfers: {value: "program_specific_not_universal", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Basic economic aid exists in humanitarian reception, conditional on eligibility."}
+  migrant_specific_in_kind_transfers: {value: "accommodation_food_hygiene_clothing_basic_health_and_support_services", unit: "categorical", reference_date: "2026", source_ids: ["ES-HUMANITARIAN-RECEPTION-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  migrant_benefit_take_up_rate: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Needs beneficiary microdata or official disaggregation."}
+  migrant_social_transfer_cost: {value: null, unit: "EUR_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Do not equate SAPI budget with all transfers to immigrants."}
+  migrant_net_fiscal_balance: {value: null, unit: "EUR_or_percent_GDP", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires taxes/contributions and public expenditure by comparable population definitions."}
+  policy_generosity_index: {value: null, unit: "normalized_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Future normalization must be based on eligibility, cash/in-kind value, duration and coverage, not party labels."}
+  government_policy_attribution:
+    value: "measure_program_rules_and_expenditure_directly"
+    unit: "methodology"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Government ideology is not used as a proxy for an unmeasured benefit level."
+  methodological_note:
+    value: "Separate migrant-specific reception programs from general means-tested welfare available to residents. Use legal eligibility, expenditure and uptake rather than political labels."
+    unit: "text"
+    reference_date: "v1"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
 geography:
+  capital_coordinates: {value: {name: "Madrid", lat: 40.4168, lon: -3.7038}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  distance_matrix_reference: {value: "config/geography/country_distance_matrix_v1.yaml", unit: "path", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
   land_area_km2: {value: null, unit: "km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "To populate from canonical geography dataset."}
   population_density: {value: null, unit: "persons_per_km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   coastline_km: {value: null, unit: "km", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}

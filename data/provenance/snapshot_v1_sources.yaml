@@ -1,0 +1,203 @@
+snapshot_version: "1.0"
+snapshot_date: "2026-09-23"
+purpose: "Canonical v1 freeze provenance for demographic dynamics, geography, energy, food/water and sustainment."
+
+sources:
+  GEO-CAPITALS-V1:
+    title: "Canonical capital-coordinate set and Haversine distance matrix"
+    publisher: "Project-derived from standard WGS84 capital coordinates"
+    reference_date: "2026-09-23"
+    type: "derived_geography"
+    quality: "high"
+    notes: "Distances use Earth radius 6371.0088 km and are capital-to-capital great-circle distances, not minimum territorial separation."
+
+  ES-INE-POP-2026:
+    title: "Estadística Continua de Población - 1 de julio de 2026"
+    publisher: "Instituto Nacional de Estadística"
+    url: "https://ine.es/dyngs/Prensa/ECP2T26.htm"
+    reference_date: "2026-07-01"
+    publication_date: "2026-08-06"
+    type: "official_demography"
+    quality: "high"
+
+  ES-INE-POP-2025:
+    title: "Censo Anual de Población 2025 - primeros resultados"
+    publisher: "Instituto Nacional de Estadística"
+    url: "https://www.ine.es/dyngs/Prensa/CensoVariables2025.htm"
+    reference_date: "2025-01-01"
+    type: "official_demography"
+    quality: "high"
+
+  ES-INE-FERTILITY-2024:
+    title: "Movimiento Natural de la Población / Indicadores Demográficos Básicos 2024"
+    publisher: "Instituto Nacional de Estadística"
+    url: "https://www.ine.es/dyngs/Prensa/MNP2024.htm"
+    reference_date: "2024"
+    type: "official_demography"
+    quality: "high"
+
+  MA-HCP-RGPH-2024:
+    title: "RGPH 2024 - population and demographic growth"
+    publisher: "Haut-Commissariat au Plan, Morocco"
+    url: "https://www.hcp.ma/file/242665/"
+    reference_date: "2024-09-01"
+    type: "official_census"
+    quality: "high"
+
+  MA-HCP-FERTILITY-2024:
+    title: "RGPH 2024 - fertility transition"
+    publisher: "Haut-Commissariat au Plan, Morocco"
+    url: "https://www.hcp.ma/file/242668/"
+    reference_date: "2024"
+    type: "official_census"
+    quality: "high"
+
+  MA-HCP-PROJECTIONS-2026:
+    title: "Projections de la population du Maroc 2024-2060"
+    publisher: "Haut-Commissariat au Plan, Morocco"
+    url: "https://www.hcp.ma/file/248421/"
+    reference_date: "2024-2060"
+    publication_date: "2026"
+    type: "official_population_projection"
+    quality: "high"
+
+  ES-CORES-RESERVES-2025:
+    title: "Reservas CORES e industria a 31/12/2025"
+    publisher: "Corporación de Reservas Estratégicas de Productos Petrolíferos"
+    url: "https://www.cores.es/es/seguridad-suministro/productos-petroliferos/reservas-cores"
+    reference_date: "2025-12-31"
+    type: "official_energy_security"
+    quality: "high"
+    notes: "CORES 43.1 days; industry computable stocks 63.2 days are documented on the corresponding industry-reserves page."
+
+  ES-CORES-OBLIGATION-2026:
+    title: "Productos petrolíferos - seguridad de suministro"
+    publisher: "Corporación de Reservas Estratégicas de Productos Petrolíferos"
+    url: "https://www.cores.es/es/seguridad-suministro/productos-petroliferos"
+    reference_date: "2026"
+    type: "official_energy_security"
+    quality: "high"
+    notes: "Normal statutory obligation 92 days: 42 strategic CORES + 50 industry, with temporary emergency reductions possible."
+
+  ES-REE-ELECTRICITY-2025:
+    title: "El sistema eléctrico español en 2025"
+    publisher: "Red Eléctrica"
+    url: "https://www.ree.es/es/sala-de-prensa/actualidad/nota-de-prensa/2026/03/el-sistema-electrico-espanol-en-2025-aumenta-la-demanda-de-electricidad-la-generacion-y-la-potencia-instalada"
+    reference_date: "2025"
+    publication_date: "2026-03"
+    type: "official_electricity_statistics"
+    quality: "high"
+
+  ES-MAPA-CEREALS-2024-25:
+    title: "Balance cereales en España - campaña 2024/2025"
+    publisher: "Ministerio de Agricultura, Pesca y Alimentación"
+    url: "https://www.mapa.gob.es/dam/mapa/contenido/agricultura/temas/producciones-agricolas/cultivos-herbaceos/cereales/balances-de-mercado-de-cereales/balances-cereales-de-espana-campanas/balancescerealeses_2024_25.pdf"
+    reference_date: "2024/25"
+    publication_date: "2025-05"
+    type: "official_food_balance"
+    quality: "high"
+
+  WB-AQUASTAT-WATER-2022:
+    title: "World Development Indicators / AQUASTAT water resources and water stress"
+    publisher: "World Bank / FAO AQUASTAT"
+    url: "https://data.worldbank.org/indicator/ER.H2O.FWST.ZS"
+    reference_date: "2022"
+    type: "international_water_statistics"
+    quality: "high"
+
+  ES-STATE-TOPOLOGY:
+    title: "Spanish political and territorial organization"
+    publisher: "Administracion.gob.es"
+    url: "https://administracion.gob.es/pag_Home/en/espanaAdmon/comoSeOrganizaEstado/Sistema_Politico"
+    reference_date: "2026"
+    type: "official_governance_structure"
+    quality: "high"
+
+  MA-MEM-PETROLEUM-2025:
+    title: "Combustibles - consommation en produits pétroliers 2025"
+    publisher: "Ministère de la Transition Énergétique et du Développement Durable, Morocco"
+    url: "https://www.mem.gov.ma/Pages/secteuref84.html?e=6"
+    reference_date: "2025"
+    type: "official_energy_statistics"
+    quality: "high"
+
+  MA-FUEL-STOCK-2026:
+    title: "Morocco has diesel stocks for 51 days, energy ministry says"
+    publisher: "Reuters, reporting Morocco Energy Ministry figures"
+    url: "https://www.reuters.com/sustainability/climate-energy/morocco-has-diesel-stocks-51-days-energy-ministry-says-2026-04-02/"
+    reference_date: "2026-04-02"
+    type: "authoritative_news_reporting_official_figures"
+    quality: "high"
+    notes: "Diesel 51 days; petrol 55 days; source also reports lack of domestic refining capacity since 2015."
+
+  MA-MEM-ELECTRICITY-2024:
+    title: "Électricité - indicateurs clés 2024"
+    publisher: "Ministère de la Transition Énergétique et du Développement Durable, Morocco"
+    url: "https://www.mem.gov.ma/Pages/secteur0a89.html?e=1"
+    reference_date: "2024"
+    type: "official_electricity_statistics"
+    quality: "high"
+
+  MA-WHEAT-IMPORTS-2024:
+    title: "Morocco wheat imports 2024"
+    publisher: "World Bank WITS / UN Comtrade"
+    url: "https://wits.worldbank.org/trade/comtrade/en/country/MAR/year/2024/tradeflow/Imports/partner/ALL/product/100190"
+    reference_date: "2024"
+    type: "international_trade_statistics"
+    quality: "high"
+    notes: "Common wheat/meslin quantity combined with WITS durum-wheat series to derive 6.3067 Mt wheat imports."
+
+  GLOBAL-OIL-RESERVES-2025:
+    title: "Country oil reserves, production and consumption compilation"
+    publisher: "Worldometer, compiled from international petroleum statistical sources"
+    url: "https://www.worldometers.info/oil/"
+    reference_date: "2025"
+    type: "secondary_energy_compilation"
+    quality: "medium"
+    notes: "Used only where a current primary national proved-oil-reserve series was not found. Strategic fuel-stock sources are kept separate and higher quality."
+
+  PEW-EU-MUSLIM-FERTILITY-2017:
+    title: "Europe's Growing Muslim Population"
+    publisher: "Pew Research Center"
+    url: "https://www.pewresearch.org/religion/2017/11/29/europes-growing-muslim-population/"
+    reference_date: "2015-2020_projection_window"
+    publication_date: "2017-11-29"
+    type: "religious_demography_projection"
+    quality: "high"
+    notes: "Europe-wide estimate: Muslim TFR 2.6 versus non-Muslim TFR 1.6 for 2015-2020. Country-specific gaps vary; do not assign this rate directly to Spain."
+
+  ES-IMV-LAW-2026:
+    title: "Ley 19/2021 por la que se establece el ingreso mínimo vital - consolidated 2026"
+    publisher: "Boletín Oficial del Estado"
+    url: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-21007"
+    reference_date: "2026-04-10"
+    type: "official_social_protection_law"
+    quality: "high"
+    notes: "Normally requires legal and effective residence in Spain continuously for at least one year plus economic vulnerability, with statutory exceptions."
+
+  ES-SAPI-2025:
+    title: "Sistema de Acogida Estatal 2025"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/documents/20121/0/Informe-Balance-SistemaAcogidaEstatal-2025.pdf/"
+    reference_date: "2025"
+    type: "official_reception_statistics"
+    quality: "high"
+    notes: "SAPI reports 33,936 available places and 69,573 persons served in 2025."
+
+  ES-SAPI-BUDGET-2025:
+    title: "Informe Sistema de Protección Internacional Español - presupuesto anual del sistema de acogida"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/documents/d/migraciones/200625-informe-sistema-proteccion-internacional-espanol-jun25.pdf"
+    reference_date: "2025"
+    type: "official_reception_budget"
+    quality: "high"
+    notes: "2025 annual SAPI budget: EUR 558,857,239.38."
+
+  ES-HUMANITARIAN-RECEPTION-2026:
+    title: "Programa de Atención Humanitaria"
+    publisher: "Ministerio de Inclusión, Seguridad Social y Migraciones"
+    url: "https://www.inclusion.gob.es/es/web/migraciones/atencion-humanitaria"
+    reference_date: "2026"
+    type: "official_humanitarian_reception_program"
+    quality: "high"
+    notes: "For eligible vulnerable irregular arrivals lacking resources; includes accommodation, food, basic healthcare, language support, material assistance and basic economic aid."

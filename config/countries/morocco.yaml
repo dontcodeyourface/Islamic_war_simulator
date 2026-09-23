@@ -2,7 +2,7 @@ identity:
   country_name: "Morocco"
   iso2: "MA"
   iso3: "MAR"
-  snapshot_version: "0.5"
+  snapshot_version: "1.0"
   snapshot_date: "2026-09-23"
 
 population:
@@ -127,6 +127,103 @@ population:
       derived: false
       imputed: false
       notes: null
+
+demographic_dynamics:
+  annual_population_growth_rate:
+    value: 0.85
+    unit: "percent_average_annual"
+    reference_date: "2014-2024"
+    source_ids: ["MA-HCP-RGPH-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Average annual growth between the 2014 and 2024 censuses; legal population reached 36,828,330."
+  natural_increase: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  annual_births: {value: null, unit: "live_births", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  crude_birth_rate: {value: null, unit: "births_per_1000_population", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  total_fertility_rate:
+    value: 1.97
+    unit: "children_per_woman"
+    reference_date: "2024"
+    source_ids: ["MA-HCP-FERTILITY-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "RGPH 2024."
+  urban_fertility_rate: {value: 1.77, unit: "children_per_woman", reference_date: "2024", source_ids: ["MA-HCP-FERTILITY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  rural_fertility_rate: {value: 2.37, unit: "children_per_woman", reference_date: "2024", source_ids: ["MA-HCP-FERTILITY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  christian_fertility_rate_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Christian minority fertility is not directly measured in the census data used."
+  muslim_fertility_rate_direct:
+    value: null
+    unit: "children_per_woman"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "National fertility is not labeled as a direct religion-specific measure."
+  christian_population_growth_rate_direct: {value: null, unit: "percent_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_population_growth_rate_direct: {value: null, unit: "percent_per_year", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_fertility_national_proxy:
+    value: 1.97
+    unit: "children_per_woman_proxy"
+    reference_date: "2024"
+    source_ids: ["MA-HCP-FERTILITY-2024","MA-STATE-RELIGION-2023"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Because Morocco is estimated >99% Muslim, national TFR is retained as an approximate Muslim-population proxy, but NOT as a direct religious fertility measurement."
+  demographic_projection_2030:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: ["MA-HCP-PROJECTIONS-2026"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "HCP projection framework exists; exact population projection not imported here."
+  demographic_projection_2050: {value: null, unit: "persons", reference_date: null, source_ids: ["MA-HCP-PROJECTIONS-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religion_specific_methodology:
+    value: "direct_measurement_preferred_national_proxy_allowed_only_for_overwhelmingly_homogeneous_religious_population"
+    unit: "policy"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Proxy remains tagged and uncertain; it does not transform ordinary Muslims into Islamist actors."
+
+demographic_differentials:
+  native_national_tfr: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Nationality differential not needed as religion proxy in an overwhelmingly Muslim population."}
+  foreign_national_tfr: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_born_mother_birth_share: {value: null, unit: "percent_of_births", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_national_mother_birth_share: {value: null, unit: "percent_of_births", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_non_muslim_tfr_gap_direct: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Minority populations are too small and no direct comparable religious TFR series is used."}
+  muslim_christian_tfr_gap_direct: {value: null, unit: "children_per_woman", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  non_muslim_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  christian_median_age: {value: null, unit: "years", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_switching_net_effect: {value: null, unit: "persons_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  religious_demographic_momentum: {value: "national_demographic_momentum_approximately_matches_Muslim_majority_population", unit: "categorical", reference_date: "2024", source_ids: ["MA-HCP-FERTILITY-2024","MA-STATE-RELIGION-2023"], quality: "medium", estimated: true, derived: true, imputed: false, notes: "This does not distinguish Islamist ideology; it only reflects overwhelming Muslim religious demography."}
+  migration_demographic_momentum: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodology: {value: "Keep religion, migration and ideology analytically separate.", unit: "text", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
 
 religion:
   christian_share:
@@ -1118,7 +1215,218 @@ economy:
   trade_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   sanctions_vulnerability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
 
+energy_security:
+  proven_crude_oil_reserves_barrels:
+    value: 684000
+    unit: "barrels"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Secondary compiled proved-reserve estimate; Morocco's operational fuel security is dominated by imported refined products."
+  domestic_oil_production_bpd:
+    value: 25
+    unit: "barrels_per_day"
+    reference_date: "2025"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  petroleum_consumption_bpd:
+    value: 321481
+    unit: "barrels_per_day_petroleum_products"
+    reference_date: "2024"
+    source_ids: ["GLOBAL-OIL-RESERVES-2025"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Broad energy-series baseline."
+  petroleum_consumption_annual:
+    value: 12867000
+    unit: "tonnes_petroleum_products"
+    reference_date: "2025"
+    source_ids: ["MA-MEM-PETROLEUM-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes propane, butane, gasoline, gasoil, jet fuel and fuel oil."
+  petroleum_import_dependency:
+    value: "near_total_for_refined_fuel_supply"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["MA-FUEL-STOCK-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Morocco has lacked domestic refining capacity since the refinery shutdown in 2015 and relies on fuel imports."
+  strategic_petroleum_stock_days:
+    value: {diesel_days: 51, petrol_days: 55}
+    unit: "days"
+    reference_date: "2026-04-02"
+    source_ids: ["MA-FUEL-STOCK-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Energy Ministry figures reported by Reuters."
+  petroleum_security_obligation_days: {value: null, unit: "days", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No equivalent current statutory national obligation imported."}
+  refinery_capacity:
+    value: 0
+    unit: "operational_domestic_refining_capacity"
+    reference_date: "2026-04"
+    source_ids: ["MA-FUEL-STOCK-2026"]
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Operational domestic refinery capacity absent in the cited current assessment."
+  domestic_refining_available: {value: false, unit: "boolean", reference_date: "2026-04", source_ids: ["MA-FUEL-STOCK-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_installed_capacity_mw: {value: 12016, unit: "MW", reference_date: "2024", source_ids: ["MA-MEM-ELECTRICITY-2024"], quality: "high", freshness_class: "aging", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_annual_demand_gwh: {value: 45698, unit: "GWh_net_called_energy", reference_date: "2024", source_ids: ["MA-MEM-ELECTRICITY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_annual_generation_gwh: {value: 43698, unit: "GWh", reference_date: "2024", source_ids: ["MA-MEM-ELECTRICITY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_net_import_export_gwh:
+    value: 2000
+    unit: "GWh_net_import_requirement_approx"
+    reference_date: "2024"
+    source_ids: ["MA-MEM-ELECTRICITY-2024"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "45,698 GWh net called energy minus 43,698 GWh national production; simplified balance, not a full accounting identity."
+  renewable_installed_share: {value: 45.3, unit: "percent_installed_capacity", reference_date: "2024", source_ids: ["MA-MEM-ELECTRICITY-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electricity_storage_capacity_mw: {value: null, unit: "MW", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  gas_supply_resilience: {value: null, unit: "latent_input", reference_date: null, source_ids: ["MA-FUEL-STOCK-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Current source notes gas supply actions, but no normalized resilience score."}
+  fuel_supply_resilience: {value: "moderate_stock_buffer_very_high_import_dependency_no_domestic_refining", unit: "categorical", reference_date: "2026", source_ids: ["MA-FUEL-STOCK-2026","MA-MEM-PETROLEUM-2025"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+
+food_water_security:
+  cereal_production_tonnes: {value: null, unit: "tonnes", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Highly climate-sensitive; current synchronized national total not imported in v1 freeze."}
+  cereal_imports_tonnes:
+    value: 6306700
+    unit: "tonnes_wheat_only"
+    reference_date: "2024"
+    source_ids: ["MA-WHEAT-IMPORTS-2024"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "5.26002 Mt common wheat/meslin + 1.04668 Mt durum wheat. This is a partial cereal-import baseline, not all cereals."
+  cereal_internal_use_tonnes: {value: null, unit: "tonnes", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cereal_end_stocks_tonnes: {value: null, unit: "tonnes", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cereal_import_dependency_ratio:
+    value: null
+    unit: "percent"
+    reference_date: null
+    source_ids: []
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "High dependence is evident, but a harmonized production/use denominator was not imported; no fabricated percentage."
+  food_import_dependency: {value: "material_cereal_import_dependency", unit: "categorical", reference_date: "2024", source_ids: ["MA-WHEAT-IMPORTS-2024"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+  strategic_food_stock_days: {value: null, unit: "days", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  renewable_freshwater_per_capita_m3:
+    value: 777
+    unit: "m3_per_person_year"
+    reference_date: "2022"
+    source_ids: ["WB-AQUASTAT-WATER-2022"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Renewable internal freshwater resources per capita."
+  water_stress_percent: {value: 50.75, unit: "percent", reference_date: "2022", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "high", freshness_class: "aging", estimated: false, derived: false, imputed: false, notes: null}
+  annual_freshwater_withdrawal_m3: {value: null, unit: "m3", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  desalination_capacity_m3_day: {value: null, unit: "m3_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Critical refresh field because desalination is strategically relevant to Morocco."}
+  potable_water_access_percent: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  food_supply_resilience: {value: "climate_sensitive_with_material_wheat_import_exposure", unit: "categorical", reference_date: "2024-2026", source_ids: ["MA-WHEAT-IMPORTS-2024"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+  water_supply_resilience: {value: "high_structural_water_stress", unit: "categorical", reference_date: "2022-2026", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+
+sustainment:
+  civilian_petroleum_baseline: {value: 12867000, unit: "tonnes_petroleum_products_2025", reference_date: "2025", source_ids: ["MA-MEM-PETROLEUM-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Observed national market baseline."}
+  civilian_food_baseline: {value: 6306700, unit: "tonnes_wheat_imported_2024_partial_food_security_proxy", reference_date: "2024", source_ids: ["MA-WHEAT-IMPORTS-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Not total food consumption."}
+  civilian_water_baseline: {value: 777, unit: "m3_renewable_internal_resource_per_capita_year_2022", reference_date: "2022", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Resource availability, not actual household consumption."}
+  military_fuel_consumption_public: {value: null, unit: "fuel_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-derived."}
+  military_food_consumption_public: {value: null, unit: "food_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-derived."}
+  military_water_consumption_public: {value: null, unit: "water_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-derived; climate dependent."}
+  military_munitions_consumption_public: {value: null, unit: "munition_units_per_day", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-derived; no tactical burn-rate constant."}
+  military_sustainment_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: "Derived from force mix, readiness, tempo, climate, geography, logistics and duration."}
+  munitions_burn_policy: {value: "scenario_derived", unit: "policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Snapshot stores national stocks/capacities and observed civilian demand; military wartime consumption belongs to the future engine.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+critical_infrastructure:
+  electricity_resilience: {value: "growing_system_with_import_interconnection_and_high_renewable_share", unit: "categorical", reference_date: "2024", source_ids: ["MA-MEM-ELECTRICITY-2024"], quality: "medium", estimated: true, derived: true, imputed: false, notes: null}
+  fuel_storage_resilience: {value: "roughly_51_to_55_day_diesel_petrol_buffer_at_2026_04_reference", unit: "categorical", reference_date: "2026-04-02", source_ids: ["MA-FUEL-STOCK-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  telecom_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  internet_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  water_system_resilience: {value: "structurally_stressed", unit: "categorical", reference_date: "2022-2026", source_ids: ["WB-AQUASTAT-WATER-2022"], quality: "high", estimated: true, derived: true, imputed: false, notes: null}
+  port_capacity: {value: "multiple_Atlantic_and_Mediterranean_ports", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No route-level operational model."}
+  airport_capacity: {value: "multiple_international_airports", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  road_rail_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  data_center_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  critical_spare_parts_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  infrastructure_repair_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+regional_government_topology:
+  subnational_autonomy: {value: "12_regions_with_decentralized_administration_within_unitary_state", unit: "structure", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Detailed competence mapping deferred."}
+  regional_police_control: {value: "national_security_forces_predominate", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  regional_fiscal_control: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  regional_emergency_powers: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  regional_identity_pressure: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Scenario-dependent."}
+  center_region_conflict: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  regional_government_legitimacy: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  decomposition_priority: {value: "medium_rising_if_regional_security_or_supply_stress_rises", unit: "fractal_policy", reference_date: "v1", source_ids: [], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
+
+administrative_continuity:
+  court_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  prosecution_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  civil_registry_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  tax_collection_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_salary_payment_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  emergency_governance_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+information_environment:
+  mainstream_media_trust: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  social_media_dependency: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  misinformation_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  foreign_information_operations_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  encrypted_network_adoption: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_communications_credibility: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+health_emergency:
+  hospital_bed_capacity: {value: null, unit: "beds", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  emergency_bed_capacity: {value: null, unit: "beds", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  trauma_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  ambulance_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  medicine_import_dependency: {value: null, unit: "percent_or_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_health_continuity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+external_social_finance:
+  diaspora_size: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Diaspora size and direction require a separate migration-stock definition; no faction inference."}
+  remittances_gdp_share: {value: null, unit: "percent_GDP", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Important for Morocco; field frozen and can be refreshed without schema change."}
+  foreign_private_funding: {value: null, unit: "index_or_currency", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  cross_border_family_networks: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  external_political_financing_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "External social/financial ties are modeled as resilience/influence channels, never automatic political or armed alignment.", unit: "text", reference_date: "v1", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+migration_welfare_policy: {}
+
 geography:
+  capital_coordinates: {value: {name: "Rabat", lat: 34.0209, lon: -6.8416}, unit: "WGS84_decimal_degrees", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  distance_matrix_reference: {value: "config/geography/country_distance_matrix_v1.yaml", unit: "path", reference_date: "v1", source_ids: ["GEO-CAPITALS-V1"], quality: "structural", estimated: false, derived: false, imputed: false, notes: null}
   land_area_km2: {value: null, unit: "km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Territorial-definition issues require an explicit canonical geography policy before populating."}
   population_density: {value: null, unit: "persons_per_km2", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   coastline_km: {value: null, unit: "km", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}

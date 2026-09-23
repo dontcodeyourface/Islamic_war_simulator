@@ -1,0 +1,204 @@
+# Canonical country registration template — Snapshot v1
+# Every newly registered country MUST contain every top-level section below.
+# Empirical values should use datum_template from config/countries/_schema.yaml.
+
+identity:
+  country_name: null
+  iso2: null
+  iso3: null
+  snapshot_version: "1.0"
+  snapshot_date: null
+
+population: {}
+demographic_dynamics:
+  annual_population_growth_rate: {}
+  natural_increase: {}
+  annual_births: {}
+  crude_birth_rate: {}
+  total_fertility_rate: {}
+  urban_fertility_rate: {}
+  rural_fertility_rate: {}
+  christian_fertility_rate_direct: {}
+  muslim_fertility_rate_direct: {}
+  christian_population_growth_rate_direct: {}
+  muslim_population_growth_rate_direct: {}
+  muslim_fertility_national_proxy: {}
+  demographic_projection_2030: {}
+  demographic_projection_2050: {}
+  religion_specific_methodology: {}
+
+demographic_differentials:
+  native_national_tfr: {}
+  foreign_national_tfr: {}
+  foreign_born_mother_birth_share: {}
+  foreign_national_mother_birth_share: {}
+  muslim_non_muslim_tfr_gap_direct: {}
+  muslim_christian_tfr_gap_direct: {}
+  muslim_median_age: {}
+  non_muslim_median_age: {}
+  christian_median_age: {}
+  religious_switching_net_effect: {}
+  religious_demographic_momentum: {}
+  migration_demographic_momentum: {}
+  methodology: {}
+
+religion: {}
+religious_infrastructure: {}
+violent_islamist_extremism: {}
+organized_crime: {}
+prisons: {}
+terrorism_threat_posture: {}
+law_enforcement: {}
+security_force_cohesion: {}
+manpower: {}
+armed_forces: {}
+military_domains: {}
+weapon_categories: {}
+defence_industry: {}
+intelligence: {}
+cyber: {}
+ai: {}
+economy: {}
+
+energy_security:
+  proven_crude_oil_reserves_barrels: {}
+  domestic_oil_production_bpd: {}
+  petroleum_consumption_bpd: {}
+  petroleum_consumption_annual: {}
+  petroleum_import_dependency: {}
+  strategic_petroleum_stock_days: {}
+  petroleum_security_obligation_days: {}
+  refinery_capacity: {}
+  domestic_refining_available: {}
+  electricity_installed_capacity_mw: {}
+  electricity_annual_demand_gwh: {}
+  electricity_annual_generation_gwh: {}
+  electricity_net_import_export_gwh: {}
+  renewable_installed_share: {}
+  electricity_storage_capacity_mw: {}
+  gas_supply_resilience: {}
+  fuel_supply_resilience: {}
+
+food_water_security:
+  cereal_production_tonnes: {}
+  cereal_imports_tonnes: {}
+  cereal_internal_use_tonnes: {}
+  cereal_end_stocks_tonnes: {}
+  cereal_import_dependency_ratio: {}
+  food_import_dependency: {}
+  strategic_food_stock_days: {}
+  renewable_freshwater_per_capita_m3: {}
+  water_stress_percent: {}
+  annual_freshwater_withdrawal_m3: {}
+  desalination_capacity_m3_day: {}
+  potable_water_access_percent: {}
+  food_supply_resilience: {}
+  water_supply_resilience: {}
+
+sustainment:
+  civilian_petroleum_baseline: {}
+  civilian_food_baseline: {}
+  civilian_water_baseline: {}
+  military_fuel_consumption_public: {}
+  military_food_consumption_public: {}
+  military_water_consumption_public: {}
+  military_munitions_consumption_public: {}
+  military_sustainment_policy:
+    value: "scenario_derived"
+    unit: "policy"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Derived later from force composition, operational tempo, geography, climate, logistics and duration."
+  munitions_burn_policy:
+    value: "scenario_derived"
+    unit: "policy"
+    reference_date: "v1"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No fixed per-country tactical ammunition burn rate in Snapshot v1."
+  methodological_note:
+    value: "Snapshot stores stocks, capacities and observed civilian demand. Military wartime consumption is an engine variable."
+    unit: "text"
+    reference_date: "v1"
+    source_ids: []
+    quality: "high"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+critical_infrastructure: {}
+regional_government_topology: {}
+administrative_continuity: {}
+information_environment: {}
+health_emergency: {}
+external_social_finance: {}
+
+migration_welfare_policy:
+  general_means_tested_benefit_access: {}
+  legal_residence_requirement: {}
+  asylum_reception_system: {}
+  asylum_reception_capacity: {}
+  asylum_reception_people_served_annual: {}
+  asylum_reception_budget_annual: {}
+  humanitarian_reception_program: {}
+  humanitarian_cash_assistance: {}
+  housing_support: {}
+  child_family_benefit_access: {}
+  healthcare_access: {}
+  education_access: {}
+  language_integration_support: {}
+  employment_integration_support: {}
+  migrant_specific_cash_transfers: {}
+  migrant_specific_in_kind_transfers: {}
+  migrant_benefit_take_up_rate: {}
+  migrant_social_transfer_cost: {}
+  migrant_net_fiscal_balance: {}
+  policy_generosity_index: {}
+  government_policy_attribution: {}
+  methodological_note: {}
+
+geography:
+  capital_coordinates: {}
+  distance_matrix_reference:
+    value: "config/geography/country_distance_matrix_v1.yaml"
+    unit: "path"
+    reference_date: "2026-09-23"
+    source_ids: []
+    quality: "structural"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+
+alliances: {}
+governance: {}
+provenance_notes:
+  unresolved_conflicts: []
+  known_data_gaps: []
+  methodological_warnings: []
+  uncertainty_policy:
+    unresolved_fields_may_be_sampled: true
+    sampling_requires_explicit_bounds_or_distribution: true
+    no_unbounded_sampling_from_null: true
+    preserve_cross_variable_correlations: true
+
+snapshot_v1_registration_contract:
+  required_top_level_sections: true
+  religion_specific_fertility_requires_direct_evidence: true
+  demographic_proxy_must_preserve_original_category: true
+  foreign_nationality_must_not_proxy_muslim_identity: true
+  nationality_or_origin_must_not_proxy_religion: true
+  criminal_identity_must_not_imply_faction_alignment: true
+  partisan_preference_must_not_imply_security_force_defection: true
+  migration_welfare_policy_must_use_observable_eligibility_and_expenditure: true
+  government_ideology_must_not_be_used_as_unobserved_benefit_proxy: true
+  tactical_burn_rates_forbidden_in_country_snapshot: true
+  adaptive_fractal_resolution_required: true
