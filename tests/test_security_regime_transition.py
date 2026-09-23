@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _fixture() -> tuple[EngineState, dict, dict, dict, object]:
+def _fixture() -> tuple[EngineState, dict, dict, dict, dict, object]:
     logger.info("_fixture")
     registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
     parameters = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
