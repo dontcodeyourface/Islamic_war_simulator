@@ -22,6 +22,7 @@ from .phase_transition import (
     commit_phase_transition,
     retain_phase_persistence,
 )
+from .recovery import propose_recovery_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
 from .rng import RNGManager
 from .state import EngineState, extract_latent_registry
@@ -219,6 +220,7 @@ def _transaction_id(
     graph: CountryGraph,
     states: dict[str, EngineState],
     phase_inputs: dict[str, Any] | None = None,
+    recovery_config_hash: str | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -237,6 +239,7 @@ def _transaction_id(
             },
             "execution_order_version": manifest.execution_order_version,
             "phase_inputs": phase_inputs,
+            "recovery_config_hash": recovery_config_hash,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -549,6 +552,8 @@ def run_day_transaction(
     phase_transition_config: dict[str, Any] | None = None,
     phase_persistence: dict[str, PhasePersistenceState | None] | None = None,
     phase_context_flags: dict[str, dict[str, bool]] | None = None,
+    enable_recovery: bool = False,
+    recovery_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -594,12 +599,19 @@ def run_day_transaction(
             phase_transition_config=phase_transition_config,
         )
 
+    recovery_config_hash: str | None = None
+    if enable_recovery:
+        if recovery_config is None:
+            raise ValueError("Recovery integration requires recovery_config")
+        recovery_config_hash = canonical_hash(recovery_config)
+
     transaction_id = _transaction_id(
         manifest=manifest,
         day_from=day_from,
         graph=graph,
         states=states,
         phase_inputs=phase_inputs,
+        recovery_config_hash=recovery_config_hash,
     )
 
     working_rng = rng.clone()
@@ -629,13 +641,31 @@ def run_day_transaction(
         trace=staged_trace,
     )
     events = _occurred_events(candidates)
-    proposals = _propose_all_effects(
+    event_proposals = _propose_all_effects(
         events=events,
         states=states,
         engine_state_registry=engine_state_registry,
         parameter_registry=parameter_registry,
         profile=profile,
         trace=staged_trace,
+    )
+    recovery_proposals: tuple[DeltaProposal, ...] = ()
+    if enable_recovery:
+        assert recovery_config is not None
+        recovery_proposals = propose_recovery_effects(
+            states=states,
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            recovery_config=recovery_config,
+            profile=profile,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+    proposals = tuple(
+        sorted(
+            (*event_proposals, *recovery_proposals),
+            key=lambda proposal: proposal.proposal_id,
+        )
     )
 
     resolution = resolve_delta_proposals(
@@ -702,6 +732,10 @@ def run_day_transaction(
         resolution_ids=[
             record.resolution_id for record in resolution.records
         ],
+        recovery_proposal_ids=[
+            proposal.proposal_id for proposal in recovery_proposals
+        ],
+        recovery_config_hash=recovery_config_hash,
         phase_commit_ids=[
             record.commit_id for record in phase_commits
         ],
