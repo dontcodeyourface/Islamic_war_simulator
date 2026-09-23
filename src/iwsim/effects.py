@@ -125,9 +125,6 @@ def propose_event_effects(
         event.event_type,
         profile,
     )
-    if not event.dry_run:
-        raise ValueError("v0.5 proposal layer expects dry-run SimEvent inputs")
-
     parameter_id = _effect_parameter_id(profile)
     effect_set = _parameter(
         parameter_registry,
@@ -172,7 +169,7 @@ def propose_event_effects(
                 equation_id="EVENT_EFFECT_PROPOSAL_V1",
                 parameter_ids=(parameter_id,),
                 apply_status="PROPOSED_NOT_APPLIED",
-                dry_run=True,
+                dry_run=event.dry_run,
             )
             proposals.append(proposal)
             trace.append(
