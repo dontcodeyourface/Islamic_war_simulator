@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.17"
+status: "implementation-v0.18"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -29,6 +29,10 @@ mode:
   security_regime_commit_allowed: true
   security_regime_commit_requires_explicit_enable_flag: true
   security_regime_transition_contract: "config/engine/security_regime_transition_v1.yaml"
+  security_regime_recovery_evaluator_allowed: true
+  security_regime_recovery_evaluator_requires_explicit_enable_flag: true
+  security_regime_recovery_contract: "config/engine/security_regime_recovery_v1.yaml"
+  security_regime_recovery_commit_allowed: false
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
   recovery_contract: "config/engine/recovery_v1.yaml"
@@ -58,6 +62,11 @@ transaction_rules:
   security_regime_commit_must_be_atomic_with_day_transaction: true
   security_regime_max_commits_per_node_per_day: 1
   security_regime_commit_resets_transition_streaks: true
+  security_regime_recovery_requires_committed_escalation_precedence: true
+  security_regime_recovery_uses_end_of_day_committed_security_state: true
+  security_regime_recovery_persistence_must_commit_only_after_success: true
+  security_regime_recovery_history_required_after_day_zero_when_enabled: true
+  security_regime_recovery_same_day_escalation_suppresses_recovery: true
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
   proposals_resolved_once_per_day: true
@@ -87,8 +96,9 @@ ordering:
   occurred_events: "event_id_ascending"
   proposals: "event_recovery_matured_spillover_network_reciprocal_and_security_collected_then_proposal_id_ascending_before_resolution"
   security_regime_evaluation: "after_state_resolution_and_clock_advance"
-  security_regime_commit: "after_security_regime_evaluation_before_phase_evaluation"
-  phase_evaluation: "after_security_regime_commit"
+  security_regime_commit: "after_security_regime_evaluation"
+  security_regime_recovery_evaluation: "after_security_regime_commit_before_phase_evaluation"
+  phase_evaluation: "after_security_regime_recovery_evaluation"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
 
 safety_abstraction:
