@@ -58,6 +58,8 @@ Dry-run event infrastructure: [docs/EVENT_ENGINE_V0.4.md](docs/EVENT_ENGINE_V0.4
 
 Event-effect proposal infrastructure: [docs/EVENT_EFFECT_PROPOSALS_V0.5.md](docs/EVENT_EFFECT_PROPOSALS_V0.5.md), backed by [`config/engine/event_effects_v1.yaml`](config/engine/event_effects_v1.yaml). Events may now emit deterministic, traceable delta proposals routed to canonical owner modules, but no EngineState mutation or phase transition is allowed yet.
 
+Owner-resolution infrastructure: [docs/OWNER_RESOLVER_V0.6.md](docs/OWNER_RESOLVER_V0.6.md), backed by [`config/engine/owner_resolver_v1.yaml`](config/engine/owner_resolver_v1.yaml). Proposals can now be deterministically aggregated, clamped to canonical bounds and committed into new EngineState objects while preserving original-state immutability; phase transitions remain disabled.
+
 ---
 
 ## 2. Core analytical rule
