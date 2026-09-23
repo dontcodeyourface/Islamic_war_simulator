@@ -194,6 +194,7 @@ def test_forbidden_identity_input_fails_closed() -> None:
     logger.info("test_forbidden_identity_input_fails_closed")
     state, registry, parameters, config = _fixture()
     broken = copy.deepcopy(config)
+    broken["forbidden_direct_inputs"] = []
     broken["driver_inputs"][0]["variable"] = "religious_fraction_muslim"
 
     with pytest.raises(ValueError, match="Forbidden direct extremist-network inputs"):
