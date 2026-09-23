@@ -74,6 +74,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/security_chain_dynamics_v1.yaml",
     )
     day_smoke.add_argument(
+        "--security-regime-config",
+        default="config/engine/security_regime_evaluator_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -235,6 +239,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         root / args.reciprocal_radicalization_config
     )
     security_chain_config = load_yaml(root / args.security_chain_config)
+    security_regime_config = load_yaml(root / args.security_regime_config)
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -306,6 +311,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "extremist_network_dynamics",
             "reciprocal_radicalization",
             "security_chain_dynamics",
+            "security_regime_evaluator",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -348,6 +354,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         ),
         enable_security_chain_dynamics=True,
         security_chain_config=security_chain_config,
+        enable_security_regime_evaluator=True,
+        security_regime_config=security_regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
@@ -396,6 +406,15 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "security_chain_proposal_count": len(
                 result.security_chain_proposals
             ),
+            "security_regime_proposal_count": len(
+                result.security_regime_proposals
+            ),
+            "security_regime_persistence": {
+                node_id: item.to_dict()
+                for node_id, item in sorted(
+                    result.security_regime_persistence.items()
+                )
+            },
             "spillover_queue": (
                 result.spillover_queue.to_dict()
                 if result.spillover_queue is not None
