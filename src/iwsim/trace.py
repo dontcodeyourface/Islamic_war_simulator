@@ -80,6 +80,7 @@ class TraceLedger:
         agent_action_ids: tuple[str, ...] = (),
         refinement_actions: tuple[str, ...] = (),
         constraint_clamps: tuple[str, ...] = (),
+        phase_transition_ids: tuple[str, ...] = (),
     ) -> None:
         logger.info(
             "TraceLedger.append_daily_checkpoint run_id=%s day=%s node_id=%s",
@@ -100,6 +101,7 @@ class TraceLedger:
             agent_action_ids=list(agent_action_ids),
             refinement_actions=list(refinement_actions),
             constraint_clamps=list(constraint_clamps),
+            phase_transition_ids=list(phase_transition_ids),
         )
 
     def extend_from(self, other: "TraceLedger") -> None:
