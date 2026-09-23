@@ -291,6 +291,7 @@ def _spillover_id(
     source_pressure: float,
     transmission_factor: float,
     edge_data_version: str,
+    apply_to_state: bool,
 ) -> str:
     logger.info(
         "_spillover_id day=%s rule=%s source=%s target=%s channel=%s",
@@ -313,6 +314,7 @@ def _spillover_id(
             "source_pressure": source_pressure,
             "transmission_factor": transmission_factor,
             "edge_data_version": edge_data_version,
+            "apply_to_state": apply_to_state,
         }
     )
     return f"spill-{digest[:24]}"
@@ -474,6 +476,7 @@ def evaluate_graph_spillovers(
                             source_pressure=source_pressure,
                             transmission_factor=factor,
                             edge_data_version=edge_data_version,
+                            apply_to_state=bool(rule["apply_to_state"]),
                         ),
                         rule_id=rule["rule_id"],
                         day_created=day,
