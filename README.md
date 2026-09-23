@@ -44,6 +44,8 @@ Detailed pre-engine capability specification: [docs/FACTOR_MODEL.md](docs/FACTOR
 
 Canonical frozen country-data contract: [docs/SNAPSHOT_V1_SPEC.md](docs/SNAPSHOT_V1_SPEC.md). New countries must start from [`config/countries/_snapshot_v1_template.yaml`](config/countries/_snapshot_v1_template.yaml).
 
+Canonical pre-implementation engine contract: [docs/ENGINE_DYNAMICS_V1.md](docs/ENGINE_DYNAMICS_V1.md). It defines country-independent dynamics, endogenous RANDOM_SHOCK/GENERATED conflict initiation, typed contagion, adaptive fractal refinement, execution order and mandatory causal traceability.
+
 ---
 
 ## 2. Core analytical rule
@@ -1698,15 +1700,16 @@ China
 Implement:
 
 1. deterministic baseline;
-2. stochastic shocks;
-3. graph spillover;
-4. extremist-network separation;
-5. reciprocal radicalization;
-6. security-chain cohesion;
-7. alliance response;
-8. state-machine escalation;
-9. Monte Carlo;
-10. causal trace for every collapse.
+2. endogenous conflict initiation through RANDOM_SHOCK or GENERATED events;
+3. stochastic shocks;
+4. typed graph spillover;
+5. extremist-network separation;
+6. reciprocal radicalization;
+7. security-chain cohesion;
+8. alliance response;
+9. state-machine escalation;
+10. Monte Carlo;
+11. complete causal trace for every material transition and collapse.
 
 Only after Phase 1 passes validation should the model expand country by country.
 
@@ -1715,15 +1718,21 @@ Only after Phase 1 passes validation should the model expand country by country.
 The first serious simulator is complete when:
 
 - SCN-00 remains broadly stable over long runs;
+- default endogenous mode can initiate conflict through RANDOM_SHOCK or GENERATED events while some runs remain peaceful;
 - extreme scenarios can escalate without hard-coded collapse;
 - removing extremist-network propagation reduces contagion;
 - increasing institutional cohesion measurably reduces civil-war transitions;
-- France and Portugal affect Spain through expected graph links;
+- France and Portugal affect Spain through explicit typed graph links;
 - Sahel deterioration can increase European stress without guaranteeing European collapse;
 - alliance support can stabilize states but is constrained by simultaneous crises;
 - coalitions can form and fragment dynamically;
-- every output can be traced to parameters/events;
-- identical seed + config + commit produces identical results.
+- every stochastic event records event provenance, hazard, RNG stream and random draw;
+- every phase transition records rule ID, thresholds, persistence and supporting causal trace IDs;
+- every material variable delta records its module, equation ID, parameters and source inputs;
+- every initial latent state is traceable to Snapshot v1 fields and source IDs;
+- every run stores an immutable manifest containing snapshot, graph, scenario, parameters, code version and RNG configuration;
+- identical manifest + seeds reproduce the run exactly;
+- adding a new valid Snapshot-v1 country does not require changes to engine equations.
 
 ---
 
