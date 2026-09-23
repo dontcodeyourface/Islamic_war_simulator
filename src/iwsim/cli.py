@@ -7,6 +7,7 @@ from pathlib import Path
 from . import __version__
 from .config import canonical_hash, file_sha256, load_yaml
 from .engine import NoOpEngine
+from .graph import build_structural_graph
 from .initializer import initialize_hybrid_state
 from .io import write_json
 from .logging import configure_logging
@@ -45,12 +46,22 @@ def run_smoke(args: argparse.Namespace) -> int:
     normalization_path = root / "config/engine/normalization_parameters_v1.yaml"
     parameters_path = root / "config/engine/parameter_registry_v1.yaml"
     feature_map_path = root / "config/engine/snapshot_feature_map_v1.yaml"
+    graph_config_path = root / "config/graph/base_country_graph_v1.yaml"
 
     snapshot = load_yaml(country_path)
     engine_state_registry = load_yaml(engine_state_path)
     normalization_registry = load_yaml(normalization_path)
     parameter_registry = load_yaml(parameters_path)
     feature_map = load_yaml(feature_map_path)
+    graph_config = load_yaml(graph_config_path)
+    distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
+    graph = build_structural_graph(
+        repo_root=root,
+        graph_config=graph_config,
+        distance_matrix=distance_matrix,
+        parameter_registry=parameter_registry,
+        profile="synthetic_smoke_v1",
+    )
 
     rng = RNGManager(master_seed=args.seed)
     trace = TraceLedger()
@@ -74,7 +85,7 @@ def run_smoke(args: argparse.Namespace) -> int:
         snapshot_schema_version=str(snapshot["identity"]["snapshot_version"]),
         snapshot_bundle_hash=canonical_hash(snapshot),
         country_file_hashes={initial_state.node_id: file_sha256(country_path)},
-        graph_hash=canonical_hash({"graph": "none", "version": "smoke-v1"}),
+        graph_hash=graph.graph_hash(),
         scenario_id="SCN-SMOKE-NOOP",
         scenario_hash=canonical_hash(scenario_payload),
         parameter_set_id="synthetic_smoke_v1",
@@ -85,7 +96,7 @@ def run_smoke(args: argparse.Namespace) -> int:
         time_step_days=1,
         start_date=str(snapshot["identity"]["snapshot_date"]),
         horizon_days=args.days,
-        enabled_modules=("initializer", "trace", "noop_engine"),
+        enabled_modules=("initializer", "structural_graph", "trace", "noop_engine"),
         normalization_version="1.0-hybrid-v0.2",
         execution_order_version="EXEC_ORDER_V1",
     )
@@ -101,6 +112,7 @@ def run_smoke(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     write_json(out / "manifest.json", manifest.to_dict())
+    write_json(out / "graph.json", graph.to_dict())
     write_json(out / "initial_state.json", initial_state.to_dict())
     write_json(out / "final_state.json", result.final_state.to_dict())
     write_json(
