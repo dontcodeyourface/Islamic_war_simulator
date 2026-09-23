@@ -1,0 +1,79 @@
+schema_version: "1.0"
+status: "implementation-v0.10"
+purpose: "Bounded endogenous recovery toward immutable t0 EngineState baselines."
+
+mode:
+  enabled: true
+  proposal_only: true
+  resolved_by_owner_resolver: true
+  rng_required: false
+  baseline_source: "EngineState.metadata.baseline_latents"
+  baseline_version_required: "ENGINESTATE_T0_V1"
+  deescalation_phase_changes_allowed: false
+
+equation:
+  rule_id: "RECOVERY_TO_BASELINE_V1"
+  formula: "delta = (baseline - current) * (1 - 2^(-1/half_life_days))"
+
+parameter_id:
+  synthetic_smoke_v1: "MEM_HALF_LIVES_SYN_V1"
+  calibrated_v1: "MEM_HALF_LIVES_CAL_V1"
+
+variables:
+  communal_fear:
+    memory_class: "short"
+  public_order_stress:
+    memory_class: "short"
+  electricity_functionality:
+    memory_class: "medium"
+  fuel_distribution_functionality:
+    memory_class: "medium"
+  transport_logistics_functionality:
+    memory_class: "medium"
+  telecom_internet_functionality:
+    memory_class: "short"
+  health_system_functionality:
+    memory_class: "medium"
+
+forbidden_generic_recovery:
+  - state_cohesion
+  - territorial_control
+  - regional_fragmentation_pressure
+  - security_chain_cohesion
+  - command_cohesion
+  - constitutional_loyalty
+  - criminal_network_power
+  - violent_islamist_pressure
+  - violent_ultranationalist_pressure
+  - revolutionary_extremist_pressure
+  - organized_armed_actor_capacity
+  - foreign_support_nonstate
+  - displacement_pressure
+  - demographic_momentum
+
+transaction:
+  compute_from_beginning_of_day_state: true
+  aggregate_with_event_proposals_before_single_owner_resolution: true
+  config_hash_part_of_transaction_identity: true
+
+trace:
+  proposal_record: "recovery_proposal"
+  also_emit_delta_proposal: true
+  required_fields:
+    - node_id
+    - day
+    - variable
+    - baseline_value
+    - value_before
+    - memory_class
+    - half_life_days
+    - daily_alpha
+    - raw_delta
+    - equation_id
+    - parameter_ids
+    - baseline_version
+
+safety:
+  tactical_behavior: false
+  identity_propensity_mapping: false
+  phase_deescalation: false
