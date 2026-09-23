@@ -70,6 +70,8 @@ This preserves synchronous semantics.
 
 ## Proposal lineage
 
+Spillover identity is bound to the source and target latent IDs, the state-effect policy, channel, edge, creation/effective day and frozen transmission inputs. A semantic rule change therefore cannot silently reuse the same `spillover_id`.
+
 A state-changing spillover emits:
 
 1. `graph_spillover_candidate`;
