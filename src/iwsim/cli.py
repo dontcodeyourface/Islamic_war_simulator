@@ -86,6 +86,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/security_regime_recovery_v1.yaml",
     )
     day_smoke.add_argument(
+        "--security-regime-recovery-transition-config",
+        default="config/engine/security_regime_recovery_transition_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--fractal-refinement-config",
         default="config/engine/fractal_refinement_v1.yaml",
     )
@@ -270,6 +274,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     security_regime_recovery_config = load_yaml(
         root / args.security_regime_recovery_config
     )
+    security_regime_recovery_transition_config = load_yaml(
+        root / args.security_regime_recovery_transition_config
+    )
     fractal_refinement_config = load_yaml(
         root / args.fractal_refinement_config
     )
@@ -354,6 +361,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "security_regime_evaluator",
             "security_regime_commit",
             "security_regime_recovery_evaluator",
+            "security_regime_recovery_commit",
             "phase_evaluator",
             "phase_arbitration",
             "phase_commit",
@@ -412,6 +420,10 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             security_regime_recovery_config
         ),
         security_regime_recovery_persistence=None,
+        enable_security_regime_recovery_commits=True,
+        security_regime_recovery_transition_config=(
+            security_regime_recovery_transition_config
+        ),
         phase_config=phase_config,
         phase_transition_config=phase_transition_config,
         phase_persistence=None,
@@ -488,6 +500,13 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "security_regime_recovery_proposal_count": len(
                 result.security_regime_recovery_proposals
             ),
+            "security_regime_recovery_commit_count": len(
+                result.security_regime_recovery_commits
+            ),
+            "security_regime_recovery_commit_ids": [
+                item.commit_id
+                for item in result.security_regime_recovery_commits
+            ],
             "security_regime_recovery_persistence": {
                 node_id: item.to_dict()
                 for node_id, item in sorted(
