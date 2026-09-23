@@ -1,0 +1,64 @@
+schema_version: "1.0"
+status: "implementation-v0.4"
+purpose: "Dry-run strategic event engine contract."
+
+mode:
+  dry_run: true
+  apply_effects: false
+  phase_changes_allowed: false
+  graph_spillover_allowed: false
+
+supported_event_families:
+  - INTERSTATE_INCIDENT_V1
+  - MASS_PROTEST_TRIGGER_V1
+
+occurrence_policy:
+  generated:
+    condition: "hazard_score >= generated_threshold"
+    provenance_class: "GENERATED"
+    random_draw_required: false
+  random_shock:
+    condition: "hazard_score < generated_threshold and random_draw < occurrence_probability"
+    provenance_class: "RANDOM_SHOCK"
+    rng_stream: "events"
+
+trace_requirements:
+  candidate:
+    - event_type
+    - day
+    - actors
+    - hazard_score
+    - generated_threshold
+    - occurrence_probability
+    - feature_values
+    - parameter_ids
+    - occurred
+    - provenance_class
+  stochastic_draw:
+    - rng_stream
+    - draw_index
+    - random_draw
+    - occurrence_probability
+  created_event:
+    - event_id
+    - causal_trace_id
+    - provenance_class
+    - source_nodes
+    - target_nodes
+    - parent_event_ids
+    - scenario_id
+    - run_id
+    - dry_run
+
+safety_abstraction:
+  target_selection: false
+  weapon_selection: false
+  attack_method: false
+  tactical_route_planning: false
+  operational_execution: false
+
+rules:
+  event_id_must_be_deterministic_from_replay_identity: true
+  generated_event_must_not_consume_event_rng: true
+  random_shock_must_record_rng_draw: true
+  event_evaluation_must_not_mutate_engine_state: true
