@@ -120,7 +120,10 @@ def test_reciprocal_feedback_is_symmetric_traceable_and_non_mutating() -> None:
         for item in proposals
     )
     assert all(
-        item.parameter_ids == ("RECIPROCAL_RADICALIZATION_SYN_V1",)
+        item.parameter_ids == (
+            "RECIPROCAL_RADICALIZATION_SYN_V1",
+            "DYNAMIC_GAINS_SYN_V1",
+        )
         for item in proposals
     )
     assert state.state_hash() == before
@@ -160,7 +163,11 @@ def test_institutional_damping_can_reverse_feedback_delta() -> None:
         trace=TraceLedger(),
     )
     assert len(proposals) == 2
-    expected = (0.020 * 0.4 * 0.5) + (0.012 * 0.2 * 0.4) - (0.025 * 1.0 * 0.4)
+    expected = (
+        (0.020 * 0.4 * 0.5 * 0.6)
+        + (0.012 * 0.2 * 0.4 * 0.6)
+        - (0.025 * 1.0 * 0.4)
+    )
     assert expected < 0.0
     assert all(item.raw_delta == pytest.approx(expected) for item in proposals)
 
@@ -324,3 +331,41 @@ def test_network_pair_cannot_be_replaced_by_civilian_or_unrelated_state() -> Non
             profile="synthetic_smoke_v1",
             trace=TraceLedger(),
         )
+
+
+
+def test_reciprocal_feedback_respects_common_daily_cap() -> None:
+    logger.info("test_reciprocal_feedback_respects_common_daily_cap")
+    state, registry, parameters, feedback_config = _state_fixture()
+    _set_feedback_state(
+        state,
+        islamist=1.0,
+        ultranationalist=0.0,
+        fear=1.0,
+        narrative=1.0,
+        damping=0.0,
+    )
+    patched = copy.deepcopy(parameters)
+    reciprocal = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "RECIPROCAL_RADICALIZATION_SYN_V1"
+    ]["value"]
+    reciprocal["cross_reaction_gain"] = 1.0
+    reciprocal["narrative_amplification_gain"] = 1.0
+    dynamic = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "DYNAMIC_GAINS_SYN_V1"
+    ]["value"]
+    dynamic["max_single_day_latent_delta"] = 0.05
+
+    proposals = propose_reciprocal_radicalization_effects(
+        states={"TST": state},
+        feedback_config=feedback_config,
+        engine_state_registry=registry,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        trace=TraceLedger(),
+    )
+
+    by_variable = {item.variable: item for item in proposals}
+    assert by_variable[
+        "violent_ultranationalist_pressure"
+    ].raw_delta == pytest.approx(0.05)
