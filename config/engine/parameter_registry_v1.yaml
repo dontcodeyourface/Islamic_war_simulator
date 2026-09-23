@@ -222,6 +222,21 @@ parameter_sets:
         unit: probability_per_day
         rationale: "CI/smoke-test event frequency only; not a real-world estimate."
 
+      EVENT_EFFECT_PROPOSALS_SYN_V1:
+        type: event_effect_delta_set
+        value:
+          INTERSTATE_INCIDENT_V1:
+            each_actor:
+              external_conflict_pressure: 0.060
+              public_order_stress: 0.025
+              communal_fear: 0.015
+          MASS_PROTEST_TRIGGER_V1:
+            each_actor:
+              public_order_stress: 0.060
+              government_legitimacy: -0.030
+              social_cohesion: -0.020
+        rationale: "Engineering-only dry-run event-effect proposals. Values are not calibrated causal estimates and are not applied directly to EngineState."
+
       DYNAMIC_GAINS_SYN_V1:
         type: update_gain_set
         value:
@@ -325,6 +340,7 @@ parameter_sets:
       SECURITY_REGIMES_CAL_V1: null
       EVENT_HAZARD_WEIGHTS_CAL_V1: null
       EVENT_HAZARD_PROBABILITY_CAL_V1: null
+      EVENT_EFFECT_PROPOSALS_CAL_V1: null
       DYNAMIC_GAINS_CAL_V1: null
       RECIPROCAL_RADICALIZATION_CAL_V1: null
       FRACTAL_REFINEMENT_CAL_V1: null
