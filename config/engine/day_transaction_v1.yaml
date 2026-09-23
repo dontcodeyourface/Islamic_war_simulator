@@ -1,0 +1,58 @@
+schema_version: "1.0"
+status: "implementation-v0.7"
+purpose: "Atomic deterministic single-day transaction contract."
+
+atomicity:
+  all_graph_nodes_required: true
+  all_states_same_day_required: true
+  evaluate_against_beginning_of_day_state: true
+  stage_trace_until_commit: true
+  clone_rng_until_commit: true
+  input_states_must_remain_unchanged: true
+  resolver_runs_once_per_day: true
+  day_advance_after_successful_resolution: true
+  failure_commits_nothing: true
+
+event_evaluation_order:
+  - event_type: "INTERSTATE_INCIDENT_V1"
+    scope: "all_edges"
+  - event_type: "MASS_PROTEST_TRIGGER_V1"
+    scope: "all_nodes"
+
+supported_scopes:
+  - "all_edges"
+  - "all_nodes"
+
+execution:
+  transaction_rule_id: "DAY_TRANSACTION_V1"
+  candidate_snapshot: "beginning_of_day"
+  proposal_snapshot: "beginning_of_day"
+  owner_resolution: "single_batch"
+  phase_transition: false
+  graph_spillover_effects: false
+  recovery: false
+  resource_depletion: false
+  event_chaining_same_day: false
+
+trace:
+  started_record: "day_transaction_started"
+  committed_record: "day_transaction_committed"
+  failed_record: null
+  note: "Failures leave the caller trace unchanged, so no partial failed-day record is committed."
+  checkpoint_contains:
+    - event_ids_applied
+    - resolution_ids
+    - clamp_resolution_ids
+
+determinism:
+  event_order_source: "event_evaluation_order"
+  edge_order: "edge_id_ascending"
+  node_order: "node_id_ascending"
+  same_day_events_do_not_observe_other_same_day_event_effects: true
+
+safety_abstraction:
+  tactical_target_selection: false
+  weapon_selection: false
+  attack_method: false
+  route_planning: false
+  operational_execution: false
