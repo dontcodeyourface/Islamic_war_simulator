@@ -362,9 +362,10 @@ def materialize_l1_to_l2(
         raise ValueError(
             "Fractal action persistence requirement is not satisfied"
         )
-    if topology.last_committed_day != action.day - 1:
+    if topology.last_committed_day not in {action.day - 1, action.day}:
         raise ValueError(
-            "Fractal topology must be committed through the prior day"
+            "Fractal topology must be committed through the prior day "
+            "or an earlier same-day materialization"
         )
     if topology.active_children(action.node_id):
         raise ValueError(
