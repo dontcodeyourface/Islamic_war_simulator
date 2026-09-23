@@ -1,0 +1,86 @@
+schema_version: "1.0"
+status: "implementation-v0.16"
+purpose: "Read-only security-force regime evaluator with consecutive-day persistence."
+
+mode:
+  read_only: true
+  regime_commit_allowed: false
+  deescalation_enabled: false
+  evaluate_end_of_day_state: true
+
+regime_order:
+  - "COHESIVE"
+  - "STRAINED"
+  - "SELECTIVE_NONCOMPLIANCE"
+  - "COMMAND_FRACTURE"
+  - "LOCALIZED_DEFECTION"
+  - "MULTIPLE_COMMANDS"
+
+transitions:
+  - rule_id: "SECURITY_COHESIVE_STRAINED_V1"
+    from: "COHESIVE"
+    to: "STRAINED"
+    parameter_subkey: "strained"
+    parameter_id:
+      synthetic_smoke_v1: "SECURITY_REGIMES_SYN_V1"
+      calibrated_v1: "SECURITY_REGIMES_CAL_V1"
+
+  - rule_id: "SECURITY_STRAINED_SELECTIVE_NONCOMPLIANCE_V1"
+    from: "STRAINED"
+    to: "SELECTIVE_NONCOMPLIANCE"
+    parameter_subkey: "selective_noncompliance"
+    parameter_id:
+      synthetic_smoke_v1: "SECURITY_REGIMES_SYN_V1"
+      calibrated_v1: "SECURITY_REGIMES_CAL_V1"
+
+  - rule_id: "SECURITY_SELECTIVE_NONCOMPLIANCE_COMMAND_FRACTURE_V1"
+    from: "SELECTIVE_NONCOMPLIANCE"
+    to: "COMMAND_FRACTURE"
+    parameter_subkey: "command_fracture"
+    parameter_id:
+      synthetic_smoke_v1: "SECURITY_REGIMES_SYN_V1"
+      calibrated_v1: "SECURITY_REGIMES_CAL_V1"
+
+  - rule_id: "SECURITY_COMMAND_FRACTURE_LOCALIZED_DEFECTION_V1"
+    from: "COMMAND_FRACTURE"
+    to: "LOCALIZED_DEFECTION"
+    parameter_subkey: "localized_defection"
+    parameter_id:
+      synthetic_smoke_v1: "SECURITY_REGIMES_SYN_V1"
+      calibrated_v1: "SECURITY_REGIMES_CAL_V1"
+
+  - rule_id: "SECURITY_LOCALIZED_DEFECTION_MULTIPLE_COMMANDS_V1"
+    from: "LOCALIZED_DEFECTION"
+    to: "MULTIPLE_COMMANDS"
+    parameter_subkey: "multiple_commands"
+    parameter_id:
+      synthetic_smoke_v1: "SECURITY_REGIMES_SYN_V1"
+      calibrated_v1: "SECURITY_REGIMES_CAL_V1"
+
+condition_language:
+  latent_suffix_operators:
+    "_gte": ">="
+    "_lte": "<="
+    "_gt": ">"
+    "_lt": "<"
+  boolean_context_flags:
+    - "competing_authority_present"
+    - "multiple_authority_nodes_present"
+
+persistence:
+  default_persistence_days: 1
+  consecutive_days_required: true
+  reset_on_failed_condition: true
+  reset_when_current_regime_changes: true
+  same_day_re_evaluation: "fail_closed"
+  skipped_day_re_evaluation: "fail_closed"
+
+trace:
+  evaluation_record: "security_regime_evaluation"
+  proposal_record: "security_regime_transition_proposal"
+
+safety:
+  political_identity_direct_transition_input: false
+  demographic_identity_direct_transition_input: false
+  religious_identity_direct_transition_input: false
+  regime_is_classifier_not_operational_instruction: true
