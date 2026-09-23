@@ -222,6 +222,17 @@ parameter_sets:
         unit: probability_per_day
         rationale: "CI/smoke-test event frequency only; not a real-world estimate."
 
+      OWNER_RESOLVER_POLICY_SYN_V1:
+        type: owner_resolver_policy
+        value:
+          aggregation: "sum"
+          stale_proposal_policy: "fail"
+          owner_mismatch_policy: "fail"
+          unknown_variable_policy: "fail"
+          bounds_source: "engine_state_registry"
+          clamp: true
+        rationale: "Engineering resolver policy for deterministic proposal aggregation and canonical bound enforcement; contains no calibrated causal coefficients."
+
       EVENT_EFFECT_PROPOSALS_SYN_V1:
         type: event_effect_delta_set
         value:
@@ -340,6 +351,7 @@ parameter_sets:
       SECURITY_REGIMES_CAL_V1: null
       EVENT_HAZARD_WEIGHTS_CAL_V1: null
       EVENT_HAZARD_PROBABILITY_CAL_V1: null
+      OWNER_RESOLVER_POLICY_CAL_V1: null
       EVENT_EFFECT_PROPOSALS_CAL_V1: null
       DYNAMIC_GAINS_CAL_V1: null
       RECIPROCAL_RADICALIZATION_CAL_V1: null
