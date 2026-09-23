@@ -14,6 +14,14 @@ from .events import (
 )
 from .graph import CountryGraph
 from .manifest import RunManifest
+from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
+from .phase_transition import (
+    PhaseArbitrationRecord,
+    PhaseCommitRecord,
+    arbitrate_phase_proposals,
+    commit_phase_transition,
+    retain_phase_persistence,
+)
 from .resolver import ResolutionRecord, resolve_delta_proposals
 from .rng import RNGManager
 from .state import EngineState, extract_latent_registry
@@ -53,6 +61,10 @@ class DayTransactionResult:
     events: tuple[SimEvent, ...]
     proposals: tuple[DeltaProposal, ...]
     resolutions: tuple[ResolutionRecord, ...]
+    phase_persistence: dict[str, PhasePersistenceState]
+    phase_evaluations: tuple[PhaseEvaluationResult, ...]
+    phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
+    phase_commits: tuple[PhaseCommitRecord, ...]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -72,6 +84,17 @@ class DayTransactionResult:
             "events": [event.to_dict() for event in self.events],
             "proposals": [proposal.to_dict() for proposal in self.proposals],
             "resolutions": [record.to_dict() for record in self.resolutions],
+            "phase_persistence": {
+                node_id: persistence.to_dict()
+                for node_id, persistence in sorted(self.phase_persistence.items())
+            },
+            "phase_evaluations": [
+                item.to_dict() for item in self.phase_evaluations
+            ],
+            "phase_arbitrations": [
+                item.to_dict() for item in self.phase_arbitrations
+            ],
+            "phase_commits": [item.to_dict() for item in self.phase_commits],
         }
 
 
@@ -113,12 +136,89 @@ def _validate_day_inputs(
     return next(iter(days))
 
 
+def _normalize_phase_persistence_inputs(
+    *,
+    states: dict[str, EngineState],
+    day_from: int,
+    phase_persistence: dict[str, PhasePersistenceState | None] | None,
+) -> dict[str, PhasePersistenceState | None]:
+    logger.info(
+        "_normalize_phase_persistence_inputs day_from=%s supplied=%s",
+        day_from,
+        phase_persistence is not None,
+    )
+    if phase_persistence is None:
+        if day_from != 0:
+            raise ValueError(
+                "Phase persistence is required after day zero when phase integration is enabled"
+            )
+        return {node_id: None for node_id in sorted(states)}
+
+    if set(phase_persistence) != set(states):
+        raise ValueError("Phase persistence nodes must equal state nodes")
+
+    normalized: dict[str, PhasePersistenceState | None] = {}
+    for node_id in sorted(states):
+        persistence = phase_persistence[node_id]
+        if persistence is None:
+            if day_from != 0:
+                raise ValueError(
+                    f"Missing phase persistence for {node_id} after day zero"
+                )
+            normalized[node_id] = None
+            continue
+        if persistence.node_id != node_id:
+            raise ValueError(
+                f"Phase persistence node mismatch key={node_id} value={persistence.node_id}"
+            )
+        if persistence.last_evaluated_day != day_from:
+            raise ValueError(
+                f"Phase persistence day mismatch for {node_id}: "
+                f"expected {day_from}, got {persistence.last_evaluated_day}"
+            )
+        if persistence.current_phase != states[node_id].regimes["national_phase"]:
+            raise ValueError(
+                f"Phase persistence phase mismatch for {node_id}: "
+                f"{persistence.current_phase} != "
+                f"{states[node_id].regimes['national_phase']}"
+            )
+        normalized[node_id] = persistence
+    return normalized
+
+
+def _phase_inputs_fingerprint(
+    *,
+    phase_persistence: dict[str, PhasePersistenceState | None],
+    phase_context_flags: dict[str, dict[str, bool]],
+    phase_config: dict[str, Any],
+    phase_transition_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info("_phase_inputs_fingerprint nodes=%s", len(phase_persistence))
+    return {
+        "phase_persistence": {
+            node_id: (
+                persistence.to_dict()
+                if persistence is not None
+                else None
+            )
+            for node_id, persistence in sorted(phase_persistence.items())
+        },
+        "phase_context_flags": {
+            node_id: dict(sorted(flags.items()))
+            for node_id, flags in sorted(phase_context_flags.items())
+        },
+        "phase_config_hash": canonical_hash(phase_config),
+        "phase_transition_config_hash": canonical_hash(phase_transition_config),
+    }
+
+
 def _transaction_id(
     *,
     manifest: RunManifest,
     day_from: int,
     graph: CountryGraph,
     states: dict[str, EngineState],
+    phase_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -136,6 +236,7 @@ def _transaction_id(
                 for node_id, state in sorted(states.items())
             },
             "execution_order_version": manifest.execution_order_version,
+            "phase_inputs": phase_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -297,6 +398,83 @@ def _advance_resolved_states(
     return advanced
 
 
+def _evaluate_and_commit_phases(
+    *,
+    states: dict[str, EngineState],
+    phase_persistence: dict[str, PhasePersistenceState | None],
+    phase_context_flags: dict[str, dict[str, bool]],
+    phase_config: dict[str, Any],
+    phase_transition_config: dict[str, Any],
+    parameter_registry: dict[str, Any],
+    profile: str,
+    engine_state_registry: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, EngineState],
+    dict[str, PhasePersistenceState],
+    tuple[PhaseEvaluationResult, ...],
+    tuple[PhaseArbitrationRecord, ...],
+    tuple[PhaseCommitRecord, ...],
+]:
+    logger.info("_evaluate_and_commit_phases states=%s", len(states))
+    committed_states: dict[str, EngineState] = {}
+    persistence_out: dict[str, PhasePersistenceState] = {}
+    evaluations: list[PhaseEvaluationResult] = []
+    arbitrations: list[PhaseArbitrationRecord] = []
+    commits: list[PhaseCommitRecord] = []
+
+    for node_id in sorted(states):
+        state = states[node_id]
+        evaluation = evaluate_national_phase(
+            state=state,
+            persistence=phase_persistence[node_id],
+            context_flags=phase_context_flags.get(node_id, {}),
+            phase_config=phase_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=trace,
+        )
+        evaluations.append(evaluation)
+        arbitration = arbitrate_phase_proposals(
+            proposals=evaluation.proposals,
+            phase_config=phase_config,
+            transition_config=phase_transition_config,
+            manifest=manifest,
+            trace=trace,
+        )
+        if arbitration is None:
+            committed_states[node_id] = state
+            persistence_out[node_id] = retain_phase_persistence(
+                persistence=evaluation.persistence,
+                trace=trace,
+            )
+            continue
+
+        next_state, commit_record, persistence = commit_phase_transition(
+            state=state,
+            proposals=evaluation.proposals,
+            arbitration=arbitration,
+            transition_config=phase_transition_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=trace,
+        )
+        committed_states[node_id] = next_state
+        persistence_out[node_id] = persistence
+        arbitrations.append(arbitration)
+        commits.append(commit_record)
+
+    return (
+        committed_states,
+        persistence_out,
+        tuple(evaluations),
+        tuple(arbitrations),
+        tuple(commits),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -304,6 +482,7 @@ def _checkpoint_node(
     state_after: EngineState,
     events: tuple[SimEvent, ...],
     resolutions: tuple[ResolutionRecord, ...],
+    phase_commits: tuple[PhaseCommitRecord, ...],
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> None:
@@ -334,6 +513,13 @@ def _checkpoint_node(
             and abs(record.clamp_amount) > 1e-15
         )
     )
+    node_phase_commits = tuple(
+        sorted(
+            record.commit_id
+            for record in phase_commits
+            if record.node_id == node_id
+        )
+    )
     trace.append_daily_checkpoint(
         run_id=manifest.run_id,
         day=state_after.day,
@@ -343,6 +529,7 @@ def _checkpoint_node(
         module_deltas=node_resolutions,
         event_ids_applied=node_events,
         constraint_clamps=clamp_resolutions,
+        phase_transition_ids=node_phase_commits,
     )
 
 
@@ -357,6 +544,11 @@ def run_day_transaction(
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    enable_phase_transitions: bool = False,
+    phase_config: dict[str, Any] | None = None,
+    phase_transition_config: dict[str, Any] | None = None,
+    phase_persistence: dict[str, PhasePersistenceState | None] | None = None,
+    phase_context_flags: dict[str, dict[str, bool]] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -372,11 +564,42 @@ def run_day_transaction(
         engine_state_registry=engine_state_registry,
     )
     day_to = day_from + 1
+    normalized_phase_persistence: dict[str, PhasePersistenceState | None] = {}
+    normalized_phase_context_flags = {
+        node_id: dict(flags)
+        for node_id, flags in (phase_context_flags or {}).items()
+    }
+    phase_inputs: dict[str, Any] | None = None
+    if enable_phase_transitions:
+        if phase_config is None or phase_transition_config is None:
+            raise ValueError(
+                "Phase integration requires phase_config and phase_transition_config"
+            )
+        normalized_phase_persistence = _normalize_phase_persistence_inputs(
+            states=states,
+            day_from=day_from,
+            phase_persistence=phase_persistence,
+        )
+        unknown_context_nodes = (
+            set(normalized_phase_context_flags) - set(states)
+        )
+        if unknown_context_nodes:
+            raise ValueError(
+                f"Unknown phase context nodes: {sorted(unknown_context_nodes)}"
+            )
+        phase_inputs = _phase_inputs_fingerprint(
+            phase_persistence=normalized_phase_persistence,
+            phase_context_flags=normalized_phase_context_flags,
+            phase_config=phase_config,
+            phase_transition_config=phase_transition_config,
+        )
+
     transaction_id = _transaction_id(
         manifest=manifest,
         day_from=day_from,
         graph=graph,
         states=states,
+        phase_inputs=phase_inputs,
     )
 
     working_rng = rng.clone()
@@ -428,13 +651,42 @@ def run_day_transaction(
         engine_state_registry=engine_state_registry,
     )
 
+    phase_persistence_out: dict[str, PhasePersistenceState] = {}
+    phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
+    phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
+    phase_commits: tuple[PhaseCommitRecord, ...] = ()
+    final_states = advanced_states
+
+    if enable_phase_transitions:
+        assert phase_config is not None
+        assert phase_transition_config is not None
+        (
+            final_states,
+            phase_persistence_out,
+            phase_evaluations,
+            phase_arbitrations,
+            phase_commits,
+        ) = _evaluate_and_commit_phases(
+            states=advanced_states,
+            phase_persistence=normalized_phase_persistence,
+            phase_context_flags=normalized_phase_context_flags,
+            phase_config=phase_config,
+            phase_transition_config=phase_transition_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
             state_before=states[node_id],
-            state_after=advanced_states[node_id],
+            state_after=final_states[node_id],
             events=events,
             resolutions=resolution.records,
+            phase_commits=phase_commits,
             manifest=manifest,
             trace=staged_trace,
         )
@@ -450,9 +702,16 @@ def run_day_transaction(
         resolution_ids=[
             record.resolution_id for record in resolution.records
         ],
+        phase_commit_ids=[
+            record.commit_id for record in phase_commits
+        ],
+        phase_persistence={
+            node_id: persistence.to_dict()
+            for node_id, persistence in sorted(phase_persistence_out.items())
+        },
         state_hashes_after={
             node_id: state.state_hash()
-            for node_id, state in sorted(advanced_states.items())
+            for node_id, state in sorted(final_states.items())
         },
     )
 
@@ -463,9 +722,13 @@ def run_day_transaction(
         transaction_id=transaction_id,
         day_from=day_from,
         day_to=day_to,
-        states=advanced_states,
+        states=final_states,
         candidates=candidates,
         events=events,
         proposals=proposals,
         resolutions=resolution.records,
+        phase_persistence=phase_persistence_out,
+        phase_evaluations=phase_evaluations,
+        phase_arbitrations=phase_arbitrations,
+        phase_commits=phase_commits,
     )
