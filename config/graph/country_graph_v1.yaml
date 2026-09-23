@@ -1,0 +1,51 @@
+schema_version: "1.0"
+status: "implementation-v0.3"
+date: "2026-09-23"
+purpose: "Country-independent source configuration for the first typed country graph."
+
+distance_matrix_path: "config/geography/country_distance_matrix_v1.yaml"
+
+nodes:
+  ESP:
+    snapshot_path: "config/countries/spain.yaml"
+  MAR:
+    snapshot_path: "config/countries/morocco.yaml"
+  FRA:
+    snapshot_path: "config/countries/france.yaml"
+  DEU:
+    snapshot_path: "config/countries/germany.yaml"
+  GBR:
+    snapshot_path: "config/countries/united_kingdom.yaml"
+
+channels:
+  geographic_proximity:
+    source: distance_matrix
+    normalization_rule_id: EDGE_GEO_V1
+  land_border:
+    source: distance_matrix
+    normalization_rule_id: EDGE_LAND_BORDER_V1
+  alliance_link:
+    source: "snapshot.alliances.memberships"
+    normalization_rule_id: EDGE_ALLIANCE_FORMAL_V1
+  trade_dependency:
+    source: unresolved
+  energy_dependency:
+    source: unresolved
+  migration_link:
+    source: unresolved
+  diaspora_link:
+    source: unresolved
+  information_link:
+    source: unresolved
+  criminal_network_link:
+    source: unresolved
+  extremist_network_link:
+    source: unresolved
+
+rules:
+  graph_is_undirected_v0_3: true
+  complete_pair_coverage_required: true
+  unresolved_channel_is_null_not_zero: true
+  country_specific_edge_logic_forbidden: true
+  population_identity_must_not_create_extremist_edge: true
+  diaspora_identity_must_not_create_faction_alignment: true
