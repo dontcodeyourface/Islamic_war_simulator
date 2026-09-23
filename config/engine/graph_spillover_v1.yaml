@@ -19,8 +19,8 @@ rules:
       - "land_border"
 
   - rule_id: "POLARIZATION_INFORMATION_TRACE_V1"
-    source_variable: "misinformation_pressure"
-    target_variable: "misinformation_pressure"
+    source_variable: "polarization"
+    target_variable: "polarization"
     channels:
       - "information_link"
 
