@@ -1420,20 +1420,7 @@ with:
 
 EngineState v1 fixes the **variables**, not yet the numerical formulas.
 
-Still to define before engine implementation:
-
-1. normalization equations;
-2. parameter registry;
-3. baseline priors for missing data;
-4. correlation groups;
-5. graph-edge normalization;
-6. phase thresholds;
-7. memory/decay constants;
-8. random-shock hazard families.
-
-These belong in the next contract:
-
-`NORMALIZATION_AND_PARAMETERS_V1.md`
+These items are now defined structurally by [NORMALIZATION_AND_PARAMETERS_V1.md](NORMALIZATION_AND_PARAMETERS_V1.md), `config/engine/normalization_parameters_v1.yaml`, and the authoritative `config/engine/parameter_registry_v1.yaml`. Empirical calibration of the `calibrated_v1` profile remains intentionally unfinished.
 
 ---
 

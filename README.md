@@ -48,6 +48,8 @@ Canonical pre-implementation engine contract: [docs/ENGINE_DYNAMICS_V1.md](docs/
 
 Canonical runtime-state contract: [docs/ENGINE_STATE_V1.md](docs/ENGINE_STATE_V1.md), with the machine-readable registry in [`config/engine/engine_state_v1.yaml`](config/engine/engine_state_v1.yaml). It fixes 12 physical stocks, 60 country latents, 4 regimes and the dynamic-collection model.
 
+Canonical normalization/parameter contract: [docs/NORMALIZATION_AND_PARAMETERS_V1.md](docs/NORMALIZATION_AND_PARAMETERS_V1.md), with [`config/engine/normalization_parameters_v1.yaml`](config/engine/normalization_parameters_v1.yaml) and the authoritative [`config/engine/parameter_registry_v1.yaml`](config/engine/parameter_registry_v1.yaml). Synthetic smoke-test parameters are explicitly separated from future calibrated parameters.
+
 ---
 
 ## 2. Core analytical rule

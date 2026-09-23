@@ -1,0 +1,783 @@
+schema_version: "1.0"
+status: "canonical-pre-implementation"
+date: "2026-09-23"
+purpose: "Normalization, memory, parameter, threshold and stochastic-hazard contract for EngineState v1."
+
+principles:
+  parameter_registry_path: "config/engine/parameter_registry_v1.yaml"
+  parameter_registry_is_authoritative: true
+  duplicated_numeric_views_must_match_registry_hash_validation: true
+  calibrated_analysis_must_not_use_synthetic_smoke_parameters: true
+  synthetic_profile_is_not_real_world_probability: true
+  parameter_literals_in_code_forbidden: true
+  every_parameter_requires_parameter_id: true
+  every_normalization_requires_rule_id: true
+  every_prior_requires_prior_id: true
+  every_phase_transition_requires_rule_id: true
+  every_hazard_requires_hazard_id: true
+  missing_calibrated_parameter_is_fatal: true
+  country_specific_parameter_override_requires_explicit_data_or_scenario_provenance: true
+  religious_identity_must_not_be_used_as_extremist_propensity: true
+  political_identity_must_not_be_used_as_security_defection_propensity: true
+
+profiles:
+  synthetic_smoke_v1:
+    purpose: "Engineering-only profile for deterministic tests, replay, bounded-feedback checks and CI."
+    calibrated: false
+    report_as_real_probability: false
+    allow_public_interpretation_as_forecast: false
+  calibrated_v1:
+    purpose: "Future empirical/backtested profile."
+    calibrated: true
+    status: "UNPOPULATED"
+    missing_parameter_policy: "fail_closed"
+    report_as_real_probability: false
+
+normalization_transforms:
+  NORM_CLAMP_01_V1:
+    formula: "min(1,max(0,x))"
+  NORM_CLAMP_SIGNED_V1:
+    formula: "min(1,max(-1,x))"
+  NORM_RATIO_SAT_V1:
+    formula: "x/(x+k)"
+    parameter_contract: "Calling rule supplies a versioned parameter_id containing k; synthetic fallback may use GENERIC_RATIO_K_SYN_V1."
+  NORM_LOGISTIC_V1:
+    formula: "1/(1+exp(-s*(x-m)))"
+    parameter_contract: "Calling rule supplies a versioned parameter_id containing slope and midpoint; synthetic fallback may use GENERIC_LOGISTIC_SYN_V1."
+  NORM_SIGNED_TANH_V1:
+    formula: "tanh(x/s)"
+    parameter_contract: "Calling rule supplies a versioned scale parameter_id; synthetic fallback may use GENERIC_SIGNED_TANH_SCALE_SYN_V1."
+  NORM_LINEAR_ANCHOR_V1:
+    formula: "(x-low)/(high-low), then clamp"
+    parameter_contract: "Calling rule must supply one versioned parameter_id containing low/high anchors."
+  NORM_COMPLEMENT_V1:
+    formula: "1-x"
+  NORM_WEIGHTED_MEAN_V1:
+    formula: "sum(w_i*x_i)/sum(w_i)"
+  NORM_GEOMEAN_V1:
+    formula: "exp(sum(w_i*ln(max(eps,x_i)))/sum(w_i))"
+  NORM_ORDINAL_V1:
+    formula: "lookup(category, versioned_mapping)"
+  NORM_EVIDENCE_BLEND_V1:
+    formula: "weighted mean of normalized empirical contributors; uncertainty tracked separately from mean"
+
+confidence_model:
+  quality_to_uncertainty_multiplier:
+    high: 1.0
+    medium: 1.35
+    low: 1.8
+    unavailable: null
+  freshness_to_uncertainty_multiplier:
+    current: 1.0
+    recent: 1.10
+    aging: 1.30
+    stale: 1.65
+    structural: 1.0
+  rules:
+    - "Source quality/freshness widen uncertainty; they do not silently drag the normalized mean toward 0.5."
+    - "Derived values inherit contributor uncertainty plus derivation penalty."
+    - "Imputed values must record prior_fraction > 0."
+    - "Conflicting empirical sources must remain visible in contribution trace."
+
+memory_classes:
+  authoritative_parameter_id:
+    synthetic_smoke_v1: MEM_HALF_LIVES_SYN_V1
+    calibrated_v1: MEM_HALF_LIVES_CAL_V1
+  immediate:
+    ema_half_life_days: 2
+    comparison_windows_days: [1,2,3]
+  short:
+    ema_half_life_days: 8
+    comparison_windows_days: [3,5,8,13]
+  medium:
+    ema_half_life_days: 34
+    comparison_windows_days: [13,21,34,55]
+  structural:
+    ema_half_life_days: 144
+    comparison_windows_days: [55,89,144,233]
+  long:
+    ema_half_life_days: 610
+    comparison_windows_days: [233,377,610,987]
+  note: "Half-lives are engineering defaults inspired by multiscale/Fibonacci spacing and require empirical validation."
+
+uncertainty:
+  rng_stream: uncertainty_sampling
+  allowed_distributions: [beta, normal_truncated, lognormal_truncated, triangular, uniform_bounded, categorical]
+  correlation_method: "Gaussian copula or explicitly documented multivariate distribution"
+  no_unbounded_null_sampling: true
+  correlation_groups:
+    GOV_INSTITUTIONAL_V1:
+      variables: [government_legitimacy,state_cohesion,elite_cohesion,administrative_capacity,judicial_continuity,fiscal_capacity,salary_payment_continuity]
+      expected_sign: positive
+    SECURITY_CAPACITY_V1:
+      variables: [police_effective_capacity,intelligence_effectiveness,security_chain_cohesion,command_cohesion,constitutional_loyalty]
+      expected_sign: positive
+    RESOURCE_RESILIENCE_V1:
+      variables: [energy_resilience,electricity_functionality,fuel_distribution_functionality,food_resilience,water_resilience,transport_logistics_functionality]
+      expected_sign: positive
+    MILITARY_CAPACITY_V1:
+      variables: [military_land_effective,military_air_effective,military_naval_effective,military_isr_ew_effective,military_drone_cuas_effective,military_logistics_availability,defence_industrial_capacity,replenishment_capacity]
+      expected_sign: positive
+    SOCIAL_STRESS_V1:
+      variables: [polarization,communal_fear,public_order_stress,terrorism_threat_pressure]
+      expected_sign: positive
+    STATE_RESILIENCE_STRESS_INVERSE_V1:
+      variables_resilient: [social_cohesion,government_legitimacy,state_cohesion]
+      variables_stress: [polarization,communal_fear,regional_fragmentation_pressure]
+      expected_sign: negative_cross_group
+    EXTREMIST_FEEDBACK_V1:
+      variables: [violent_islamist_pressure,violent_ultranationalist_pressure,civilizational_narrative_strength,communal_fear]
+      expected_sign: positive_under_crisis_not_identity_based
+
+prior_policy:
+  calibrated_v1:
+    rule: "No generic prior may be used for a required latent unless registered and justified by calibration/domain evidence."
+  synthetic_smoke_v1:
+    rng_stream: uncertainty_sampling
+    priors:
+      PRIOR_RESILIENT_INSTITUTION_V1:
+        distribution: beta
+        alpha: 8
+        beta: 2
+        scope: "engineering-only resilient-state tests"
+      PRIOR_NEUTRAL_CAPACITY_V1:
+        distribution: beta
+        alpha: 5
+        beta: 3
+        scope: "engineering-only capacity placeholder"
+      PRIOR_LOW_STRESS_V1:
+        distribution: beta
+        alpha: 2
+        beta: 8
+        scope: "engineering-only baseline stress placeholder"
+      PRIOR_MODERATE_STRESS_V1:
+        distribution: beta
+        alpha: 3
+        beta: 6
+        scope: "engineering-only uncertain stress placeholder"
+      PRIOR_SIGNED_STABLE_MOMENTUM_V1:
+        distribution: normal_truncated
+        mean: 0.0
+        sd: 0.15
+        lower: -1.0
+        upper: 1.0
+        scope: "engineering-only demographic momentum placeholder"
+
+synthetic_smoke_defaults:
+  missing_latent_prior_classes:
+    demographic_momentum: PRIOR_SIGNED_STABLE_MOMENTUM_V1
+    migration_pressure: PRIOR_LOW_STRESS_V1
+    dependency_pressure: PRIOR_MODERATE_STRESS_V1
+    social_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    polarization: PRIOR_LOW_STRESS_V1
+    communal_fear: PRIOR_LOW_STRESS_V1
+    reception_pressure: PRIOR_LOW_STRESS_V1
+    displacement_pressure: PRIOR_LOW_STRESS_V1
+    government_legitimacy: PRIOR_RESILIENT_INSTITUTION_V1
+    state_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    elite_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    administrative_capacity: PRIOR_RESILIENT_INSTITUTION_V1
+    judicial_continuity: PRIOR_RESILIENT_INSTITUTION_V1
+    fiscal_capacity: PRIOR_NEUTRAL_CAPACITY_V1
+    salary_payment_continuity: PRIOR_RESILIENT_INSTITUTION_V1
+    center_region_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    territorial_control: PRIOR_RESILIENT_INSTITUTION_V1
+    regional_fragmentation_pressure: PRIOR_LOW_STRESS_V1
+    police_effective_capacity: PRIOR_NEUTRAL_CAPACITY_V1
+    intelligence_effectiveness: PRIOR_NEUTRAL_CAPACITY_V1
+    security_chain_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    command_cohesion: PRIOR_RESILIENT_INSTITUTION_V1
+    constitutional_loyalty: PRIOR_RESILIENT_INSTITUTION_V1
+    operational_fatigue: PRIOR_LOW_STRESS_V1
+    public_order_stress: PRIOR_LOW_STRESS_V1
+    prison_control: PRIOR_RESILIENT_INSTITUTION_V1
+    terrorism_threat_pressure: PRIOR_LOW_STRESS_V1
+    criminal_network_power: PRIOR_MODERATE_STRESS_V1
+    black_market_expansion: PRIOR_LOW_STRESS_V1
+    violent_islamist_pressure: PRIOR_LOW_STRESS_V1
+    violent_ultranationalist_pressure: PRIOR_LOW_STRESS_V1
+    revolutionary_extremist_pressure: PRIOR_LOW_STRESS_V1
+    organized_armed_actor_capacity: PRIOR_LOW_STRESS_V1
+    foreign_support_nonstate: PRIOR_LOW_STRESS_V1
+    civilizational_narrative_strength: PRIOR_LOW_STRESS_V1
+    economic_output: PRIOR_RESILIENT_INSTITUTION_V1
+    inflation_pressure: PRIOR_LOW_STRESS_V1
+    unemployment_pressure: PRIOR_MODERATE_STRESS_V1
+    financial_buffer: PRIOR_NEUTRAL_CAPACITY_V1
+    trade_access: PRIOR_RESILIENT_INSTITUTION_V1
+    energy_resilience: PRIOR_NEUTRAL_CAPACITY_V1
+    electricity_functionality: PRIOR_RESILIENT_INSTITUTION_V1
+    fuel_distribution_functionality: PRIOR_RESILIENT_INSTITUTION_V1
+    food_resilience: PRIOR_RESILIENT_INSTITUTION_V1
+    water_resilience: PRIOR_NEUTRAL_CAPACITY_V1
+    transport_logistics_functionality: PRIOR_RESILIENT_INSTITUTION_V1
+    telecom_internet_functionality: PRIOR_RESILIENT_INSTITUTION_V1
+    health_system_functionality: PRIOR_RESILIENT_INSTITUTION_V1
+    military_land_effective: PRIOR_NEUTRAL_CAPACITY_V1
+    military_air_effective: PRIOR_NEUTRAL_CAPACITY_V1
+    military_naval_effective: PRIOR_NEUTRAL_CAPACITY_V1
+    military_isr_ew_effective: PRIOR_NEUTRAL_CAPACITY_V1
+    military_drone_cuas_effective: PRIOR_NEUTRAL_CAPACITY_V1
+    military_logistics_availability: PRIOR_NEUTRAL_CAPACITY_V1
+    defence_industrial_capacity: PRIOR_NEUTRAL_CAPACITY_V1
+    replenishment_capacity: PRIOR_NEUTRAL_CAPACITY_V1
+    ai_defence_maturity: PRIOR_NEUTRAL_CAPACITY_V1
+    cyber_resilience: PRIOR_NEUTRAL_CAPACITY_V1
+    alliance_support: PRIOR_NEUTRAL_CAPACITY_V1
+    external_conflict_pressure: PRIOR_LOW_STRESS_V1
+
+initialization_rules:
+  DEM_MOMENTUM_INIT_V1:
+    target: demographic_momentum
+    transform: NORM_SIGNED_TANH_V1
+    contributors: [annual_population_growth_rate,natural_increase,total_fertility_rate,age_structure,migration_demographic_momentum,religious_switching_net_effect]
+    rule: "Preserve measured group semantics; do not infer ideology from religion."
+  MIG_PRESSURE_INIT_V1:
+    target: migration_pressure
+    transform: NORM_RATIO_SAT_V1
+    contributors: [recent_net_migration,reception_capacity,housing_capacity,labor_absorption,integration_support]
+  DEPENDENCY_PRESSURE_INIT_V1:
+    target: dependency_pressure
+    transform: NORM_RATIO_SAT_V1
+    contributors: [dependent_population,working_age_population]
+  SOCIAL_COHESION_INIT_V1:
+    target: social_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [governance_cohesion,regional_cohesion,information_trust,community_institution_resilience]
+  POLARIZATION_INIT_V1:
+    target: polarization
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [political_polarization_evidence,identity_tension,information_fragmentation]
+  COMMUNAL_FEAR_INIT_V1:
+    target: communal_fear
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [recent_identity_violence,terrorism_threat,hostile_information_pressure]
+  RECEPTION_PRESSURE_INIT_V1:
+    target: reception_pressure
+    transform: NORM_RATIO_SAT_V1
+    contributors: [reception_population,reception_capacity,housing_pressure]
+  DISPLACEMENT_PRESSURE_INIT_V1:
+    target: displacement_pressure
+    transform: NORM_RATIO_SAT_V1
+    contributors: [displaced_people,population_total,regional_absorption_capacity]
+
+  GOV_LEGITIMACY_INIT_V1:
+    target: government_legitimacy
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [governance_legitimacy,government_effectiveness,communications_credibility]
+  STATE_COHESION_INIT_V1:
+    target: state_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [institutional_cohesion,regional_topology,security_force_cohesion]
+  ELITE_COHESION_INIT_V1:
+    target: elite_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [elite_fragmentation_inverse,constitutional_consensus]
+  ADMIN_CAPACITY_INIT_V1:
+    target: administrative_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [tax_collection_continuity,civil_registry_continuity,emergency_governance_capacity]
+  JUDICIAL_CONTINUITY_INIT_V1:
+    target: judicial_continuity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [court_continuity,prosecution_capacity]
+  FISCAL_CAPACITY_INIT_V1:
+    target: fiscal_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [gdp,fiscal_space,debt_access,foreign_reserves,gold_reserves,tax_collection]
+  SALARY_CONTINUITY_INIT_V1:
+    target: salary_payment_continuity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [public_salary_payment_continuity,fiscal_capacity]
+  CENTER_REGION_COHESION_INIT_V1:
+    target: center_region_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [center_region_conflict_inverse,regional_government_legitimacy,subnational_cooperation]
+  TERRITORIAL_CONTROL_INIT_V1:
+    target: territorial_control
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [administrative_reach,police_territorial_presence,state_security_presence]
+  REGIONAL_FRAGMENTATION_INIT_V1:
+    target: regional_fragmentation_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [regional_identity_pressure,center_region_conflict,competing_authority_evidence]
+
+  POLICE_CAPACITY_INIT_V1:
+    target: police_effective_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [officer_density,frontline_share,public_order_capacity,armed_policing_capacity,territorial_coverage]
+  INTEL_EFFECTIVENESS_INIT_V1:
+    target: intelligence_effectiveness
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [humint,sigint,osint,cyber_intelligence,counterintelligence,interagency_fusion]
+  SECURITY_CHAIN_COHESION_INIT_V1:
+    target: security_chain_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [constitutional_loyalty,command_cohesion,professional_identity,disciplinary_stress_inverse]
+  COMMAND_COHESION_INIT_V1:
+    target: command_cohesion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [command_cohesion_evidence,chain_of_command_integrity]
+  CONSTITUTIONAL_LOYALTY_INIT_V1:
+    target: constitutional_loyalty
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [constitutional_loyalty_evidence,professional_identity,extremist_infiltration_inverse]
+  OPERATIONAL_FATIGUE_INIT_V1:
+    target: operational_fatigue
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [public_order_fatigue,staffing_pressure,operational_load]
+  PUBLIC_ORDER_STRESS_INIT_V1:
+    target: public_order_stress
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [current_unrest,terrorism_posture,protest_load,police_demand]
+  PRISON_CONTROL_INIT_V1:
+    target: prison_control
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [occupancy_inverse,staffing,security_control,disorder_inverse]
+  TERRORISM_PRESSURE_INIT_V1:
+    target: terrorism_threat_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [threat_posture,violent_network_activity,arrests_or_disruptions,attack_history_with_decay]
+
+  CRIMINAL_POWER_INIT_V1:
+    target: criminal_network_power
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [market_power,financial_capacity,logistics_infiltration,violence_capacity,international_reach]
+  BLACK_MARKET_INIT_V1:
+    target: black_market_expansion
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [organized_crime_presence,scarcity,formal_market_disruption]
+  VIOLENT_ISLAMIST_INIT_V1:
+    target: violent_islamist_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [violent_islamist_network_activity,terrorism_posture,prison_network_pressure,external_support]
+    forbidden_contributors: [muslim_population_share,mosque_count]
+  VIOLENT_ULTRANATIONALIST_INIT_V1:
+    target: violent_ultranationalist_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [violent_ultranationalist_network_activity,political_violence_history,network_organization]
+    forbidden_contributors: [conservative_population_share,nationalist_vote_share_without_violence_evidence]
+  REVOLUTIONARY_EXTREMIST_INIT_V1:
+    target: revolutionary_extremist_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [violent_revolutionary_network_activity,political_violence_history,network_organization]
+    forbidden_contributors: [left_wing_population_share]
+  ORGANIZED_ARMED_ACTOR_INIT_V1:
+    target: organized_armed_actor_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [material_violent_networks,organization,financing,weapons_access,territorial_influence]
+  FOREIGN_SUPPORT_NONSTATE_INIT_V1:
+    target: foreign_support_nonstate
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [documented_external_finance,foreign_network_links,external_state_or_nonstate_support]
+  CIVILIZATIONAL_NARRATIVE_INIT_V1:
+    target: civilizational_narrative_strength
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [transnational_narrative_reach,information_amplification,repeated_identity_violence]
+
+  ECON_OUTPUT_INIT_V1:
+    target: economic_output
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [gdp_growth,industrial_output,employment,trade_functionality]
+  INFLATION_PRESSURE_INIT_V1:
+    target: inflation_pressure
+    transform: NORM_LOGISTIC_V1
+    contributors: [inflation_rate]
+  UNEMPLOYMENT_PRESSURE_INIT_V1:
+    target: unemployment_pressure
+    transform: NORM_LOGISTIC_V1
+    contributors: [unemployment_rate,youth_unemployment]
+  FINANCIAL_BUFFER_INIT_V1:
+    target: financial_buffer
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [foreign_reserves,gold_reserves,fiscal_space,borrowing_access]
+  TRADE_ACCESS_INIT_V1:
+    target: trade_access
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [port_access,land_trade_access,alliance_market_access,sanctions_absence]
+  ENERGY_RESILIENCE_INIT_V1:
+    target: energy_resilience
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [strategic_petroleum_stock_days,import_dependency_inverse,domestic_refining,electricity_diversification,storage,external_supply_access]
+  ELECTRICITY_FUNCTION_INIT_V1:
+    target: electricity_functionality
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [generation_margin,grid_resilience,interconnection,storage]
+  FUEL_DISTRIBUTION_INIT_V1:
+    target: fuel_distribution_functionality
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [fuel_storage_resilience,distribution_resilience,refinery_or_import_terminal_access]
+  FOOD_RESILIENCE_INIT_V1:
+    target: food_resilience
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [domestic_food_supply,food_import_access,strategic_food_stock,agricultural_resilience]
+  WATER_RESILIENCE_INIT_V1:
+    target: water_resilience
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [renewable_freshwater,water_stress_inverse,desalination,distribution_resilience]
+  TRANSPORT_FUNCTION_INIT_V1:
+    target: transport_logistics_functionality
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [road_rail_resilience,port_capacity,airport_capacity]
+  TELECOM_FUNCTION_INIT_V1:
+    target: telecom_internet_functionality
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [telecom_resilience,internet_resilience,cyber_resilience]
+  HEALTH_FUNCTION_INIT_V1:
+    target: health_system_functionality
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [hospital_capacity,trauma_capacity,ambulance_resilience,medicine_access]
+
+  MIL_LAND_INIT_V1:
+    target: military_land_effective
+    transform: NORM_GEOMEAN_V1
+    contributors: [land_force_capacity,readiness,training,logistics]
+  MIL_AIR_INIT_V1:
+    target: military_air_effective
+    transform: NORM_GEOMEAN_V1
+    contributors: [air_force_capacity,readiness,air_defence_support,logistics]
+  MIL_NAVAL_INIT_V1:
+    target: military_naval_effective
+    transform: NORM_GEOMEAN_V1
+    contributors: [naval_capacity,readiness,maintenance,logistics]
+  MIL_ISR_EW_INIT_V1:
+    target: military_isr_ew_effective
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [ISR,C4ISR,EW,intelligence_fusion]
+  MIL_DRONE_CUAS_INIT_V1:
+    target: military_drone_cuas_effective
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [drone_capacity,counter_UAS,domestic_drone_production,electronics]
+  MIL_LOGISTICS_INIT_V1:
+    target: military_logistics_availability
+    transform: NORM_GEOMEAN_V1
+    contributors: [fuel_availability,transport,maintenance,food_water,spares]
+  DEFENCE_INDUSTRY_INIT_V1:
+    target: defence_industrial_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [munitions,vehicles,aerospace,shipbuilding,electronics,repair]
+  REPLENISHMENT_INIT_V1:
+    target: replenishment_capacity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [domestic_production,repair,allied_supply,import_access,training_replacement]
+  AI_DEFENCE_INIT_V1:
+    target: ai_defence_maturity
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [compute,models,talent,defence_adoption,ISR_AI,logistics_AI,EW_AI]
+  CYBER_RESILIENCE_INIT_V1:
+    target: cyber_resilience
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [defensive_cyber,critical_infrastructure_resilience,network_recovery]
+
+  ALLIANCE_SUPPORT_INIT_V1:
+    target: alliance_support
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [formal_commitments,interoperability,political_cohesion,partner_capacity]
+  EXTERNAL_CONFLICT_PRESSURE_INIT_V1:
+    target: external_conflict_pressure
+    transform: NORM_EVIDENCE_BLEND_V1
+    contributors: [active_disputes,hostile_signaling,border_pressure,military_alert,diplomatic_crisis]
+
+graph_edge_normalization:
+  channels:
+    geographic_proximity:
+      rule_id: EDGE_GEO_V1
+      parameter_id:
+        synthetic_smoke_v1: EDGE_GEO_SCALE_SYN_V1
+        calibrated_v1: EDGE_GEO_SCALE_CAL_V1
+      formula: "exp(-distance_km/lambda_km)"
+      synthetic_smoke_parameters:
+        lambda_km: 1000
+    land_border:
+      rule_id: EDGE_LAND_BORDER_V1
+      values: {false: 0.0, true: 1.0}
+    trade_dependency:
+      rule_id: EDGE_TRADE_V1
+      formula: "bounded bilateral trade exposure normalized by source/target economy"
+    energy_dependency:
+      rule_id: EDGE_ENERGY_V1
+      formula: "bounded bilateral energy dependence"
+    migration_link:
+      rule_id: EDGE_MIGRATION_V1
+      formula: "bounded recent migration-flow and migrant-stock connectivity"
+    diaspora_link:
+      rule_id: EDGE_DIASPORA_V1
+      formula: "bounded cross-border family/diaspora connectivity; never faction alignment"
+    alliance_link:
+      rule_id: EDGE_ALLIANCE_V1
+      formula: "formal commitment × interoperability × political availability"
+    information_link:
+      rule_id: EDGE_INFORMATION_V1
+      formula: "shared language/media/platform exposure and cross-border information reach"
+    criminal_network_link:
+      rule_id: EDGE_CRIMINAL_V1
+      formula: "documented transnational organized-crime connectivity"
+    extremist_network_link:
+      rule_id: EDGE_EXTREMIST_V1
+      formula: "documented violent-network connectivity; never religious-population similarity"
+
+spillover:
+  equation_id: GRAPH_SPILLOVER_V1
+  parameter_ids:
+    synthetic_smoke_v1: [GRAPH_TRANSMISSION_SYN_V1, GRAPH_LATENCIES_SYN_V1]
+    calibrated_v1: [GRAPH_TRANSMISSION_CAL_V1, GRAPH_LATENCIES_CAL_V1]
+  formula: "sum(channel_edge * source_pressure * channel_transmission) with channel latency and saturation"
+  saturation_transform: NORM_RATIO_SAT_V1
+  synthetic_smoke_channel_transmission:
+    geographic_proximity: 0.010
+    land_border: 0.020
+    trade_dependency: 0.015
+    energy_dependency: 0.020
+    migration_link: 0.012
+    diaspora_link: 0.006
+    alliance_link: 0.018
+    information_link: 0.025
+    criminal_network_link: 0.012
+    extremist_network_link: 0.018
+  synthetic_smoke_latencies_days:
+    geographic_proximity: [1,3]
+    land_border: [0,2]
+    trade_dependency: [2,13]
+    energy_dependency: [1,8]
+    migration_link: [3,34]
+    diaspora_link: [3,21]
+    alliance_link: [1,13]
+    information_link: [0,3]
+    criminal_network_link: [5,34]
+    extremist_network_link: [5,34]
+
+phase_rules:
+  profile_note: "Numerical thresholds below are synthetic engineering thresholds for smoke tests only, not empirical real-world thresholds."
+  STABLE_TO_TENSION_SYN_V1:
+    parameter_id: PHASE_STABLE_TENSION_SYN_V1
+    persistence_days: 3
+    any:
+      - {variable: external_conflict_pressure, op: ">=", value: 0.35}
+      - {variable: polarization, op: ">=", value: 0.45}
+      - {variable: public_order_stress, op: ">=", value: 0.40}
+  TENSION_TO_EMERGENCY_SYN_V1:
+    parameter_id: PHASE_TENSION_EMERGENCY_SYN_V1
+    persistence_days: 3
+    all:
+      - {variable: public_order_stress, op: ">=", value: 0.50}
+      - {variable: government_legitimacy, op: "<=", value: 0.65}
+  EMERGENCY_TO_MASS_UNREST_SYN_V1:
+    parameter_id: PHASE_EMERGENCY_MASS_UNREST_SYN_V1
+    persistence_days: 5
+    all:
+      - {variable: public_order_stress, op: ">=", value: 0.60}
+      - {variable: polarization, op: ">=", value: 0.60}
+      - {variable: social_cohesion, op: "<=", value: 0.55}
+  MASS_UNREST_TO_ORGANIZED_POLITICAL_VIOLENCE_SYN_V1:
+    parameter_id: PHASE_MASS_UNREST_OPV_SYN_V1
+    persistence_days: 8
+    all:
+      - {variable: organized_armed_actor_capacity, op: ">=", value: 0.35}
+      - {variable: public_order_stress, op: ">=", value: 0.65}
+  ORGANIZED_POLITICAL_VIOLENCE_TO_INSURGENCY_SYN_V1:
+    parameter_id: PHASE_OPV_INSURGENCY_SYN_V1
+    persistence_days: 13
+    all:
+      - {variable: organized_armed_actor_capacity, op: ">=", value: 0.50}
+      - {variable: security_chain_cohesion, op: "<=", value: 0.60}
+      - {variable: territorial_control, op: "<=", value: 0.90}
+  INSURGENCY_TO_DUAL_AUTHORITY_SYN_V1:
+    parameter_id: PHASE_INSURGENCY_DUAL_AUTHORITY_SYN_V1
+    persistence_days: 13
+    all:
+      - {variable: territorial_control, op: "<=", value: 0.75}
+      - {variable: center_region_cohesion, op: "<=", value: 0.50}
+      - {variable: state_cohesion, op: "<=", value: 0.55}
+      - {event_flag: competing_authority_present, equals: true}
+  INSURGENCY_OR_DUAL_TO_CIVIL_WAR_SYN_V1:
+    parameter_id: PHASE_CIVIL_WAR_SYN_V1
+    persistence_days: 21
+    all:
+      - {variable: organized_armed_actor_capacity, op: ">=", value: 0.65}
+      - {variable: security_chain_cohesion, op: "<=", value: 0.45}
+      - {variable: territorial_control, op: "<=", value: 0.70}
+      - {variable: administrative_capacity, op: "<=", value: 0.60}
+  CIVIL_WAR_TO_STATE_FRAGMENTATION_SYN_V1:
+    parameter_id: PHASE_FRAGMENTATION_SYN_V1
+    persistence_days: 34
+    all:
+      - {variable: territorial_control, op: "<=", value: 0.45}
+      - {variable: administrative_capacity, op: "<=", value: 0.40}
+      - {variable: state_cohesion, op: "<=", value: 0.35}
+      - {variable: command_cohesion, op: "<=", value: 0.40}
+      - {variable: salary_payment_continuity, op: "<=", value: 0.50}
+
+deescalation_policy:
+  parameter_id:
+    synthetic_smoke_v1: PHASE_RECOVERY_SYN_V1
+    calibrated_v1: PHASE_RECOVERY_CAL_V1
+  rule: "Reverse transitions require stricter recovery persistence than escalation and must use lower-stress/higher-resilience thresholds."
+  synthetic_smoke_recovery_multiplier: 1.5
+  minimum_recovery_days: 13
+  hysteresis_required: true
+
+security_force_regime_rules:
+  parameter_id:
+    synthetic_smoke_v1: SECURITY_REGIMES_SYN_V1
+    calibrated_v1: SECURITY_REGIMES_CAL_V1
+  synthetic_smoke:
+    COHESIVE:
+      condition: "security_chain_cohesion >= 0.75 and command_cohesion >= 0.75"
+    STRAINED:
+      condition: "security_chain_cohesion < 0.75 or operational_fatigue >= 0.45"
+    SELECTIVE_NONCOMPLIANCE:
+      condition: "security_chain_cohesion <= 0.60 and constitutional_loyalty <= 0.70"
+      persistence_days: 8
+    COMMAND_FRACTURE:
+      condition: "command_cohesion <= 0.50 and security_chain_cohesion <= 0.50"
+      persistence_days: 13
+    LOCALIZED_DEFECTION:
+      condition: "command_cohesion <= 0.40 and center_region_cohesion <= 0.45 and competing_authority_present"
+      persistence_days: 13
+    MULTIPLE_COMMANDS:
+      condition: "command_cohesion <= 0.30 and state_cohesion <= 0.35 and multiple_authority_nodes_present"
+      persistence_days: 21
+
+event_hazard_model:
+  equation_id: EVENT_HAZARD_SCORE_V1
+  probability_conversion_parameter_id:
+    synthetic_smoke_v1: EVENT_HAZARD_PROBABILITY_SYN_V1
+    calibrated_v1: EVENT_HAZARD_PROBABILITY_CAL_V1
+  model: "bounded hazard score -> profile-specific probability conversion"
+  formula: "score = base + weighted_state_terms + weighted_memory_terms + weighted_graph_terms + event_context; score clamped 0..1"
+  calibrated_probability_conversion:
+    status: "UNDEFINED_PENDING_BACKTEST"
+  synthetic_smoke_probability_conversion:
+    formula: "p_day = p_floor + scale * score"
+    parameters:
+      p_floor: 0.0001
+      scale: 0.010
+    warning: "Synthetic CI/test frequency only; never interpret as real event probability."
+
+event_families:
+  INTERSTATE_INCIDENT_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    strategic_only: true
+    positive_terms: [external_conflict_pressure,hostile_signaling_memory,land_or_maritime_exposure]
+    negative_terms: [alliance_deterrence,deescalation_memory]
+  DIPLOMATIC_CRISIS_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    positive_terms: [external_conflict_pressure,prior_incident_memory]
+    negative_terms: [negotiation_memory]
+  MASS_PROTEST_TRIGGER_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    positive_terms: [polarization,inflation_pressure,unemployment_pressure,government_legitimacy_inverse]
+    negative_terms: [social_cohesion]
+  EXTREMIST_VIOLENCE_SHOCK_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    strategic_only: true
+    positive_terms: [relevant_violent_network_pressure,communal_fear,civilizational_narrative_strength]
+    negative_terms: [intelligence_effectiveness,police_effective_capacity,community_rejection]
+    note: "No target, method, weapon or operational detail is modeled."
+  INFRASTRUCTURE_FAILURE_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    positive_terms: [infrastructure_stress,cyber_pressure,resource_shortage]
+    negative_terms: [repair_capacity,redundancy]
+  PRISON_DISORDER_V1:
+    provenance: GENERATED_or_RANDOM_SHOCK
+    positive_terms: [prison_control_inverse,overcrowding,public_order_stress,salary_payment_failure]
+  GOVERNMENT_CRISIS_V1:
+    provenance: GENERATED
+    positive_terms: [government_legitimacy_inverse,elite_fragmentation,state_cohesion_inverse,economic_stress]
+  ALLIANCE_CONSULTATION_V1:
+    provenance: GENERATED
+    positive_terms: [external_conflict_pressure,member_request,incident_severity]
+  DISPLACEMENT_SURGE_V1:
+    provenance: GENERATED
+    positive_terms: [external_conflict_pressure,territorial_control_inverse,service_failure]
+  MARKET_CONFIDENCE_SHOCK_V1:
+    provenance: RANDOM_SHOCK_or_GENERATED
+    positive_terms: [external_conflict_pressure,government_crisis,energy_stress]
+    negative_terms: [financial_buffer,alliance_support]
+
+dynamic_equation_defaults:
+  parameter_id:
+    synthetic_smoke_v1: DYNAMIC_GAINS_SYN_V1
+    calibrated_v1: DYNAMIC_GAINS_CAL_V1
+  profile_note: "Synthetic coefficients are stability-test values only."
+  generic_update:
+    equation_id: GENERIC_BOUNDED_DELTA_V1
+    formula: "x[t+1] = clamp(x[t] + gain*positive_pressure - loss*negative_pressure + recovery*(baseline_anchor-x[t]))"
+  synthetic_smoke:
+    fast_daily_gain: 0.035
+    medium_daily_gain: 0.012
+    structural_daily_gain: 0.003
+    long_daily_gain: 0.0005
+    fast_recovery: 0.025
+    medium_recovery: 0.008
+    structural_recovery: 0.002
+    long_recovery: 0.0003
+    max_single_day_latent_delta: 0.10
+    max_single_day_structural_delta: 0.025
+
+reciprocal_radicalization:
+  equation_id: RECIPROCAL_RADICALIZATION_V1
+  parameter_id:
+    synthetic_smoke_v1: RECIPROCAL_RADICALIZATION_SYN_V1
+    calibrated_v1: RECIPROCAL_RADICALIZATION_CAL_V1
+  saturation: NORM_RATIO_SAT_V1
+  rule: "Violent-network incidents may raise communal fear and opposing violent-network recruitment pressure; damping comes from social cohesion, policing, legitimacy, community rejection and credible communication."
+  forbidden_direct_edges:
+    - "muslim_population_share -> violent_islamist_pressure"
+    - "christian_population_share -> violent_ultranationalist_pressure"
+    - "conservative_vote_share -> violent_ultranationalist_pressure"
+    - "left_vote_share -> revolutionary_extremist_pressure"
+  synthetic_smoke:
+    cross_reaction_gain: 0.020
+    damping_gain: 0.025
+    narrative_amplification_gain: 0.012
+
+fractal_refinement:
+  equation_id: REFINEMENT_TRIGGER_V1
+  parameter_id:
+    synthetic_smoke_v1: FRACTAL_REFINEMENT_SYN_V1
+    calibrated_v1: FRACTAL_REFINEMENT_CAL_V1
+  formula: "w_v*violence + w_i*institutional_stress + w_f*infrastructure_stress + w_n*network_activity + w_d*displacement"
+  synthetic_smoke:
+    weights:
+      violence: 0.30
+      institutional_stress: 0.25
+      infrastructure_stress: 0.15
+      network_activity: 0.20
+      displacement: 0.10
+    expand_threshold: 0.62
+    expand_persistence_days: 8
+    collapse_threshold: 0.38
+    collapse_persistence_days: 34
+  lineage_required: true
+
+operator_order:
+  execution_order_version: "EXEC_ORDER_V1"
+  steps:
+    - advance_clock
+    - apply_scheduled_factual_or_scenario_events
+    - update_slow_exogenous_baselines
+    - compute_domestic_pressures
+    - compute_graph_spillovers
+    - evaluate_strategic_agent_actions
+    - evaluate_random_and_generated_events
+    - apply_event_effects
+    - resolve_owner_module_state_updates
+    - apply_constraints_and_conservation
+    - evaluate_discrete_regimes_and_phase
+    - evaluate_fractal_refinement
+    - persist_trace_ledgers
+    - emit_checkpoint
+
+calibration_gate:
+  calibrated_v1_requirements:
+    - "Historical cases from multiple regions and conflict types."
+    - "Holdout cases not used during parameter fitting."
+    - "Baseline false-positive collapse rate reported."
+    - "Phase-transition precision/recall or appropriate event-history metrics reported."
+    - "Sensitivity and identifiability analysis."
+    - "Posterior/parameter uncertainty retained."
+    - "No demographic identity variable used as direct violent-propensity coefficient."
+    - "No synthetic smoke-test numeric parameter reused silently."
+  forbidden_claim:
+    - "Monte Carlo frequency equals real-world probability without calibration/validation."
