@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.9"
+status: "implementation-v0.10"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -11,7 +11,9 @@ mode:
   phase_transitions_require_explicit_enable_flag: true
   phase_transition_commit_contract: "config/engine/phase_transition_v1.yaml"
   graph_spillover_effects_allowed: false
-  recovery_allowed: false
+  recovery_allowed: true
+  recovery_requires_explicit_enable_flag: true
+  recovery_contract: "config/engine/recovery_v1.yaml"
   resource_depletion_allowed: false
   event_chaining_allowed: false
 
@@ -33,6 +35,8 @@ transaction_rules:
   trace_must_commit_only_after_success: true
   phase_persistence_must_commit_only_after_success: true
   phase_history_required_after_day_zero_when_enabled: true
+  recovery_proposals_use_beginning_of_day_values: true
+  recovery_and_event_proposals_resolved_once_together: true
   unknown_event_type_or_scope: "fail_closed"
 
 trace:
@@ -43,12 +47,14 @@ trace:
   include_resolution_ids: true
   include_clamp_resolution_ids: true
   include_phase_commit_ids: true
+  include_recovery_proposal_ids: true
 
 ordering:
   graph_edges: "edge_id_ascending"
   country_nodes: "iso3_ascending"
   occurred_events: "event_id_ascending"
   proposals: "proposal_id_ascending_before_resolution"
+  recovery_proposals: "after_event_effect_proposals_before_owner_resolution"
   phase_evaluation: "after_state_resolution_and_clock_advance"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
 
