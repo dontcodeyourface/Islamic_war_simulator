@@ -1,4 +1,4 @@
-# Engine infrastructure CI v1 - synchronized
+# Engine infrastructure CI v1 - synchronized - v0.7
 name: engine-smoke
 
 on:
