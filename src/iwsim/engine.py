@@ -65,6 +65,12 @@ class NoOpEngine:
         )
         if days < 0:
             raise ValueError("days must be >= 0")
+        if days != manifest.horizon_days:
+            raise ValueError(
+                f"days={days} does not match manifest.horizon_days={manifest.horizon_days}"
+            )
+        if manifest.time_step_days != 1:
+            raise ValueError("NoOpEngine v0.1 requires a 1-day time step")
         state = initial_state
         hashes = [state.state_hash()]
         for _ in range(days):
