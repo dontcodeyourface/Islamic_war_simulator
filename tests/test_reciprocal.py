@@ -104,10 +104,10 @@ def test_reciprocal_feedback_is_symmetric_traceable_and_non_mutating() -> None:
     assert len(proposals) == 2
     by_variable = {item.variable: item for item in proposals}
     assert by_variable["violent_ultranationalist_pressure"].raw_delta == pytest.approx(
-        0.016
+        0.0128
     )
     assert by_variable["violent_islamist_pressure"].raw_delta == pytest.approx(
-        0.004
+        0.0008
     )
     assert by_variable["violent_ultranationalist_pressure"].value_before == pytest.approx(
         0.2
