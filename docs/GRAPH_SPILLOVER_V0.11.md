@@ -90,7 +90,7 @@ The first resolved structural rule traces regional external-conflict pressure ov
 
 Additional trace-only rules exercise the currently unresolved directed contracts for:
 
-- information;
+- information-driven polarization;
 - organized crime;
 - violent Islamist networks;
 - violent ultranationalist networks;
