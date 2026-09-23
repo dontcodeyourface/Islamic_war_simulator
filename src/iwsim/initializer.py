@@ -119,14 +119,15 @@ def _init_rule_map(engine_state_registry: dict[str, Any]) -> dict[str, str]:
 def _sample_prior(prior: dict[str, Any], rng: RNGManager) -> tuple[float, int]:
     logger.info("_sample_prior distribution=%s", prior["distribution"])
     stream = rng.stream("uncertainty_sampling")
-    draw_index = stream.draw_index
     distribution = prior["distribution"]
     if distribution == "beta":
+        draw_index = stream.draw_index
         return stream.betavariate(float(prior["alpha"]), float(prior["beta"])), draw_index
     if distribution == "normal_truncated":
         lower = float(prior["lower"])
         upper = float(prior["upper"])
         for _ in range(1000):
+            draw_index = stream.draw_index
             value = stream.normalvariate(float(prior["mean"]), float(prior["sd"]))
             if lower <= value <= upper:
                 return value, draw_index
