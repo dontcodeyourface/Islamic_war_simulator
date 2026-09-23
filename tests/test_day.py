@@ -926,3 +926,94 @@ def test_matured_spillover_and_event_share_one_owner_resolution() -> None:
     assert resolution.raw_sum_delta == pytest.approx(expected_delta)
     assert resolution.value_before == pytest.approx(0.8)
     assert resolution.value_after == pytest.approx(0.8 + expected_delta)
+
+
+
+def test_matured_spillover_and_event_share_single_owner_resolution() -> None:
+    logger.info(
+        "test_matured_spillover_and_event_share_single_owner_resolution"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1006)
+    day_one_parameters = _disable_all_events(parameters)
+    latencies = day_one_parameters["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "GRAPH_LATENCIES_SYN_V1"
+    ]["value"]
+    latencies["geographic_proximity"] = [1, 1]
+    latencies["land_border"] = [1, 1]
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+
+    for state in states.values():
+        state.latents["external_conflict_pressure"] = 0.0
+    states["ESP"].latents["external_conflict_pressure"] = 1.0
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=day_one_parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+    assert first.spillover_queue is not None
+
+    day_two_parameters = copy.deepcopy(day_one_parameters)
+    day_two_parameters["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "EVENT_HAZARD_WEIGHTS_SYN_V1"
+    ]["value"]["INTERSTATE_INCIDENT_V1"]["generated_threshold"] = 0.0
+
+    mar_before = float(first.states["MAR"].latents["external_conflict_pressure"])
+    trace = TraceLedger()
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=day_two_parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=first.spillover_queue,
+    )
+
+    mar_proposals = [
+        proposal
+        for proposal in second.proposals
+        if proposal.target_node == "MAR"
+        and proposal.variable == "external_conflict_pressure"
+    ]
+    assert any(
+        proposal.event_type == "GRAPH_SPILLOVER_V1"
+        for proposal in mar_proposals
+    )
+    assert any(
+        proposal.event_type == "INTERSTATE_INCIDENT_V1"
+        for proposal in mar_proposals
+    )
+    assert all(
+        proposal.value_before == pytest.approx(mar_before)
+        for proposal in mar_proposals
+    )
+
+    resolution = next(
+        record
+        for record in second.resolutions
+        if record.target_node == "MAR"
+        and record.variable == "external_conflict_pressure"
+    )
+    expected_delta = sum(proposal.raw_delta for proposal in mar_proposals)
+    assert resolution.raw_sum_delta == pytest.approx(expected_delta)
+    assert set(resolution.proposal_ids) == {
+        proposal.proposal_id for proposal in mar_proposals
+    }
+    assert second.states["MAR"].latents[
+        "external_conflict_pressure"
+    ] == pytest.approx(min(1.0, mar_before + expected_delta))
