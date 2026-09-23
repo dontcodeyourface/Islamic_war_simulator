@@ -25,6 +25,12 @@ from .phase_transition import (
 from .recovery import propose_recovery_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
 from .rng import RNGManager
+from .spillover import (
+    GraphSpilloverRecord,
+    SpilloverQueueState,
+    empty_spillover_queue,
+    evaluate_graph_spillovers,
+)
 from .state import EngineState, extract_latent_registry
 from .trace import TraceLedger
 
@@ -62,6 +68,9 @@ class DayTransactionResult:
     events: tuple[SimEvent, ...]
     proposals: tuple[DeltaProposal, ...]
     resolutions: tuple[ResolutionRecord, ...]
+    spillover_queue: SpilloverQueueState | None
+    spillover_candidates: tuple[GraphSpilloverRecord, ...]
+    matured_spillovers: tuple[GraphSpilloverRecord, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -85,6 +94,17 @@ class DayTransactionResult:
             "events": [event.to_dict() for event in self.events],
             "proposals": [proposal.to_dict() for proposal in self.proposals],
             "resolutions": [record.to_dict() for record in self.resolutions],
+            "spillover_queue": (
+                self.spillover_queue.to_dict()
+                if self.spillover_queue is not None
+                else None
+            ),
+            "spillover_candidates": [
+                item.to_dict() for item in self.spillover_candidates
+            ],
+            "matured_spillovers": [
+                item.to_dict() for item in self.matured_spillovers
+            ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
                 for node_id, persistence in sorted(self.phase_persistence.items())
@@ -187,6 +207,30 @@ def _normalize_phase_persistence_inputs(
     return normalized
 
 
+def _normalize_spillover_queue_inputs(
+    *,
+    day_from: int,
+    spillover_queue: SpilloverQueueState | None,
+) -> SpilloverQueueState:
+    logger.info(
+        "_normalize_spillover_queue_inputs day_from=%s supplied=%s",
+        day_from,
+        spillover_queue is not None,
+    )
+    if spillover_queue is None:
+        if day_from != 0:
+            raise ValueError(
+                "Spillover queue is required after day zero when graph spillover is enabled"
+            )
+        return empty_spillover_queue(day_from)
+    if spillover_queue.last_processed_day != day_from:
+        raise ValueError(
+            "Spillover queue day mismatch: "
+            f"expected {day_from}, got {spillover_queue.last_processed_day}"
+        )
+    return spillover_queue
+
+
 def _phase_inputs_fingerprint(
     *,
     phase_persistence: dict[str, PhasePersistenceState | None],
@@ -221,6 +265,7 @@ def _transaction_id(
     states: dict[str, EngineState],
     phase_inputs: dict[str, Any] | None = None,
     recovery_inputs: dict[str, Any] | None = None,
+    spillover_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -240,6 +285,7 @@ def _transaction_id(
             "execution_order_version": manifest.execution_order_version,
             "phase_inputs": phase_inputs,
             "recovery_inputs": recovery_inputs,
+            "spillover_inputs": spillover_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -554,6 +600,9 @@ def run_day_transaction(
     phase_context_flags: dict[str, dict[str, bool]] | None = None,
     enable_recovery: bool = False,
     recovery_config: dict[str, Any] | None = None,
+    enable_graph_spillover: bool = False,
+    spillover_config: dict[str, Any] | None = None,
+    spillover_queue: SpilloverQueueState | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -576,6 +625,26 @@ def run_day_transaction(
     }
     phase_inputs: dict[str, Any] | None = None
     recovery_inputs: dict[str, Any] | None = None
+    spillover_inputs: dict[str, Any] | None = None
+    normalized_spillover_queue: SpilloverQueueState | None = None
+    if enable_graph_spillover:
+        if spillover_config is None:
+            raise ValueError("Graph spillover integration requires spillover_config")
+        if not bool(
+            day_config.get("mode", {}).get("graph_spillover_trace_allowed", False)
+        ):
+            raise ValueError(
+                "Graph spillover trace is disabled by the day transaction contract"
+            )
+        normalized_spillover_queue = _normalize_spillover_queue_inputs(
+            day_from=day_from,
+            spillover_queue=spillover_queue,
+        )
+        spillover_inputs = {
+            "spillover_config_hash": canonical_hash(spillover_config),
+            "spillover_queue": normalized_spillover_queue.to_dict(),
+        }
+
     if enable_recovery:
         if recovery_config is None:
             raise ValueError("Recovery integration requires recovery_config")
@@ -616,6 +685,7 @@ def run_day_transaction(
         states=states,
         phase_inputs=phase_inputs,
         recovery_inputs=recovery_inputs,
+        spillover_inputs=spillover_inputs,
     )
 
     working_rng = rng.clone()
@@ -632,6 +702,26 @@ def run_day_transaction(
             for node_id, state in sorted(states.items())
         },
     )
+
+    spillover_candidates: tuple[GraphSpilloverRecord, ...] = ()
+    matured_spillovers: tuple[GraphSpilloverRecord, ...] = ()
+    spillover_queue_out: SpilloverQueueState | None = None
+    if enable_graph_spillover:
+        assert spillover_config is not None
+        assert normalized_spillover_queue is not None
+        spillover_result = evaluate_graph_spillovers(
+            day=day_to,
+            states=states,
+            graph=graph,
+            spillover_config=spillover_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            queue=normalized_spillover_queue,
+            trace=staged_trace,
+        )
+        spillover_candidates = spillover_result.candidates
+        matured_spillovers = spillover_result.matured
+        spillover_queue_out = spillover_result.queue
 
     candidates = _evaluate_candidates(
         day=day_to,
@@ -738,6 +828,17 @@ def run_day_transaction(
         phase_commit_ids=[
             record.commit_id for record in phase_commits
         ],
+        spillover_candidate_ids=[
+            record.spillover_id for record in spillover_candidates
+        ],
+        matured_spillover_ids=[
+            record.spillover_id for record in matured_spillovers
+        ],
+        spillover_queue=(
+            spillover_queue_out.to_dict()
+            if spillover_queue_out is not None
+            else None
+        ),
         phase_persistence={
             node_id: persistence.to_dict()
             for node_id, persistence in sorted(phase_persistence_out.items())
@@ -760,6 +861,9 @@ def run_day_transaction(
         events=events,
         proposals=proposals,
         resolutions=resolution.records,
+        spillover_queue=spillover_queue_out,
+        spillover_candidates=spillover_candidates,
+        matured_spillovers=matured_spillovers,
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,
