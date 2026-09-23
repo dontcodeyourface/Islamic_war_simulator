@@ -82,10 +82,10 @@ def test_formal_alliance_channel_uses_shared_membership_only() -> None:
     ) == pytest.approx(0.0)
 
     metadata = graph.edge("ESP", "FRA").to_dict()["metadata"]
-    assert metadata["shared_formal_memberships"] == [
+    assert metadata["shared_formal_memberships"] == (
         "European Union",
         "NATO",
-    ]
+    )
 
 
 def test_unresolved_directed_channels_remain_null_both_directions() -> None:
