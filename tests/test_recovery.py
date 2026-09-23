@@ -361,3 +361,48 @@ def test_missing_t0_baseline_fails_closed() -> None:
             manifest=manifest,
             trace=TraceLedger(),
         )
+
+
+def test_recovery_failure_after_event_evaluation_rolls_back_transaction() -> None:
+    logger.info(
+        "test_recovery_failure_after_event_evaluation_rolls_back_transaction"
+    )
+    (
+        states,
+        graph,
+        day_config,
+        registry,
+        parameters,
+        rng,
+        manifest,
+        recovery_config,
+    ) = _runtime(seed=1013)
+    states["ESP"].metadata.pop("baseline_latents")
+    state_hashes_before = {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    }
+    rng_before = rng.describe()
+    trace = TraceLedger()
+
+    with pytest.raises(ValueError, match="Missing baseline_latents"):
+        run_day_transaction(
+            states=states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_recovery=True,
+            recovery_config=recovery_config,
+        )
+
+    assert rng.describe() == rng_before
+    assert trace.records == []
+    assert {
+        node_id: state.state_hash()
+        for node_id, state in sorted(states.items())
+    } == state_hashes_before
