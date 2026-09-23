@@ -1,0 +1,58 @@
+schema_version: "1.0"
+status: "implementation-v0.13"
+purpose: "Parallel endogenous dynamics for separated violent-network pressure families."
+
+equation_id: "EXTREMIST_NETWORK_PRESSURE_V1"
+
+families:
+  - family_id: "violent_islamist"
+    variable: "violent_islamist_pressure"
+  - family_id: "violent_ultranationalist"
+    variable: "violent_ultranationalist_pressure"
+  - family_id: "revolutionary"
+    variable: "revolutionary_extremist_pressure"
+
+driver_inputs:
+  - key: "polarization"
+    variable: "polarization"
+    transform: "identity"
+  - key: "communal_fear"
+    variable: "communal_fear"
+    transform: "identity"
+  - key: "civilizational_narrative_strength"
+    variable: "civilizational_narrative_strength"
+    transform: "identity"
+  - key: "foreign_support_nonstate"
+    variable: "foreign_support_nonstate"
+    transform: "identity"
+  - key: "prison_control_inverse"
+    variable: "prison_control"
+    transform: "one_minus"
+
+damping_inputs:
+  - key: "police_effective_capacity"
+    variable: "police_effective_capacity"
+    transform: "identity"
+  - key: "intelligence_effectiveness"
+    variable: "intelligence_effectiveness"
+    transform: "identity"
+  - key: "government_legitimacy"
+    variable: "government_legitimacy"
+    transform: "identity"
+  - key: "social_cohesion"
+    variable: "social_cohesion"
+    transform: "identity"
+
+forbidden_direct_inputs:
+  - "religious_fraction_muslim"
+  - "religious_fraction_christian"
+  - "religious_fraction_other"
+  - "foreign_born_fraction"
+  - "second_generation_fraction"
+
+rules:
+  same_equation_for_all_families: true
+  population_identity_is_not_recruitment_coefficient: true
+  political_vote_share_is_not_recruitment_coefficient: true
+  proposals_only: true
+  owner_resolver_required: true
