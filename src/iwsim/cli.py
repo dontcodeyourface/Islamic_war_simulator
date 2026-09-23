@@ -49,6 +49,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--day-config",
         default="config/engine/day_transaction_v1.yaml",
     )
+    day_smoke.add_argument(
+        "--phase-config",
+        default="config/engine/phase_evaluator_v1.yaml",
+    )
+    day_smoke.add_argument(
+        "--phase-transition-config",
+        default="config/engine/phase_transition_v1.yaml",
+    )
     day_smoke.add_argument("--seed", type=int, default=42)
     day_smoke.add_argument("--out", default="run_output/day-smoke")
     day_smoke.add_argument("--git-commit", default="UNKNOWN")
@@ -199,6 +207,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     feature_map = load_yaml(root / "config/engine/snapshot_feature_map_v1.yaml")
     graph_config = load_yaml(root / args.graph_config)
     day_config = load_yaml(root / args.day_config)
+    phase_config = load_yaml(root / args.phase_config)
+    phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
     snapshots: dict[str, dict[str, object]] = {}
@@ -263,6 +273,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "event_effects",
             "owner_resolver",
             "day_transaction",
+            "phase_evaluator",
+            "phase_arbitration",
+            "phase_commit",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -288,6 +301,11 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         rng=rng,
         manifest=manifest,
         trace=trace,
+        enable_phase_transitions=True,
+        phase_config=phase_config,
+        phase_transition_config=phase_transition_config,
+        phase_persistence=None,
+        phase_context_flags={},
     )
 
     out = Path(args.out)
@@ -319,6 +337,13 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "event_ids": [event.event_id for event in result.events],
             "proposal_count": len(result.proposals),
             "resolution_count": len(result.resolutions),
+            "phase_commit_ids": [
+                record.commit_id for record in result.phase_commits
+            ],
+            "phase_persistence": {
+                node_id: persistence.to_dict()
+                for node_id, persistence in sorted(result.phase_persistence.items())
+            },
             "rng": rng.describe(),
             "profile_warning": (
                 "ENGINEERING TEST PROFILE / SYNTHETIC EVENT PARAMETERS / "

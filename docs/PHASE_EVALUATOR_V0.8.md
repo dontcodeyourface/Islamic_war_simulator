@@ -446,19 +446,17 @@ The transaction should not commit phase changes until proposal arbitration and t
 
 ## 27. Next milestone
 
-Recommended v0.9:
+Implemented by [PHASE_TRANSITION_V0.9.md](PHASE_TRANSITION_V0.9.md).
 
-> phase-transition arbitration and transaction integration.
+v0.9 now:
 
-It should:
-
-1. evaluate phase proposals after end-of-day state commit;
-2. persist PhasePersistenceState for every node;
-3. define deterministic arbitration when multiple outgoing proposals mature;
-4. stage proposed phase changes;
-5. commit phase changes atomically with phase-persistence state;
-6. preserve reversible traceability;
-7. keep de-escalation disabled until explicit recovery thresholds are defined.
+1. evaluates phase proposals after end-of-day state resolution and clock advance;
+2. persists PhasePersistenceState for every node;
+3. deterministically arbitrates simultaneous mature proposals;
+4. stages and commits at most one phase transition per node/day;
+5. commits phase changes atomically with persistence history;
+6. records arbitration/commit/checkpoint lineage;
+7. keeps de-escalation disabled until explicit recovery thresholds are defined.
 
 ---
 

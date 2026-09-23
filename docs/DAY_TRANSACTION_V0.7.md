@@ -216,19 +216,24 @@ Still disabled:
 - fractal refinement;
 - calibrated event probabilities.
 
-## 15. Next milestone
+## 15. Subsequent milestones
 
-The next logical layer is **v0.8 memory and recovery**.
+The original v0.7 recommendation was memory/recovery. The project instead implemented the more urgent phase-classification path first:
+
+- v0.8: read-only persistence-aware phase evaluator;
+- v0.9: deterministic phase arbitration and atomic phase commit.
+
+Memory/recovery remains pending and is now the recommended v0.10 milestone.
 
 It should add only bounded owner-routed endogenous proposals for variables that naturally relax toward baseline, for example:
 
 - communal_fear;
 - public_order_stress;
-- infrastructure functionality.
+- selected infrastructure functionality.
 
 Path-dependent variables should not receive generic mean reversion.
 
-The memory/recovery layer must use the already registered time-scale parameters and remain fully traceable.
+The recovery layer must use registered time-scale parameters and remain fully traceable.
 
 ---
 

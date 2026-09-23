@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.7"
+status: "implementation-v0.9"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -7,7 +7,9 @@ mode:
   synchronous_event_evaluation: true
   one_resolution_pass: true
   advance_clock_after_resolution: true
-  phase_transitions_allowed: false
+  phase_transitions_allowed: true
+  phase_transitions_require_explicit_enable_flag: true
+  phase_transition_commit_contract: "config/engine/phase_transition_v1.yaml"
   graph_spillover_effects_allowed: false
   recovery_allowed: false
   resource_depletion_allowed: false
@@ -29,6 +31,8 @@ transaction_rules:
   caller_states_must_remain_unchanged: true
   rng_must_commit_only_after_success: true
   trace_must_commit_only_after_success: true
+  phase_persistence_must_commit_only_after_success: true
+  phase_history_required_after_day_zero_when_enabled: true
   unknown_event_type_or_scope: "fail_closed"
 
 trace:
@@ -38,12 +42,15 @@ trace:
   include_event_ids: true
   include_resolution_ids: true
   include_clamp_resolution_ids: true
+  include_phase_commit_ids: true
 
 ordering:
   graph_edges: "edge_id_ascending"
   country_nodes: "iso3_ascending"
   occurred_events: "event_id_ascending"
   proposals: "proposal_id_ascending_before_resolution"
+  phase_evaluation: "after_state_resolution_and_clock_advance"
+  phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
 
 safety_abstraction:
   tactical_target_selection: false
