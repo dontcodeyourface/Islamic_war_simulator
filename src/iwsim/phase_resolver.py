@@ -208,6 +208,10 @@ def resolve_phase_transition(
         raise ValueError("Phase evaluation persistence node mismatch")
     if evaluation.persistence.last_evaluated_day != state.day:
         raise ValueError("Phase evaluation persistence day mismatch")
+    if evaluation.persistence.current_phase != state.regimes["national_phase"]:
+        raise ValueError(
+            "Phase evaluation persistence phase does not match EngineState"
+        )
 
     proposals = tuple(evaluation.proposals)
     if not proposals:
