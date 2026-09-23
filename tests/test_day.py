@@ -2574,3 +2574,309 @@ def test_security_regime_recovery_config_changes_transaction_identity() -> None:
 
     assert result_a.transaction_id != result_b.transaction_id
     assert result_a.states == result_b.states
+
+
+
+def _set_fractal_high_pressure_state(state) -> None:
+    logger.info("_set_fractal_high_pressure_state node=%s", state.node_id)
+    for variable in (
+        "public_order_stress",
+        "terrorism_threat_pressure",
+        "organized_armed_actor_capacity",
+        "regional_fragmentation_pressure",
+        "criminal_network_power",
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+        "revolutionary_extremist_pressure",
+        "displacement_pressure",
+    ):
+        state.latents[variable] = 1.0
+    for variable in (
+        "government_legitimacy",
+        "state_cohesion",
+        "security_chain_cohesion",
+        "electricity_functionality",
+        "fuel_distribution_functionality",
+        "transport_logistics_functionality",
+        "telecom_internet_functionality",
+        "water_resilience",
+    ):
+        state.latents[variable] = 0.0
+
+
+def test_fractal_refinement_action_flows_to_checkpoint_without_state_mutation() -> None:
+    logger.info(
+        "test_fractal_refinement_action_flows_to_checkpoint_without_state_mutation"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1033
+    )
+    parameters = _disable_all_events(parameters)
+    fractal_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    for state in states.values():
+        _set_fractal_high_pressure_state(state)
+
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=fractal_config,
+        fractal_refinement_persistence=persistence,
+    )
+
+    assert len(result.fractal_refinement_actions) == len(states)
+    assert all(
+        item.action == "EXPAND"
+        for item in result.fractal_refinement_actions
+    )
+    assert all(
+        item.apply_status == "PROPOSED_NOT_APPLIED"
+        for item in result.fractal_refinement_actions
+    )
+    assert all(
+        item.current_level == "L1_COUNTRY"
+        for item in result.fractal_refinement_persistence.values()
+    )
+
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+        assert result.states[node_id].latents == states[node_id].latents
+        checkpoint = next(
+            item
+            for item in trace.records
+            if item["record_type"] == "daily_checkpoint"
+            and item["node_id"] == node_id
+        )
+        expected = [
+            item.action_id
+            for item in result.fractal_refinement_actions
+            if item.node_id == node_id
+        ]
+        assert checkpoint["refinement_actions"] == expected
+
+
+def test_fractal_refinement_runs_after_phase_evaluation_and_commit_layer() -> None:
+    logger.info(
+        "test_fractal_refinement_runs_after_phase_evaluation_and_commit_layer"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1034
+    )
+    parameters = _disable_all_events(parameters)
+    fractal_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    phase_config = load_yaml(
+        ROOT / "config/engine/phase_evaluator_v1.yaml"
+    )
+    phase_transition_config = load_yaml(
+        ROOT / "config/engine/phase_transition_v1.yaml"
+    )
+    trace = TraceLedger()
+
+    run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_phase_transitions=True,
+        phase_config=phase_config,
+        phase_transition_config=phase_transition_config,
+        phase_persistence=None,
+        phase_context_flags={},
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=fractal_config,
+        fractal_refinement_persistence=None,
+    )
+
+    phase_index = next(
+        index
+        for index, item in enumerate(trace.records)
+        if item["record_type"] == "phase_evaluation"
+    )
+    fractal_index = next(
+        index
+        for index, item in enumerate(trace.records)
+        if item["record_type"] == "fractal_refinement_evaluation"
+    )
+    checkpoint_index = next(
+        index
+        for index, item in enumerate(trace.records)
+        if item["record_type"] == "daily_checkpoint"
+    )
+    assert phase_index < fractal_index < checkpoint_index
+
+
+def test_fractal_refinement_requires_history_after_day_zero() -> None:
+    logger.info("test_fractal_refinement_requires_history_after_day_zero")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1035
+    )
+    parameters = _disable_all_events(parameters)
+    fractal_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=fractal_config,
+        fractal_refinement_persistence=None,
+    )
+    assert all(
+        item.last_evaluated_day == 1
+        for item in first.fractal_refinement_persistence.values()
+    )
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(
+        ValueError,
+        match="Fractal refinement persistence is required after day zero",
+    ):
+        run_day_transaction(
+            states=first.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_fractal_refinement_evaluator=True,
+            fractal_refinement_config=fractal_config,
+            fractal_refinement_persistence=None,
+        )
+    assert rng.describe() == rng_before
+    assert trace.records == []
+
+
+def test_fractal_refinement_config_changes_transaction_identity() -> None:
+    logger.info(
+        "test_fractal_refinement_config_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1036)
+    runtime_b = _runtime(seed=1036)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    config_a = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    config_b = copy.deepcopy(config_a)
+    config_b["status"] = "identity-test-variant"
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=config_a,
+        fractal_refinement_persistence=None,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=config_b,
+        fractal_refinement_persistence=None,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+
+
+def test_fractal_refinement_does_not_shift_rng_streams() -> None:
+    logger.info("test_fractal_refinement_does_not_shift_rng_streams")
+    runtime_a = _runtime(seed=1037)
+    runtime_b = _runtime(seed=1037)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    fractal_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=fractal_config,
+        fractal_refinement_persistence=None,
+    )
+
+    assert [item.to_dict() for item in result_a.candidates] == [
+        item.to_dict() for item in result_b.candidates
+    ]
+    assert runtime_a[5].describe() == runtime_b[5].describe()
+    assert result_a.transaction_id != result_b.transaction_id
