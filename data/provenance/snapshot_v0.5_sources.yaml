@@ -1,0 +1,302 @@
+snapshot_version: "0.5"
+snapshot_date: "2026-09-23"
+purpose: "Organized crime, religious infrastructure, law-enforcement and security-force cohesion provenance."
+
+sources:
+  ES-WORSHIP-SITES-2025:
+    title: "Radiografía de los centros de culto en España"
+    publisher: "EFE, using Observatorio del Pluralismo Religioso data"
+    url: "https://efe.com/espana/2025-08-20/radiografia-centros-culto-espana/"
+    reference_date: "2025-08-20"
+    type: "public_sector_directory_reported_by_news_agency"
+    quality: "medium"
+    notes: "8,140 non-Catholic worship sites/entries; mosques, associations and Islamic communities represent 23%. Category is broader than mosque buildings."
+
+  ES-DRUGS-2025:
+    title: "Estadística Anual sobre Drogas 2025"
+    publisher: "CITCO / Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/es/detalle/articulo/Las-Fuerzas-de-Seguridad-del-Estado-decomisaron-370-toneladas-de-cocaina-hachis-heroina-y-marihuana-en-2025/"
+    reference_date: "2025"
+    publication_date: "2026-08-19"
+    type: "official_drug_statistics"
+    quality: "high"
+    notes: "Reports 370 tonnes of cocaine/hashish/heroin/marijuana seized; 257 tonnes hashish; 875,000 cannabis plants."
+
+  ES-MOCRO-2025:
+    title: "International criminal organization linked to Mocro Maffia dismantled in Marbella"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/es/detalle/articulo/La-Policia-Nacional-desarticula-en-Marbella-una-organizacion-criminal-internacional-dedicada-al-trafico-de-drogas-e-interviene-873-kilos-cocaina/"
+    reference_date: "2025-03-07"
+    type: "official_law_enforcement_case"
+    quality: "high"
+    notes: "Documents criminal-network links to Mocro Maffia; it does not characterize the network as Islamist."
+
+  ES-MOCRO-2026:
+    title: "Organization linked to mocromafia dismantled after 1,500 kg cocaine seizure"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/es/detalle/articulo/Desarticulada-una-organizacion-criminal-vinculada-a-la-mocromafia-por-introducir-1.500-kilos-de-cocaina-ocultos-en-sacos-de-cemento/"
+    reference_date: "2026-03-11"
+    type: "official_law_enforcement_case"
+    quality: "high"
+
+  ES-NARCO-ARMS-2025:
+    title: "Seven organized crime groups dismantled on Costa del Sol"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/eu/detalle/articulo/La-Policia-Nacional-desarticula-en-el-ultimo-mes-siete-organizaciones-criminales-con-55-detenidos-e-interviene-un-destacado-arsenal/"
+    reference_date: "2025-11-05"
+    type: "official_law_enforcement_case"
+    quality: "high"
+    notes: "37 firearms and nearly nine tonnes of hashish/cocaine seized across operations."
+
+  ES-NARCO-ARMS-2026:
+    title: "Drug-trafficking operations recover cocaine and war weapons"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/en/detail-pages/article/La-Policia-Nacional-localiza-un-narcozulo-e-interviene-un-deposito-de-armas-de-guerra-en-dos-operaciones-contra-el-narcotrafico/"
+    reference_date: "2026-03-04"
+    type: "official_law_enforcement_case"
+    quality: "high"
+    notes: "25 firearms seized in one operation, including 19 AK-47 rifles; used only as evidence of network-specific arms access."
+
+  ES-LATIN-GANGS-2026:
+    title: "Recent violent-youth gang operations"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/es/detalle/articulo/La-Policia-Nacional-desarticula-un-coro-de-los-Dominican-Dont-Play-en-Zaragoza/"
+    reference_date: "2026-06-10"
+    type: "official_law_enforcement_case"
+    quality: "high"
+    notes: "Documents active DDP, rival Trinitarios/Black Panther references, drug activity and weapons. Gang identity is not treated as religious/political alignment."
+
+  ES-TRANSNATIONAL-OCG-2025:
+    title: "Transnational cocaine organization dismantled through European cooperation"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/en/detail-pages/article/La-Policia-Nacional-desarticula-una-organizacion-criminal-dedicada-a-introducir-cocaina-en-contenedores-a-traves-del-Puerto-de-Valencia/"
+    reference_date: "2025-04-05"
+    type: "official_law_enforcement_case"
+    quality: "high"
+    notes: "Used only for high-level evidence of transnational logistics/infiltration capability; operational route details are not encoded."
+
+  ES-NARCO-CLAN-2026:
+    title: "Clan-linked international cocaine trafficking organization dismantled"
+    publisher: "Ministerio del Interior de España"
+    url: "https://www.interior.gob.es/opencms/es/detalle/articulo/Desarticulado-el-clan-del-Risitas-con-la-detencion-de-20-personas-por-trafico-internacional-de-cocaina/"
+    reference_date: "2026-03-29"
+    type: "official_law_enforcement_case"
+    quality: "high"
+
+  ES-LAW-ENFORCEMENT-2026:
+    title: "2026 recruitment and staffing of Policía Nacional and Guardia Civil"
+    publisher: "Ministerio del Interior de España"
+    url: "https://interior.gob.es/opencms/es/detalle/articulo/Interior-convoca-este-2026-la-mayor-oferta-publica-de-empleo-para-las-Fuerzas-de-Seguridad-de-los-ultimos-quince-anos/"
+    reference_date: "2026-03"
+    type: "official_personnel"
+    quality: "high"
+    notes: "Combined PN+Guardia Civil staffing around 183,150; excludes regional/local police."
+
+  FR-MOSQUES-2024:
+    title: "French Senate hearing/report references on mosque landscape"
+    publisher: "Sénat français"
+    url: "https://www.senat.fr/compte-rendu-commissions/20240226/lois.html"
+    reference_date: "2024"
+    type: "official_parliamentary_evidence"
+    quality: "high"
+    notes: "References approximately 2,600 mosques in France."
+
+  FR-NARCOTRAFFIC-2026:
+    title: "National communication campaign on narcotrafficking"
+    publisher: "Ministère de l'Intérieur, France"
+    url: "https://www.interieur.gouv.fr/actualites/actualites-du-ministere/on-paie-tous-prix-de-drogue-campagne-nationale-de-communication-qui-nous-sensibilise-tous"
+    reference_date: "2025-2026"
+    type: "official_narcotraffic_assessment"
+    quality: "high"
+    notes: "Reports EUR6.8bn turnover, ~200,000 people involved and 42 tonnes cocaine seized in first half 2025."
+
+  FR-DRUG-TYPES-2025:
+    title: "Drug trafficking/use offences by substance"
+    publisher: "Ministère de l'Intérieur, France"
+    url: "https://www.interieur.gouv.fr/actualites/communiques-de-presse/caracteristiques-des-infractions-de-trafic-ou-usage-de-stupefiants-selon-type-de-substance-impliquee"
+    reference_date: "2016-2024"
+    publication_date: "2025-12-04"
+    type: "official_crime_statistics"
+    quality: "high"
+
+  FR-CRIME-ARMS-2025:
+    title: "État de la menace criminelle en France métropolitaine et en Outre-mer"
+    publisher: "Gendarmerie nationale"
+    url: "https://www.gendarmerie.interieur.gouv.fr/gendinfo/dossiers/lutte-contre-la-criminalite-organisee/etat-de-la-menace-criminelle-en-france-metropolitaine-et-en-outre-mer"
+    reference_date: "2025"
+    type: "official_criminal_threat_assessment"
+    quality: "high"
+    notes: "Reports rising firearm trafficking and links with drug trafficking."
+
+  FR-POLICE-2026:
+    title: "Police nationale workforce - March 2026"
+    publisher: "Police nationale"
+    url: "https://www.police-nationale.interieur.gouv.fr/actualite/8-mars-legalite-professionnelle-femmeshommes-priorite-dans-police-nationale"
+    reference_date: "2026-03-06"
+    type: "official_personnel"
+    quality: "high"
+    notes: "152,197 total Police nationale agents; includes multiple personnel categories."
+
+  FR-GENDARMERIE-130K:
+    title: "Gendarmerie nationale institutional workforce"
+    publisher: "Gendarmerie nationale"
+    url: "https://www.gendarmerie.interieur.gouv.fr/"
+    reference_date: "2023-2026"
+    type: "official_personnel"
+    quality: "medium"
+    notes: "Public material describes more/nearly 130,000 personnel including active and reserve."
+
+  UK-MOSQUES-2026:
+    title: "UK Mosque/Masjid Statistics"
+    publisher: "MuslimsInBritain.org"
+    url: "https://www.muslimsinbritain.org/statistics/statistics01.php"
+    reference_date: "2026-09-22"
+    type: "independent_continuously_maintained_directory"
+    quality: "medium"
+    notes: "Reports 1,895 actual masjids and 2,187 total places available for salah under broader definitions."
+
+  UK-MOSQUE-TRADITIONS-2026:
+    title: "UK Masjid institutional/tradition statistics"
+    publisher: "MuslimsInBritain.org"
+    url: "https://www.muslimsinbritain.org/statistics/statistics01.php"
+    reference_date: "2026"
+    type: "independent_religious_infrastructure_dataset"
+    quality: "medium"
+    notes: "Documents prominent Deobandi/Bareilvi Sunni traditions; mosque themes are not population ideology shares."
+
+  UK-NCA-SOC-2026:
+    title: "National Strategic Assessment 2026 - Serious and Organised Crime"
+    publisher: "National Crime Agency"
+    url: "https://www.nationalcrimeagency.gov.uk/nsa-overview-of-soc-2026/nsa-how-threats-changed-2026"
+    reference_date: "2025-2026"
+    type: "official_organized_crime_assessment"
+    quality: "high"
+
+  UK-NCA-WB-2026:
+    title: "National Strategic Assessment 2026 - Transnational SOC"
+    publisher: "National Crime Agency"
+    url: "https://www.nationalcrimeagency.gov.uk/nsa-domains-2026/nsa-transnational-soc-2026"
+    reference_date: "2026"
+    type: "official_organized_crime_assessment"
+    quality: "high"
+    notes: "NCA assesses Western Balkan OCGs as retaining the highest level of control over end-to-end cocaine supply to the UK."
+
+  UK-NCA-FINANCE-2026:
+    title: "National Strategic Assessment 2026 - SOC finance"
+    publisher: "National Crime Agency"
+    url: "https://www.nationalcrimeagency.gov.uk/nsa-domains-2026/nsa-soc-finance-2026"
+    reference_date: "2026"
+    type: "official_organized_crime_finance_assessment"
+    quality: "high"
+
+  UK-POLICE-EW-2026:
+    title: "Police workforce, England and Wales: 31 March 2026"
+    publisher: "UK Home Office"
+    url: "https://www.gov.uk/government/statistics/police-workforce-england-and-wales-31-march-2026/police-workforce-england-and-wales-31-march-2026"
+    reference_date: "2026-03-31"
+    type: "official_personnel_statistics"
+    quality: "high"
+
+  UK-POLICE-SCOT-2026:
+    title: "Police Scotland officer establishment after July 2026 intake"
+    publisher: "Police Scotland"
+    url: "https://www.scotland.police.uk/what-s-happening/news/2026/july/new-recruits-step-forward-for-a-job-like-no-other/"
+    reference_date: "2026-07-16"
+    type: "official_personnel"
+    quality: "high"
+
+  UK-POLICE-NI-2026:
+    title: "Strength of Police Service Statistics"
+    publisher: "Police Service of Northern Ireland"
+    url: "https://www.psni.police.uk/our-publication-scheme/who-we-are-and-what-we-do/strength-police-service-statistics"
+    reference_date: "2026-09-01"
+    type: "official_personnel_statistics"
+    quality: "high"
+
+  DE-MOSQUES-2019:
+    title: "Mosques and umbrella organizations in Germany"
+    publisher: "Wissenschaftliche Dienste des Deutschen Bundestages"
+    url: "https://www.bundestag.de/resource/blob/691394/c538200a9fda1ab9b1bb8df08b5f17ed/WD-10-083-19-pdf-data.pdf"
+    reference_date: "2019"
+    type: "official_parliamentary_research"
+    quality: "medium"
+    notes: "Estimates approximately 2,800 mosques; no complete official register."
+
+  DE-ISLAM-BRANCHES:
+    title: "Religious demography - Muslim affiliations in Germany"
+    publisher: "U.S. Department of State citing German government estimates"
+    url: "https://2021-2025.state.gov/reports/2023-report-on-international-religious-freedom/germany/"
+    reference_date: "2021_estimate"
+    type: "government_religious_demography_summary"
+    quality: "high"
+    notes: "74% Sunni, 8% Alevi, 4% Shia, 1% Ahmadi, 1% other, 12% unaffiliated/undisclosed among Muslims."
+
+  DE-DRUGS-2023:
+    title: "Bundeslagebild Rauschgiftkriminalität 2023"
+    publisher: "Bundeskriminalamt"
+    url: "https://www.bka.de/DE/AktuelleInformationen/StatistikenLagebilder/Lagebilder/Rauschgiftkriminalitaet/2023/BLB_RG_2023_node.html"
+    reference_date: "2023"
+    publication_date: "2024-06-26"
+    type: "official_drug_crime_assessment"
+    quality: "high"
+
+  DE-OC-2023:
+    title: "Bundeslagebild Organisierte Kriminalität 2023"
+    publisher: "Bundeskriminalamt"
+    url: "https://www.bka.de/DE/AktuelleInformationen/StatistikenLagebilder/Lagebilder/OrganisierteKriminalitaet/BLB_OK_2023/BLB_OK_2023.html"
+    reference_date: "2023"
+    publication_date: "2024-09"
+    type: "official_organized_crime_assessment"
+    quality: "high"
+
+  DE-ARMS-2024:
+    title: "Bundeslagebild Waffenkriminalität 2024"
+    publisher: "Bundeskriminalamt"
+    url: "https://www.bka.de/SharedDocs/Downloads/DE/Publikationen/JahresberichteUndLagebilder/Waffenkriminalitaet/waffenkriminalitaetBundeslagebild2024.pdf?__blob=publicationFile&v=2"
+    reference_date: "2024"
+    type: "official_firearms_crime_assessment"
+    quality: "high"
+
+  DE-POLICE-2024:
+    title: "Vollzeitäquivalent der Beschäftigten im Aufgabenbereich Polizei"
+    publisher: "Statistisches Bundesamt (Destatis)"
+    url: "https://www.destatis.de/DE/Themen/Staat/Oeffentlicher-Dienst/Tabellen/beschaeftigten-polizei.html"
+    reference_date: "2024-06-30"
+    type: "official_personnel_statistics"
+    quality: "high"
+
+  MA-MOSQUES-INVENTORY:
+    title: "Mosque Directorate inventory"
+    publisher: "Ministry of Habous and Islamic Affairs, Morocco"
+    url: "https://www.habous.gov.ma/%D8%A7%D9%84%D8%AF%D8%B1%D8%A7%D8%B3%D8%A7%D8%AA-%D9%88%D8%A7%D9%84%D8%B4%D8%A4%D9%88%D9%86-%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9/512-%D9%85%D8%AF%D9%8A%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D9%85%D8%B3%D8%A7%D8%AC%D8%AF.html?start=45"
+    reference_date: "2020_published_inventory"
+    type: "official_religious_infrastructure"
+    quality: "high"
+    notes: "24,106 Friday mosques and 27,748 five-prayer mosques; total over 51,000."
+
+  MA-RELIGIOUS-DOCTRINE:
+    title: "Official Moroccan mosque/religious framework"
+    publisher: "Ministry of Habous and Islamic Affairs, Morocco"
+    url: "https://habous.gov.ma/fr/component/content/article/526-r%C3%A8gles-relatives-%C3%A0-l%E2%80%99exercice-du-culte-dans-les-mosqu%C3%A9es/1568-r%C3%A8gles-relatives-%C3%A0-l%E2%80%99exercice-du-culte-dans-les-mosqu%C3%A9es.html"
+    reference_date: "structural"
+    type: "official_religious_policy"
+    quality: "high"
+    notes: "Canonical project description records the Moroccan Sunni-Maliki/Ashari/Sufi state religious framework."
+
+  MA-COCAINE-UNODC:
+    title: "Global Report on Cocaine 2023 - trafficking affecting Morocco"
+    publisher: "United Nations Office on Drugs and Crime"
+    url: "https://www.unodc.org/documents/data-and-analysis/cocaine/Global_cocaine_report_2023.pdf"
+    reference_date: "2023"
+    type: "UN_transnational_crime_assessment"
+    quality: "high"
+    notes: "Documents growth of cocaine routes into/through Morocco and overlap with longstanding cannabis-resin trafficking networks."
+
+  MA-DGSN-2025:
+    title: "DGSN 2025 annual review - personnel flows"
+    publisher: "DGSN reporting summarized in Moroccan press"
+    url: "https://escdn.lobservateur.info/2025/12/17/dgsn-2025-review-a-year-of-deep-reform-digital-momentum-and-declining-violent-crime/"
+    reference_date: "2025"
+    type: "secondary_reporting_of_official_annual_review"
+    quality: "medium"
+    notes: "Reports 4,693 recruits in training, 6,733 competition positions and 6,450 newly trained officers assigned. Does not provide total DGSN stock."

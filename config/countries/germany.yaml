@@ -2,8 +2,8 @@ identity:
   country_name: "Germany"
   iso2: "DE"
   iso3: "DEU"
-  snapshot_version: "0.2"
-  snapshot_date: "2026-09-22"
+  snapshot_version: "0.5"
+  snapshot_date: "2026-09-23"
 
 population:
   total:
@@ -136,6 +136,56 @@ religion:
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
 
+religious_infrastructure:
+  muslim_worship_sites_count:
+    value: 2800
+    unit: "mosques_and_prayer_spaces_estimated"
+    reference_date: "2019"
+    source_ids: ["DE-MOSQUES-2019"]
+    quality: "medium"
+    freshness_class: "stale"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Bundestag scientific-service estimate; Germany lacks a complete official mosque register."
+  count_definition: {value: "mosques_estimated", unit: "categorical", reference_date: "2019", source_ids: ["DE-MOSQUES-2019"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  count_reference_date: {value: "2019", unit: "year", reference_date: "2019", source_ids: ["DE-MOSQUES-2019"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  worship_sites_per_100k_muslims: {value: null, unit: "per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Count is stale; do not normalize until refreshed."}
+  dominant_islamic_branch:
+    value: "Sunni"
+    unit: "categorical"
+    reference_date: "2021_estimate"
+    source_ids: ["DE-ISLAM-BRANCHES"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Government-linked estimates: 74% Sunni among Muslims."
+  branch_distribution:
+    value:
+      sunni_percent: 74
+      alevi_percent: 8
+      shia_percent: 4
+      ahmadi_percent: 1
+      other_percent: 1
+      unaffiliated_or_undisclosed_percent: 12
+    unit: "percent_of_Muslim_population"
+    reference_date: "2021_estimate"
+    source_ids: ["DE-ISLAM-BRANCHES"]
+    quality: "high"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  predominant_fiqh_school: {value: "mixed_Hanafi_influence_strong", unit: "categorical", reference_date: "2026", source_ids: ["DE-ISLAM-BRANCHES"], quality: "low", estimated: true, derived: true, imputed: false, notes: "Not directly measured; Turkish-origin Sunni institutions make Hanafi influence plausible."}
+  theological_tradition: {value: "heterogeneous_Sunni_Alevi_Shia_Ahmadi_and_other", unit: "categorical", reference_date: "2021_estimate", source_ids: ["DE-ISLAM-BRANCHES"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  religious_governance_centralization: {value: "decentralized_multiple_associations", unit: "categorical", reference_date: "2026", source_ids: ["DE-MOSQUES-2019"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No single national mosque hierarchy."}
+  state_supervision: {value: "federal_state_legal_framework_with_security_oversight", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  imam_training_model: {value: "mixed_domestic_university_and_foreign_institutional_links", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: "Requires dedicated snapshot."}
+  foreign_religious_network_exposure: {value: "documented_transnational_institutional_links", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Not an extremism measure."}
+  methodological_note: {value: "Germany has unusually useful branch-distribution data, but mosque count is older and should receive freshness decay.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population:
     value: null
@@ -187,6 +237,60 @@ violent_islamist_extremism:
   extremist_network_assessment: {value: "28645_islamist_person_potential_of_which_9110_violence_oriented", unit: "categorical", reference_date: "2025", source_ids: ["DE-BFV-EXTREMISM-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Right-wing and left-wing violent extremism are also material and are modeled separately later."}
   external_network_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "The 0.16-0.17% value is a country-specific security-statistics proxy, not a general estimate of the proportion of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+organized_crime:
+  markets:
+    cocaine:
+      presence: {value: "very_high_and_rising", unit: "categorical", reference_date: "2023-2024", source_ids: ["DE-DRUGS-2023"], quality: "high", freshness_class: "aging", estimated: false, derived: false, imputed: false, notes: "Cocaine offences rose 27.4% in 2023; ~43 tonnes seized."}
+      national_role: {value: "major_destination_and_European_distribution_market", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: 43000, unit: "kg_cocaine_seized_2023", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Seizure proxy."}
+      wholesale_control_structure: {value: "organized_crime_transnational", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Drug trafficking, especially cannabis and cocaine, is the main organized-crime activity."}
+      retail_control_structure: {value: "fragmented", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    cannabis_hashish:
+      presence: {value: "very_high", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Cannabis accounted for about two thirds of recorded drug offences in 2023."}
+      national_role: {value: "large_domestic_market_import_and_illicit_domestic_production", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy:
+        value:
+          marijuana_seized_kg: 20900
+          hashish_seized_kg: 3700
+        unit: "kg_2023"
+        reference_date: "2023"
+        source_ids: ["DE-DRUGS-2023"]
+        quality: "high"
+        estimated: false
+        derived: false
+        imputed: false
+        notes: "Hashish seized was reported as mainly originating in Morocco; marijuana supply includes European indoor production."
+      wholesale_control_structure: {value: "organized_crime_significant", unit: "categorical", reference_date: "2023-2024", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      retail_control_structure: {value: "fragmented_black_market", unit: "categorical", reference_date: "2024", source_ids: ["DE-DRUGS-2023"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Legal reform may change black-market structure; future refresh required."}
+    illicit_firearms:
+      presence: {value: "material", unit: "categorical", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "Nine organized-crime groups had arms trafficking/smuggling as main activity in 2024."}
+      drug_market_linkage: {value: "documented_frequent_accessory_crime", unit: "categorical", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "BKA says weapons crime often accompanies drug offences."}
+      availability: {value: "network_specific", unit: "categorical", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: 9, unit: "OC_groups_main_activity_arms_trafficking", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "80 suspects; not total arms-trafficking networks."}
+  network_types:
+    mocro_maffia_linked_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No canonical nationwide BKA classification imported."}
+    latin_american_street_gang_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    western_balkan_ocg_presence: {value: "documented_in_transnational_crime_and_arms_context", unit: "categorical", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Nationality-dominance in specific arms-trafficking groups is not ethnicity-wide attribution."}
+    clan_based_ocg_presence: {value: "documented_but_not_quantified_here", unit: "categorical", reference_date: "2023-2024", source_ids: ["DE-OC-2023"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    other_transnational_ocg_presence: {value: "high", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "High share of OC investigations have foreign links."}
+  criminal_capacity:
+    national_market_structure: {value: "fragmented_transnational_OCG_ecosystem", unit: "categorical", reference_date: "2023-2024", source_ids: ["DE-OC-2023"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+    market_concentration: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    territorial_control: {value: "localized_influence_not_sovereign_control", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+    logistics_infiltration: {value: "high_transnational_logistics_capability", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Operational routes excluded."}
+    corruption_infiltration: {value: "documented_bribery_pressure", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "BKA reports increasing willingness to pay high bribes; no prevalence measure."}
+    money_laundering_capacity: {value: "high", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Money laundering appeared in roughly one third of OC investigations."}
+    firearms_access: {value: "material_network_specific", unit: "categorical", reference_date: "2024", source_ids: ["DE-ARMS-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    violence_capacity: {value: "material_and_rising_in_selected_drug_networks", unit: "categorical", reference_date: "2023", source_ids: ["DE-DRUGS-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: "BKA reports increasing readiness for severe violence among trafficking groups."}
+    prison_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    international_reach: {value: "high", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    leadership_centralization: {value: "mixed_by_group", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Individual leaders omitted from canonical model."}
+    succession_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    network_fragmentation: {value: "high", unit: "categorical", reference_date: "2023", source_ids: ["DE-OC-2023"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    ideological_alignment: {value: "predominantly_profit_seeking_nonideological", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+    likely_conflict_alignment: {value: "opportunistic_unknown", unit: "categorical", reference_date: "future_scenario", source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Nationality or clan descriptors in police reports are not ideological labels and do not determine conflict alignment.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 prisons:
   total_prison_population:
@@ -392,6 +496,85 @@ terrorism_threat_posture:
     derived: false
     imputed: false
     notes: null
+
+law_enforcement:
+  total_officers:
+    value: 294000
+    unit: "FTE_beamte_in_police_function"
+    geographic_scope: "Germany_federal_and_Laender_core_budgets"
+    reference_date: "2024-06-30"
+    source_ids: ["DE-POLICE-2024"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "52.2k federal + 207.8k territorial Länder + 34.0k city-state officials. 'Beamte' is a closer sworn/official proxy but not perfectly equivalent to operational police officers."
+  total_workforce:
+    value: 342500
+    unit: "FTE_police_function_employees"
+    reference_date: "2024-06-30"
+    source_ids: ["DE-POLICE-2024"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "Includes police officers, administration, BKA/LKA and personnel in training."
+  national_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Federal and Länder system should remain separated."}
+  gendarmerie: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No gendarmerie equivalent."}
+  federal_police:
+    value: 60600
+    unit: "FTE_police_function_workforce"
+    reference_date: "2024-06-30"
+    source_ids: ["DE-POLICE-2024"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes Bundespolizei and BKA, administration and training."
+  regional_state_police:
+    value: 281900
+    unit: "FTE_Laender_and_city_state_police_function_workforce"
+    reference_date: "2024-06-30"
+    source_ids: ["DE-POLICE-2024"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: false
+    derived: true
+    imputed: false
+    notes: "240.9k territorial Länder + 41.0k city states."
+  local_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Ordinary policing is predominantly federal/Länder."}
+  reserve_auxiliary: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  frontline_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  armed_policing_capacity: {value: "high", unit: "categorical", reference_date: "2026", source_ids: ["DE-POLICE-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No normalized score."}
+  public_order_capacity: {value: "federal_and_Laender_specialized_units", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  counterterrorism_capacity: {value: "federal_Laender_multiagency", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  organized_crime_capacity: {value: "BKA_LKA_customs_and_Laender_multiagency", unit: "categorical", reference_date: "2026", source_ids: ["DE-OC-2023"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  border_coast_capacity: {value: "Bundespolizei_customs_and_maritime_components", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  territorial_density: {value: null, unit: "officers_per_100k", reference_date: null, source_ids: ["DE-POLICE-2024"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Destatis publishes density by Land; national harmonized operational-officer density deferred."}
+  recruitment_trend: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  military_status_component: {value: "none_in_ordinary_police", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Destatis police-function workforce includes administration/training; 294k official/Beamte FTE is a useful but imperfect officer proxy.", unit: "text", reference_date: "2026", source_ids: ["DE-POLICE-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+security_force_cohesion:
+  constitutional_loyalty: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  command_cohesion: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Federal/Länder command fragmentation becomes relevant only under a crisis scenario."}
+  professional_identity: {value: "strong_federal_and_Laender_professional_institutions", unit: "categorical", reference_date: "2026", source_ids: ["DE-POLICE-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  political_heterogeneity: {value: "expected_but_unquantified", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+  partisan_preference_evidence: {value: null, unit: "representative_force_survey", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No left/right loyalty estimate is inferred."}
+  union_or_association_fragmentation: {value: "multiple_unions_and_professional_associations", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  regional_identity_pressure: {value: "institutionally_relevant_due_federal_policing_but_not_separatist_by_default", unit: "categorical", reference_date: "future_scenario", source_ids: ["DE-POLICE-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  extremist_infiltration_cases: {value: null, unit: "cases_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Dedicated integrity/extremism snapshot required."}
+  disciplinary_stress: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_order_fatigue: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_force_relations: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  pay_working_conditions_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defection_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  insubordination_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  institutional_split_risk: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Future variable must model federal/Länder command relations explicitly."}
+  methodological_note: {value: "Federal decentralization is an institutional topology variable, not evidence of political disloyalty.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}

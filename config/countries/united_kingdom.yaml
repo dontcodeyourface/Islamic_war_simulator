@@ -2,8 +2,8 @@ identity:
   country_name: "United Kingdom"
   iso2: "GB"
   iso3: "GBR"
-  snapshot_version: "0.2"
-  snapshot_date: "2026-09-22"
+  snapshot_version: "0.5"
+  snapshot_date: "2026-09-23"
 
 population:
   total:
@@ -89,6 +89,58 @@ religion:
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
 
+religious_infrastructure:
+  muslim_worship_sites_count:
+    value: 1895
+    unit: "actual_masjids"
+    reference_date: "2026-09-22"
+    source_ids: ["UK-MOSQUES-2026"]
+    quality: "medium"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Continuously maintained independent directory; 2,187 total places available for salah when halls/prayer rooms/chaplaincies are included."
+  count_definition: {value: "actual_masjids", unit: "categorical", reference_date: "2026-09-22", source_ids: ["UK-MOSQUES-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  count_reference_date: {value: "2026-09-22", unit: "date", reference_date: "2026", source_ids: ["UK-MOSQUES-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  worship_sites_per_100k_muslims: {value: null, unit: "per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Whole-UK Muslim denominator needs harmonized census estimate."}
+  dominant_islamic_branch:
+    value: "Sunni_majority"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-MOSQUE-TRADITIONS-2026"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Mosque-directory evidence shows Sunni traditions dominate institutional landscape."
+  branch_distribution: {value: null, unit: "percent_population", reference_date: null, source_ids: ["UK-MOSQUE-TRADITIONS-2026"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Mosque-theme counts are not population branch shares."}
+  predominant_fiqh_school:
+    value: "Hanafi_influence_strong_with_diverse_other_schools"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-MOSQUE-TRADITIONS-2026"]
+    quality: "medium"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "South-Asian Deobandi and Bareilvi mosque traditions are prominent; UK Islam remains diverse."
+  theological_tradition:
+    value: "Sunni_Deobandi_and_Bareilvi_prominent_plus_diverse_Sunni_and_Shia_traditions"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["UK-MOSQUE-TRADITIONS-2026"]
+    quality: "medium"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Institutional/mosque style, not a measure of political ideology."
+  religious_governance_centralization: {value: "highly_plural_decentralized", unit: "categorical", reference_date: "2026", source_ids: ["UK-MOSQUES-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  state_supervision: {value: "general_charity_planning_and_security_law_framework", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  imam_training_model: {value: "mixed_UK_and_overseas_training", unit: "categorical", reference_date: "2026", source_ids: ["UK-MOSQUE-TRADITIONS-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  foreign_religious_network_exposure: {value: "heterogeneous_transnational_links", unit: "categorical", reference_date: "2026", source_ids: ["UK-MOSQUE-TRADITIONS-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Not an extremism score."}
+  methodological_note: {value: "Mosque affiliation/tradition must never be converted directly into extremist propensity.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population:
     value: null
@@ -130,6 +182,49 @@ violent_islamist_extremism:
   extremist_network_assessment: {value: "Islamist_terrorism_primary_threat_by_volume_with_rising_extreme_right_threat", unit: "categorical", reference_date: "2026-05-01", source_ids: ["UK-MI5-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   external_network_linkage: {value: "Al_Qaeda_and_IS_attempts_to_direct_or_inspire_UK_threat_documented", unit: "categorical", reference_date: "2026", source_ids: ["UK-MI5-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "75% is counterterrorism caseload composition, not 75% of any population group.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+organized_crime:
+  markets:
+    cocaine:
+      presence: {value: "very_high", unit: "categorical", reference_date: "2025-2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "NCA assesses cocaine threat as high; 18.5 tonnes seized in 2025."}
+      national_role: {value: "major_destination_market", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: 18500, unit: "kg_cocaine_seized_2025", reference_date: "2025", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Seizure proxy, not consumption."}
+      wholesale_control_structure: {value: "Western_Balkan_OCGs_highest_end_to_end_control", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "NCA assessment; does not imply monopoly."}
+      retail_control_structure: {value: "fragmented_local_and_regional_networks", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    cannabis_hashish:
+      presence: {value: "very_high", unit: "categorical", reference_date: "2025-2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "127 tonnes of cannabis seized at UK border in year ending March 2025."}
+      national_role: {value: "large_destination_market_with_domestic_and_import_supply", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: 127000, unit: "kg_cannabis_border_seizures_year_ending_March_2025", reference_date: "2025", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Border seizure proxy only."}
+      wholesale_control_structure: {value: "transnational_OCGs_with_Western_Balkan_presence", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "NCA specifically identifies Western Balkan dominance for cocaine; cannabis influence is documented but exact current control share is not."}
+      retail_control_structure: {value: "fragmented", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    illicit_firearms:
+      presence: {value: "low_relative_to_drug_market_but_material_for_SOC", unit: "categorical", reference_date: "2025-2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "NCA says firearm use remains low, while criminal sourcing capability persists."}
+      drug_market_linkage: {value: "strong_documented_linkage", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Drugs underpin significant firearms offending."}
+      availability: {value: "constrained_but_adaptive", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "NCA notes firearms are not available to most criminals and sourcing methods adapt."}
+      market_scale_proxy: {value: 4851, unit: "firearm_offences_England_Wales_year_ending_Sep_2025", reference_date: "2025", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Offence proxy, not illicit weapon stock."}
+  network_types:
+    mocro_maffia_linked_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No canonical UK-wide Mocro-Maffia field populated."}
+    latin_american_street_gang_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not a principal national OCG category in current NCA assessment."}
+    western_balkan_ocg_presence: {value: "very_high_in_cocaine_wholesale", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    clan_based_ocg_presence: {value: "present_but_not_nationally_quantified", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+    other_transnational_ocg_presence: {value: "very_high", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "NCA also identifies Chinese-speaking laundering networks and wider global OCG collaboration."}
+  criminal_capacity:
+    national_market_structure: {value: "transnational_wholesale_plus_fragmented_domestic_distribution", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+    market_concentration: {value: "cocaine_wholesale_partially_concentrated", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No numerical market share."}
+    territorial_control: {value: "localized_criminal_influence_not_sovereign_control", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    logistics_infiltration: {value: "high_transnational_logistics_capability", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Operational route detail excluded."}
+    corruption_infiltration: {value: "documented_transnational_risk", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "No UK law-enforcement prevalence score."}
+    money_laundering_capacity: {value: "very_high_transnational_service_networks", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-FINANCE-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    firearms_access: {value: "constrained_but_present", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    violence_capacity: {value: "material_in_selected_OCGs", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+    prison_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    international_reach: {value: "very_high", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    leadership_centralization: {value: "networked_cooperative_models_increasing", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "NCA describes increasing OCG collaboration; no individual leaders stored."}
+    succession_resilience: {value: "high_for_networked_OCGs_estimated", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    network_fragmentation: {value: "mixed_wholesale_networked_retail_fragmented", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-WB-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    ideological_alignment: {value: "predominantly_profit_seeking_nonideological", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: true, derived: false, imputed: false, notes: null}
+    likely_conflict_alignment: {value: "opportunistic_unknown", unit: "categorical", reference_date: "future_scenario", source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "OCGs are economic/coercive actor networks, not identity-based political factions.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 prisons:
   total_prison_population:
@@ -328,6 +423,93 @@ terrorism_threat_posture:
     derived: false
     imputed: false
     notes: null
+
+law_enforcement:
+  total_officers:
+    value: 168894
+    unit: "approx_territorial_police_officers_FTE_or_establishment"
+    geographic_scope: "UK_territorial_policing"
+    reference_date: "2026-03_to_2026-09"
+    source_ids: ["UK-POLICE-EW-2026","UK-POLICE-SCOT-2026","UK-POLICE-NI-2026"]
+    quality: "medium"
+    freshness_class: "current"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "145,886 E&W FTE + 16,564 Police Scotland establishment + 6,444 PSNI FTE. Definitions/dates differ slightly; excludes BTP/NCA."
+  total_workforce:
+    value: null
+    unit: "persons"
+    reference_date: null
+    source_ids: ["UK-POLICE-EW-2026"]
+    quality: "unavailable"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "England/Wales total workforce is 234,441 FTE, but no harmonized Scotland/NI whole-workforce aggregate is added."
+  national_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "UK policing is decentralized rather than a single national police service."}
+  gendarmerie: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No national gendarmerie."}
+  federal_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not a federal system."}
+  regional_state_police:
+    value: 168894
+    unit: "approx_territorial_police_officers"
+    reference_date: "2026"
+    source_ids: ["UK-POLICE-EW-2026","UK-POLICE-SCOT-2026","UK-POLICE-NI-2026"]
+    quality: "medium"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "Composite of territorial systems."
+  local_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Territorial forces already cover local policing."}
+  reserve_auxiliary:
+    value: 5196
+    unit: "special_constables_England_Wales_headcount"
+    reference_date: "2026-03-31"
+    source_ids: ["UK-POLICE-EW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Does not include analogous Scotland/NI categories."
+  frontline_share:
+    value: 90.5
+    unit: "percent_of_England_Wales_police_officers"
+    reference_date: "2026-03-31"
+    source_ids: ["UK-POLICE-EW-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "England and Wales only."
+  armed_policing_capacity: {value: "specialized_armed_policing_not_universal", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Most UK officers are not routinely armed."}
+  public_order_capacity: {value: "specialized_territorial_and_mutual_aid", unit: "categorical", reference_date: "2026", source_ids: ["UK-POLICE-EW-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  counterterrorism_capacity: {value: "high_national_networked", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "CT policing, MI5 and intelligence structures modeled separately."}
+  organized_crime_capacity: {value: "NCA_plus_territorial_multiagency", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  border_coast_capacity: {value: "multiagency_national", unit: "categorical", reference_date: "2026", source_ids: ["UK-NCA-SOC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  territorial_density: {value: null, unit: "officers_per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Composite can be calculated later with harmonized definitions."}
+  recruitment_trend: {value: "mixed", unit: "categorical", reference_date: "2026", source_ids: ["UK-POLICE-EW-2026","UK-POLICE-SCOT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "E&W officer FTE down 0.4% year-on-year while Scotland recruited in 2026."}
+  military_status_component: {value: "none_in_ordinary_territorial_policing", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "UK components use different statistical conventions; composite is approximate.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+security_force_cohesion:
+  constitutional_loyalty: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  command_cohesion: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  professional_identity: {value: "strong_territorial_professional_identity", unit: "categorical", reference_date: "2026", source_ids: ["UK-POLICE-EW-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  political_heterogeneity: {value: "expected_but_unquantified", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+  partisan_preference_evidence: {value: null, unit: "representative_force_survey", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No inference from demographic identity."}
+  union_or_association_fragmentation: {value: "multiple_staff_associations_and_unions", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  regional_identity_pressure: {value: "structurally_relevant_in_Northern_Ireland_and_devolved_systems", unit: "categorical", reference_date: "2026", source_ids: ["UK-POLICE-NI-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Community background or devolution must not be equated with partisan loyalty."}
+  extremist_infiltration_cases: {value: null, unit: "cases_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  disciplinary_stress: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_order_fatigue: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_force_relations: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  pay_working_conditions_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defection_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  insubordination_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  institutional_split_risk: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Must be crisis-conditional and region-aware."}
+  methodological_note: {value: "Political preferences, community background or dissatisfaction with a government are not treated as evidence of likely defection.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}

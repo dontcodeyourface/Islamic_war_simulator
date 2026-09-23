@@ -2,8 +2,8 @@ identity:
   country_name: "France"
   iso2: "FR"
   iso3: "FRA"
-  snapshot_version: "0.2"
-  snapshot_date: "2026-09-22"
+  snapshot_version: "0.5"
+  snapshot_date: "2026-09-23"
 
 population:
   total:
@@ -112,6 +112,40 @@ religion:
   muslim_second_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Must not be inferred from ancestry."}
   muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: null}
 
+religious_infrastructure:
+  muslim_worship_sites_count:
+    value: 2600
+    unit: "mosques_estimated"
+    reference_date: "2024"
+    source_ids: ["FR-MOSQUES-2024"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Official parliamentary estimate."
+  count_definition: {value: "mosques_estimated", unit: "categorical", reference_date: "2024", source_ids: ["FR-MOSQUES-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  count_reference_date: {value: "2024", unit: "year", reference_date: "2024", source_ids: ["FR-MOSQUES-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  worship_sites_per_100k_muslims: {value: null, unit: "per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Deferred until a same-year Muslim denominator is selected."}
+  dominant_islamic_branch:
+    value: "Sunni_majority_estimated"
+    unit: "categorical"
+    reference_date: "2026"
+    source_ids: ["FR-MOSQUES-2024"]
+    quality: "low"
+    estimated: true
+    derived: true
+    imputed: false
+    notes: "French Islam is highly heterogeneous; no national branch census is available."
+  branch_distribution: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No defensible national Sunni/Shia/etc. distribution located."}
+  predominant_fiqh_school: {value: "mixed_with_Maliki_and_Hanafi_influences", unit: "categorical", reference_date: "2026", source_ids: ["FR-MOSQUES-2024"], quality: "low", estimated: true, derived: true, imputed: false, notes: "Reflects diverse Maghrebi/Turkish institutional roots; not a measured population distribution."}
+  theological_tradition: {value: "heterogeneous", unit: "categorical", reference_date: "2026", source_ids: ["FR-MOSQUES-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  religious_governance_centralization: {value: "plural_associational_with_state_regulatory_framework", unit: "categorical", reference_date: "2026", source_ids: ["FR-MOSQUES-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  state_supervision: {value: "strong_legal_and_security_oversight", unit: "categorical", reference_date: "2024-2026", source_ids: ["FR-MOSQUES-2024"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Security oversight is separate from ordinary religious governance."}
+  imam_training_model: {value: "mixed_domestic_and_foreign_legacy_transition", unit: "categorical", reference_date: "2024-2026", source_ids: ["FR-MOSQUES-2024"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Foreign-detached imam arrangements have been reduced; exact national training composition not quantified."}
+  foreign_religious_network_exposure: {value: "documented_Turkish_and_other_transnational_institutional_links", unit: "categorical", reference_date: "2023-2024", source_ids: ["FR-MOSQUES-2024"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Exposure is not treated as extremism."}
+  methodological_note: {value: "Mosque count and Islamic tradition are social-infrastructure variables, not radicalisation coefficients.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
 violent_islamist_extremism:
   comparable_radical_share_of_muslim_population:
     value: null
@@ -153,6 +187,49 @@ violent_islamist_extremism:
   extremist_network_assessment: {value: "high_persistent_jihadist_threat_with_youth_radicalization_concern", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-JIHADIST-THREAT-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Qualitative official threat assessment, not demographic prevalence."}
   external_network_linkage: {value: "international_jihadist_network_risk_present", unit: "categorical", reference_date: "2026", source_ids: ["FR-JIHADIST-THREAT-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
   methodological_note: {value: "Do not interpret FSPRT entries as a percentage of Muslims who are radical.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+organized_crime:
+  markets:
+    cocaine:
+      presence: {value: "very_high_and_rising", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "42 tonnes seized in first half 2025 versus 37.5 tonnes in full-year 2024."}
+      national_role: {value: "large_domestic_market_and_European_distribution_node", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: 6800000000, unit: "EUR_total_narcotraffic_revenue", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", estimated: true, derived: false, imputed: false, notes: "All-drug market proxy, not cocaine-only revenue."}
+      wholesale_control_structure: {value: "fragmented_transnational_mafia_cartel_networks", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No single national controller."}
+      retail_control_structure: {value: "territorially_fragmented_deal_networks", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    cannabis_hashish:
+      presence: {value: "very_high", unit: "categorical", reference_date: "2024-2026", source_ids: ["FR-DRUG-TYPES-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Cannabis dominates recorded drug cases; resin is a major component."}
+      national_role: {value: "large_domestic_market_and_distribution", unit: "categorical", reference_date: "2025", source_ids: ["FR-DRUG-TYPES-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      market_scale_proxy: {value: null, unit: "EUR_or_tonnes", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "All-drug revenue exists but product-level market revenue not populated."}
+      wholesale_control_structure: {value: "fragmented_transnational_networks", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+      retail_control_structure: {value: "territorially_fragmented", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    illicit_firearms:
+      presence: {value: "material_and_rising", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Gendarmerie reports firearm trafficking increasing between 2024 and 2025."}
+      drug_market_linkage: {value: "strong_documented_linkage", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025","FR-NARCOTRAFFIC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+      availability: {value: "significant_black_market_reservoir", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Public estimate distinguishes legal from illicit/unregistered circulation but does not equal criminally accessible stock."}
+      market_scale_proxy: {value: 9300, unit: "firearms_stolen_per_year_estimated", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Proxy for replenishment pressure, not total illicit market."}
+  network_types:
+    mocro_maffia_linked_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No country-wide official French presence classification imported in v0.5."}
+    latin_american_street_gang_presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not a major national model category without better evidence."}
+    western_balkan_ocg_presence: {value: "documented_supply_linkage", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: "For illicit firearms and broader transnational crime; not a national market-share estimate."}
+    clan_based_ocg_presence: {value: "present", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    other_transnational_ocg_presence: {value: "high", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  criminal_capacity:
+    national_market_structure: {value: "polycentric_fragmented_national_and_transnational", unit: "categorical", reference_date: "2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Drug availability reported throughout France without a single national controller."}
+    market_concentration: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    territorial_control: {value: "localized_deal_point_and_neighborhood_influence", unit: "categorical", reference_date: "2025-2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Not sovereign territorial control."}
+    logistics_infiltration: {value: "documented_transnational_logistics", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Operational routes are not encoded."}
+    corruption_infiltration: {value: "recognized_risk", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "No prevalence estimate."}
+    money_laundering_capacity: {value: "high", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    firearms_access: {value: "material", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    violence_capacity: {value: "high_in_narcotraffic_subsets", unit: "categorical", reference_date: "2025", source_ids: ["FR-CRIME-ARMS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    prison_linkage: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    international_reach: {value: "high", unit: "categorical", reference_date: "2025", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    leadership_centralization: {value: "mixed_by_network", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "No individual leader names in canonical model."}
+    succession_resilience: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    network_fragmentation: {value: "high", unit: "categorical", reference_date: "2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+    ideological_alignment: {value: "predominantly_profit_seeking_nonideological", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: true, derived: false, imputed: false, notes: "Criminal identity/ethnicity does not imply political or religious alignment."}
+    likely_conflict_alignment: {value: "opportunistic_unknown", unit: "categorical", reference_date: "future_scenario", source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  methodological_note: {value: "Criminal-market control is modeled structurally, without operational route or target detail.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 prisons:
   total_prison_population:
@@ -346,6 +423,75 @@ terrorism_threat_posture:
     derived: false
     imputed: false
     notes: null
+
+law_enforcement:
+  total_officers: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Police and gendarmerie scopes differ; no false combined active total."}
+  total_workforce:
+    value: 152197
+    unit: "Police_Nationale_total_agents"
+    geographic_scope: "France_Police_Nationale"
+    reference_date: "2026-03"
+    source_ids: ["FR-POLICE-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes operational, scientific, administrative and contract staff."
+  national_police:
+    value: 152197
+    unit: "agents_total"
+    reference_date: "2026-03"
+    source_ids: ["FR-POLICE-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not all are sworn operational officers."
+  gendarmerie:
+    value: 130000
+    unit: "active_reserve_and_other_personnel_approx"
+    reference_date: "2023-2026"
+    source_ids: ["FR-GENDARMERIE-130K"]
+    quality: "medium"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Gendarmerie public material uses >130,000 or nearly 130,000 personnel including active and reserve; do not sum directly with Police Nationale as an active-officer total."
+  federal_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Not a federal system."}
+  regional_state_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  local_police: {value: null, unit: "persons", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Police municipale aggregate deferred."}
+  reserve_auxiliary: {value: null, unit: "persons", reference_date: null, source_ids: ["FR-GENDARMERIE-130K"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Gendarmerie reserve is embedded in broad public total."}
+  frontline_share: {value: null, unit: "percent", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  armed_policing_capacity: {value: "high", unit: "categorical", reference_date: "2026", source_ids: ["FR-POLICE-2026","FR-GENDARMERIE-130K"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  public_order_capacity: {value: "high_specialized_national_capacity", unit: "categorical", reference_date: "2026", source_ids: ["FR-POLICE-2026","FR-GENDARMERIE-130K"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  counterterrorism_capacity: {value: "specialized_multiagency", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  organized_crime_capacity: {value: "specialized_national_multiagency", unit: "categorical", reference_date: "2026", source_ids: ["FR-NARCOTRAFFIC-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  border_coast_capacity: {value: "police_gendarmerie_customs_multiagency", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  territorial_density: {value: null, unit: "officers_per_100k", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires harmonized active-only scopes."}
+  recruitment_trend: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  military_status_component: {value: "Gendarmerie_Nationale", unit: "categorical", reference_date: "2026", source_ids: ["FR-GENDARMERIE-130K"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Gendarmerie is an armed force under Interior with military status."}
+  methodological_note: {value: "Police and gendarmerie headcounts have different scopes; keep them separate until harmonized.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+security_force_cohesion:
+  constitutional_loyalty: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No partisan proxy."}
+  command_cohesion: {value: null, unit: "latent_index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  professional_identity: {value: "strong_police_and_military_gendarmerie_institutional_identities", unit: "categorical", reference_date: "2026", source_ids: ["FR-GENDARMERIE-130K"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  political_heterogeneity: {value: "expected_but_unquantified", unit: "categorical", reference_date: "2026", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+  partisan_preference_evidence: {value: null, unit: "representative_force_survey", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No force-wide voting inference is used."}
+  union_or_association_fragmentation: {value: "multiple_police_unions_and_military_consultation_structures", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Labor/representation diversity is not a loyalty score."}
+  regional_identity_pressure: {value: "generally_low_nationally_but_scenario_dependent", unit: "categorical", reference_date: "future_scenario", source_ids: [], quality: "low", estimated: true, derived: false, imputed: false, notes: null}
+  extremist_infiltration_cases: {value: null, unit: "cases_or_rate", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Requires dedicated integrity snapshot."}
+  disciplinary_stress: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  public_order_fatigue: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  government_force_relations: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  pay_working_conditions_pressure: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defection_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  insubordination_hazard: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  institutional_split_risk: {value: null, unit: "probability_model_input", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Future crisis-state variable."}
+  methodological_note: {value: "Institutional fracture is driven by command legitimacy, competing authority, coercion, regional control, extremist penetration and sustained operational stress—not by assumed left/right preferences.", unit: "text", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
 
 manpower:
   legally_eligible: {value: null, unit: "persons", geographic_scope: "France", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Age bands are not substituted for military eligibility."}
