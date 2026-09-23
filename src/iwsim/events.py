@@ -313,10 +313,10 @@ def evaluate_candidate(
         occurred = True
         provenance_class = "GENERATED"
     else:
-        stream = rng.stream("events")
+        rng_stream = "events:" + event_type + ":" + "--".join(sorted(actors))
+        stream = rng.stream(rng_stream)
         draw_index = stream.draw_index
         random_draw = stream.random()
-        rng_stream = "events"
         occurred = random_draw < occurrence_probability
         if occurred:
             provenance_class = "RANDOM_SHOCK"
