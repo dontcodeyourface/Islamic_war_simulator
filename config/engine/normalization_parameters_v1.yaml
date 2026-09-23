@@ -4,6 +4,9 @@ date: "2026-09-23"
 purpose: "Normalization, memory, parameter, threshold and stochastic-hazard contract for EngineState v1."
 
 principles:
+  parameter_registry_path: "config/engine/parameter_registry_v1.yaml"
+  parameter_registry_is_authoritative: true
+  duplicated_numeric_views_must_match_registry_hash_validation: true
   calibrated_analysis_must_not_use_synthetic_smoke_parameters: true
   synthetic_profile_is_not_real_world_probability: true
   parameter_literals_in_code_forbidden: true
@@ -77,6 +80,9 @@ confidence_model:
     - "Conflicting empirical sources must remain visible in contribution trace."
 
 memory_classes:
+  authoritative_parameter_id:
+    synthetic_smoke_v1: MEM_HALF_LIVES_SYN_V1
+    calibrated_v1: MEM_HALF_LIVES_CAL_V1
   immediate:
     ema_half_life_days: 2
     comparison_windows_days: [1,2,3]
@@ -476,6 +482,9 @@ graph_edge_normalization:
   channels:
     geographic_proximity:
       rule_id: EDGE_GEO_V1
+      parameter_id:
+        synthetic_smoke_v1: EDGE_GEO_SCALE_SYN_V1
+        calibrated_v1: EDGE_GEO_SCALE_CAL_V1
       formula: "exp(-distance_km/lambda_km)"
       synthetic_smoke_parameters:
         lambda_km: 1000
@@ -509,6 +518,9 @@ graph_edge_normalization:
 
 spillover:
   equation_id: GRAPH_SPILLOVER_V1
+  parameter_ids:
+    synthetic_smoke_v1: [GRAPH_TRANSMISSION_SYN_V1, GRAPH_LATENCIES_SYN_V1]
+    calibrated_v1: [GRAPH_TRANSMISSION_CAL_V1, GRAPH_LATENCIES_CAL_V1]
   formula: "sum(channel_edge * source_pressure * channel_transmission) with channel latency and saturation"
   saturation_transform: NORM_RATIO_SAT_V1
   synthetic_smoke_channel_transmission:
@@ -537,34 +549,40 @@ spillover:
 phase_rules:
   profile_note: "Numerical thresholds below are synthetic engineering thresholds for smoke tests only, not empirical real-world thresholds."
   STABLE_TO_TENSION_SYN_V1:
+    parameter_id: PHASE_STABLE_TENSION_SYN_V1
     persistence_days: 3
     any:
       - {variable: external_conflict_pressure, op: ">=", value: 0.35}
       - {variable: polarization, op: ">=", value: 0.45}
       - {variable: public_order_stress, op: ">=", value: 0.40}
   TENSION_TO_EMERGENCY_SYN_V1:
+    parameter_id: PHASE_TENSION_EMERGENCY_SYN_V1
     persistence_days: 3
     all:
       - {variable: public_order_stress, op: ">=", value: 0.50}
       - {variable: government_legitimacy, op: "<=", value: 0.65}
   EMERGENCY_TO_MASS_UNREST_SYN_V1:
+    parameter_id: PHASE_EMERGENCY_MASS_UNREST_SYN_V1
     persistence_days: 5
     all:
       - {variable: public_order_stress, op: ">=", value: 0.60}
       - {variable: polarization, op: ">=", value: 0.60}
       - {variable: social_cohesion, op: "<=", value: 0.55}
   MASS_UNREST_TO_ORGANIZED_POLITICAL_VIOLENCE_SYN_V1:
+    parameter_id: PHASE_MASS_UNREST_OPV_SYN_V1
     persistence_days: 8
     all:
       - {variable: organized_armed_actor_capacity, op: ">=", value: 0.35}
       - {variable: public_order_stress, op: ">=", value: 0.65}
   ORGANIZED_POLITICAL_VIOLENCE_TO_INSURGENCY_SYN_V1:
+    parameter_id: PHASE_OPV_INSURGENCY_SYN_V1
     persistence_days: 13
     all:
       - {variable: organized_armed_actor_capacity, op: ">=", value: 0.50}
       - {variable: security_chain_cohesion, op: "<=", value: 0.60}
       - {variable: territorial_control, op: "<=", value: 0.90}
   INSURGENCY_TO_DUAL_AUTHORITY_SYN_V1:
+    parameter_id: PHASE_INSURGENCY_DUAL_AUTHORITY_SYN_V1
     persistence_days: 13
     all:
       - {variable: territorial_control, op: "<=", value: 0.75}
@@ -572,6 +590,7 @@ phase_rules:
       - {variable: state_cohesion, op: "<=", value: 0.55}
       - {event_flag: competing_authority_present, equals: true}
   INSURGENCY_OR_DUAL_TO_CIVIL_WAR_SYN_V1:
+    parameter_id: PHASE_CIVIL_WAR_SYN_V1
     persistence_days: 21
     all:
       - {variable: organized_armed_actor_capacity, op: ">=", value: 0.65}
@@ -579,6 +598,7 @@ phase_rules:
       - {variable: territorial_control, op: "<=", value: 0.70}
       - {variable: administrative_capacity, op: "<=", value: 0.60}
   CIVIL_WAR_TO_STATE_FRAGMENTATION_SYN_V1:
+    parameter_id: PHASE_FRAGMENTATION_SYN_V1
     persistence_days: 34
     all:
       - {variable: territorial_control, op: "<=", value: 0.45}
@@ -588,12 +608,18 @@ phase_rules:
       - {variable: salary_payment_continuity, op: "<=", value: 0.50}
 
 deescalation_policy:
+  parameter_id:
+    synthetic_smoke_v1: PHASE_RECOVERY_SYN_V1
+    calibrated_v1: PHASE_RECOVERY_CAL_V1
   rule: "Reverse transitions require stricter recovery persistence than escalation and must use lower-stress/higher-resilience thresholds."
   synthetic_smoke_recovery_multiplier: 1.5
   minimum_recovery_days: 13
   hysteresis_required: true
 
 security_force_regime_rules:
+  parameter_id:
+    synthetic_smoke_v1: SECURITY_REGIMES_SYN_V1
+    calibrated_v1: SECURITY_REGIMES_CAL_V1
   synthetic_smoke:
     COHESIVE:
       condition: "security_chain_cohesion >= 0.75 and command_cohesion >= 0.75"
@@ -614,6 +640,9 @@ security_force_regime_rules:
 
 event_hazard_model:
   equation_id: EVENT_HAZARD_SCORE_V1
+  probability_conversion_parameter_id:
+    synthetic_smoke_v1: EVENT_HAZARD_PROBABILITY_SYN_V1
+    calibrated_v1: EVENT_HAZARD_PROBABILITY_CAL_V1
   model: "bounded hazard score -> profile-specific probability conversion"
   formula: "score = base + weighted_state_terms + weighted_memory_terms + weighted_graph_terms + event_context; score clamped 0..1"
   calibrated_probability_conversion:
@@ -667,6 +696,9 @@ event_families:
     negative_terms: [financial_buffer,alliance_support]
 
 dynamic_equation_defaults:
+  parameter_id:
+    synthetic_smoke_v1: DYNAMIC_GAINS_SYN_V1
+    calibrated_v1: DYNAMIC_GAINS_CAL_V1
   profile_note: "Synthetic coefficients are stability-test values only."
   generic_update:
     equation_id: GENERIC_BOUNDED_DELTA_V1
@@ -685,6 +717,9 @@ dynamic_equation_defaults:
 
 reciprocal_radicalization:
   equation_id: RECIPROCAL_RADICALIZATION_V1
+  parameter_id:
+    synthetic_smoke_v1: RECIPROCAL_RADICALIZATION_SYN_V1
+    calibrated_v1: RECIPROCAL_RADICALIZATION_CAL_V1
   saturation: NORM_RATIO_SAT_V1
   rule: "Violent-network incidents may raise communal fear and opposing violent-network recruitment pressure; damping comes from social cohesion, policing, legitimacy, community rejection and credible communication."
   forbidden_direct_edges:
@@ -699,6 +734,9 @@ reciprocal_radicalization:
 
 fractal_refinement:
   equation_id: REFINEMENT_TRIGGER_V1
+  parameter_id:
+    synthetic_smoke_v1: FRACTAL_REFINEMENT_SYN_V1
+    calibrated_v1: FRACTAL_REFINEMENT_CAL_V1
   formula: "w_v*violence + w_i*institutional_stress + w_f*infrastructure_stress + w_n*network_activity + w_d*displacement"
   synthetic_smoke:
     weights:
