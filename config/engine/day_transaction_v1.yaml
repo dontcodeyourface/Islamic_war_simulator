@@ -57,7 +57,7 @@ trace:
 ordering:
   graph_edges: "edge_id_ascending"
   country_nodes: "iso3_ascending"
-  graph_spillover: "before_event_candidates_trace_only"
+  graph_spillover: "candidate_and_maturation_pass_before_events_effects_join_owner_resolution"
   occurred_events: "event_id_ascending"
   proposals: "event_recovery_and_matured_spillover_collected_then_proposal_id_ascending_before_resolution"
   phase_evaluation: "after_state_resolution_and_clock_advance"
