@@ -40,16 +40,16 @@ normalization_transforms:
     formula: "min(1,max(-1,x))"
   NORM_RATIO_SAT_V1:
     formula: "x/(x+k)"
-    parameter_ids: [NORM_RATIO_K]
+    parameter_contract: "Calling rule supplies a versioned parameter_id containing k; synthetic fallback may use GENERIC_RATIO_K_SYN_V1."
   NORM_LOGISTIC_V1:
     formula: "1/(1+exp(-s*(x-m)))"
-    parameter_ids: [NORM_LOGISTIC_SLOPE, NORM_LOGISTIC_MID]
+    parameter_contract: "Calling rule supplies a versioned parameter_id containing slope and midpoint; synthetic fallback may use GENERIC_LOGISTIC_SYN_V1."
   NORM_SIGNED_TANH_V1:
     formula: "tanh(x/s)"
-    parameter_ids: [NORM_SIGNED_SCALE]
+    parameter_contract: "Calling rule supplies a versioned scale parameter_id; synthetic fallback may use GENERIC_SIGNED_TANH_SCALE_SYN_V1."
   NORM_LINEAR_ANCHOR_V1:
     formula: "(x-low)/(high-low), then clamp"
-    parameter_ids: [ANCHOR_LOW, ANCHOR_HIGH]
+    parameter_contract: "Calling rule must supply one versioned parameter_id containing low/high anchors."
   NORM_COMPLEMENT_V1:
     formula: "1-x"
   NORM_WEIGHTED_MEAN_V1:
