@@ -33,6 +33,7 @@ def _run(seed: int, days: int):
 
     parameter_set = parameters["parameter_sets"]["synthetic_smoke_v1"]
     manifest = build_manifest(
+        run_id="test-run",
         created_at="2026-09-23T00:00:00+00:00",
         engine_version="0.1.0",
         git_commit="TEST",
@@ -83,3 +84,36 @@ def test_noop_engine_preserves_latents() -> None:
     ]
     assert len(initialization_records) == 60
     assert result.final_state.day == 30
+
+
+def test_manifest_replay_key_is_stable_but_default_run_id_is_unique() -> None:
+    logger.info("test_manifest_replay_key_is_stable_but_default_run_id_is_unique")
+    snapshot = load_yaml(ROOT / "config/countries/spain.yaml")
+    parameters = load_yaml(ROOT / "config/engine/parameter_registry_v1.yaml")
+    parameter_set = parameters["parameter_sets"]["synthetic_smoke_v1"]
+    common = dict(
+        created_at="2026-09-23T00:00:00+00:00",
+        engine_version="0.1.0",
+        git_commit="TEST",
+        snapshot_schema_version="1.0",
+        snapshot_bundle_hash=canonical_hash(snapshot),
+        country_file_hashes={"ESP": "TEST"},
+        graph_hash=canonical_hash({"graph": "none"}),
+        scenario_id="SCN-SMOKE-NOOP",
+        scenario_hash=canonical_hash({"scenario": "noop"}),
+        parameter_set_id="synthetic_smoke_v1",
+        parameter_set_hash=canonical_hash(parameter_set),
+        calibration_version="UNSCALED_SYNTHETIC",
+        rng_master_seed=5,
+        rng_algorithm="python_random_mt19937",
+        time_step_days=1,
+        start_date="2026-09-23",
+        horizon_days=1,
+        enabled_modules=("initializer", "trace", "noop_engine"),
+        normalization_version="1.0",
+        execution_order_version="EXEC_ORDER_V1",
+    )
+    a = build_manifest(**common)
+    b = build_manifest(**common)
+    assert a.replay_key == b.replay_key
+    assert a.run_id != b.run_id
