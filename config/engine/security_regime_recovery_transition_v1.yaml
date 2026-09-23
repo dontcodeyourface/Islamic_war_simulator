@@ -1,0 +1,28 @@
+schema_version: "1.0"
+status: "implementation-v0.19"
+purpose: "Atomic commit contract for matured security-regime recovery proposals."
+
+mode:
+  enabled: true
+  max_commits_per_node_per_day: 1
+  one_level_per_transition: true
+  commit_is_atomic_with_day_transaction: true
+  reset_escalation_persistence_after_commit: true
+  reset_recovery_persistence_after_commit: true
+
+commit:
+  rule_id: "SECURITY_REGIME_RECOVERY_COMMIT_V1"
+  state_field: "regimes.security_force_regime"
+  original_state_must_remain_unchanged: true
+  committed_state_must_validate: true
+
+trace:
+  commit_record: "security_regime_recovery_committed"
+  escalation_persistence_record: "security_regime_persistence_committed"
+  recovery_persistence_record: "security_regime_recovery_persistence_committed"
+
+safety:
+  political_identity_direct_transition_input: false
+  demographic_identity_direct_transition_input: false
+  religious_identity_direct_transition_input: false
+  regime_is_classifier_not_operational_instruction: true
