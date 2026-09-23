@@ -60,6 +60,8 @@ Event-effect proposal infrastructure: [docs/EVENT_EFFECT_PROPOSALS_V0.5.md](docs
 
 Owner-resolution infrastructure: [docs/OWNER_RESOLVER_V0.6.md](docs/OWNER_RESOLVER_V0.6.md), backed by [`config/engine/owner_resolver_v1.yaml`](config/engine/owner_resolver_v1.yaml). Proposals can now be deterministically aggregated, clamped to canonical bounds and committed into new EngineState objects while preserving original-state immutability; phase transitions remain disabled.
 
+Atomic day infrastructure: [docs/DAY_TRANSACTION_V0.7.md](docs/DAY_TRANSACTION_V0.7.md), backed by [`config/engine/day_transaction_v1.yaml`](config/engine/day_transaction_v1.yaml). The engine can now execute one atomic synchronous multi-country day from event evaluation through owner resolution and clock advance, with transactional RNG/trace rollback; phase transitions, recovery and graph spillover effects remain disabled.
+
 ---
 
 ## 2. Core analytical rule

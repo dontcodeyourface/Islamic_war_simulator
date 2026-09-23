@@ -49,6 +49,13 @@ class RNGStream:
         self.draw_index += 1
         return value
 
+    def clone(self) -> "RNGStream":
+        logger.info("RNGStream.clone name=%s draw_index=%s", self.name, self.draw_index)
+        cloned = RNGStream(name=self.name, seed=self.seed)
+        cloned._rng.setstate(self._rng.getstate())
+        cloned.draw_index = self.draw_index
+        return cloned
+
 
 @dataclass
 class RNGManager:
@@ -80,4 +87,27 @@ class RNGManager:
                 name: {"seed": stream.seed, "draw_index": stream.draw_index}
                 for name, stream in sorted(self._streams.items())
             },
+        }
+
+    def clone(self) -> "RNGManager":
+        logger.info("RNGManager.clone streams=%s", sorted(self._streams))
+        cloned = RNGManager(master_seed=self.master_seed, algorithm=self.algorithm)
+        cloned._streams = {
+            name: stream.clone()
+            for name, stream in sorted(self._streams.items())
+        }
+        return cloned
+
+    def replace_from(self, other: "RNGManager") -> None:
+        logger.info(
+            "RNGManager.replace_from source_streams=%s",
+            sorted(other._streams),
+        )
+        if self.master_seed != other.master_seed:
+            raise ValueError("Cannot replace RNG state from different master_seed")
+        if self.algorithm != other.algorithm:
+            raise ValueError("Cannot replace RNG state from different algorithm")
+        self._streams = {
+            name: stream.clone()
+            for name, stream in sorted(other._streams.items())
         }

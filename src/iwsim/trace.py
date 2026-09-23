@@ -74,6 +74,12 @@ class TraceLedger:
         node_id: str,
         state_hash_before: str,
         state_hash_after: str,
+        module_deltas: tuple[str, ...] = (),
+        event_ids_applied: tuple[str, ...] = (),
+        spillover_ids_applied: tuple[str, ...] = (),
+        agent_action_ids: tuple[str, ...] = (),
+        refinement_actions: tuple[str, ...] = (),
+        constraint_clamps: tuple[str, ...] = (),
     ) -> None:
         logger.info(
             "TraceLedger.append_daily_checkpoint run_id=%s day=%s node_id=%s",
@@ -88,13 +94,17 @@ class TraceLedger:
             node_id=node_id,
             state_hash_before=state_hash_before,
             state_hash_after=state_hash_after,
-            module_deltas=[],
-            event_ids_applied=[],
-            spillover_ids_applied=[],
-            agent_action_ids=[],
-            refinement_actions=[],
-            constraint_clamps=[],
+            module_deltas=list(module_deltas),
+            event_ids_applied=list(event_ids_applied),
+            spillover_ids_applied=list(spillover_ids_applied),
+            agent_action_ids=list(agent_action_ids),
+            refinement_actions=list(refinement_actions),
+            constraint_clamps=list(constraint_clamps),
         )
+
+    def extend_from(self, other: "TraceLedger") -> None:
+        logger.info("TraceLedger.extend_from records=%s", len(other.records))
+        self.records.extend(dict(record) for record in other.records)
 
     def to_jsonl(self, path: str | Path) -> None:
         logger.info("TraceLedger.to_jsonl path=%s records=%s", path, len(self.records))
