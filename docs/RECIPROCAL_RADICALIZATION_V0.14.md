@@ -126,3 +126,8 @@ v0.14 does not yet implement:
 - empirical calibration.
 
 All active gains remain `synthetic_smoke_v1` engineering values and are not real-world probability estimates.
+
+
+## Daily cap
+
+The reciprocal layer also reads `DYNAMIC_GAINS_*` for `max_single_day_latent_delta`. This bounds the requested daily feedback before the Owner Resolver applies canonical state bounds.
