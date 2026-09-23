@@ -1,0 +1,46 @@
+schema_version: "1.0"
+status: "implementation-v0.9"
+purpose: "Deterministic arbitration and commit of matured PhaseTransitionProposal objects."
+
+mode:
+  commit_enabled: true
+  deescalation_enabled: false
+  one_commit_per_node_per_day: true
+
+arbitration:
+  policy: "highest_target_severity"
+  phase_order_source: "config/engine/phase_evaluator_v1.yaml"
+  tie_breaker: "proposal_id_ascending"
+  require_target_above_current_phase: true
+
+validation:
+  proposal_status_required: "PROPOSED_NOT_APPLIED"
+  proposal_node_must_match_state: true
+  proposal_day_must_match_state: true
+  proposal_from_phase_must_match_state: true
+  duplicate_proposal_id: "fail_closed"
+  unknown_phase: "fail_closed"
+
+commit:
+  state_clone_required: true
+  mutate_only: "regimes.national_phase"
+  reset_phase_persistence_after_commit: true
+  persistence_last_evaluated_day: "committed_state_day"
+
+trace:
+  record_type: "phase_transition_committed"
+  fields:
+    - commit_id
+    - node_id
+    - day
+    - from_phase
+    - to_phase
+    - selected_proposal_id
+    - competing_proposal_ids
+    - arbitration_policy
+    - rule_id
+    - parameter_id
+
+safety:
+  phase_commit_is_classifier_change_only: true
+  no_tactical_behavior_generated: true
