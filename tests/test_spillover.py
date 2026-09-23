@@ -302,3 +302,78 @@ def test_matured_state_spillovers_become_traceable_delta_proposals() -> None:
     ]
     assert len(spillover_delta_records) == len(proposals)
     assert len(delta_records) == len(proposals)
+
+
+
+def test_spillover_effect_is_frozen_at_creation_across_latency() -> None:
+    logger.info("test_spillover_effect_is_frozen_at_creation_across_latency")
+    states, graph, parameters, config = _runtime()
+    registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    patched = copy.deepcopy(parameters)
+    latencies = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "GRAPH_LATENCIES_SYN_V1"
+    ]["value"]
+    latencies["geographic_proximity"] = [1, 1]
+    latencies["land_border"] = [1, 1]
+
+    for state in states.values():
+        state.latents["external_conflict_pressure"] = 0.0
+    states["ESP"].latents["external_conflict_pressure"] = 0.8
+
+    day_one = evaluate_graph_spillovers(
+        day=1,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    chosen = next(
+        item
+        for item in day_one.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+        and item.status == "SCHEDULED"
+    )
+    frozen_effect = chosen.bounded_effect
+    assert frozen_effect is not None
+    assert chosen.source_pressure == 0.8
+
+    states["ESP"].latents["external_conflict_pressure"] = 0.0
+    states["MAR"].latents["external_conflict_pressure"] = 0.25
+
+    day_two = evaluate_graph_spillovers(
+        day=2,
+        states=states,
+        graph=graph,
+        spillover_config=config,
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=day_one.queue,
+        trace=TraceLedger(),
+    )
+    matured = next(
+        item
+        for item in day_two.matured
+        if item.spillover_id == chosen.spillover_id
+    )
+    assert matured.bounded_effect == frozen_effect
+    assert matured.source_pressure == 0.8
+    assert states["ESP"].latents["external_conflict_pressure"] == 0.0
+
+    proposals = propose_matured_spillover_effects(
+        matured=day_two.matured,
+        states=states,
+        engine_state_registry=registry,
+        trace=TraceLedger(),
+    )
+    proposal = next(
+        item for item in proposals if item.event_id == chosen.spillover_id
+    )
+    assert proposal.raw_delta == frozen_effect
+    assert proposal.value_before == 0.25
+    assert proposal.proposed_unbounded_value == 0.25 + frozen_effect
