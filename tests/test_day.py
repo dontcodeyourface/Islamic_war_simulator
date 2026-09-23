@@ -1017,3 +1017,136 @@ def test_matured_spillover_and_event_share_single_owner_resolution() -> None:
     assert second.states["MAR"].latents[
         "external_conflict_pressure"
     ] == pytest.approx(min(1.0, mar_before + expected_delta))
+
+
+
+def test_extremist_network_dynamics_resolve_atomically() -> None:
+    logger.info("test_extremist_network_dynamics_resolve_atomically")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1010)
+    parameters = _disable_all_events(parameters)
+    network_config = load_yaml(
+        ROOT / "config/engine/extremist_network_dynamics_v1.yaml"
+    )
+
+    esp = states["ESP"]
+    esp.latents["polarization"] = 1.0
+    esp.latents["communal_fear"] = 1.0
+    esp.latents["civilizational_narrative_strength"] = 1.0
+    esp.latents["foreign_support_nonstate"] = 1.0
+    esp.latents["prison_control"] = 0.0
+    esp.latents["police_effective_capacity"] = 0.0
+    esp.latents["intelligence_effectiveness"] = 0.0
+    esp.latents["government_legitimacy"] = 0.0
+    esp.latents["social_cohesion"] = 0.0
+    network_variables = (
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+        "revolutionary_extremist_pressure",
+    )
+    for variable in network_variables:
+        esp.latents[variable] = 0.25
+
+    before = esp.to_dict()
+    trace = TraceLedger()
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_extremist_network_dynamics=True,
+        extremist_network_config=network_config,
+    )
+
+    esp_network_proposals = [
+        proposal
+        for proposal in result.network_proposals
+        if proposal.target_node == "ESP"
+    ]
+    assert len(esp_network_proposals) == 3
+    assert all(
+        proposal.raw_delta == pytest.approx(0.009)
+        for proposal in esp_network_proposals
+    )
+    assert all(
+        proposal.value_before == pytest.approx(0.25)
+        for proposal in esp_network_proposals
+    )
+
+    for variable in network_variables:
+        resolution = next(
+            record
+            for record in result.resolutions
+            if record.target_node == "ESP"
+            and record.variable == variable
+        )
+        assert resolution.raw_sum_delta == pytest.approx(0.009)
+        assert result.states["ESP"].latents[variable] == pytest.approx(0.259)
+        assert esp.latents[variable] == pytest.approx(0.25)
+
+    assert esp.to_dict() == before
+    assert any(
+        item["record_type"] == "extremist_network_dynamics_proposal"
+        for item in trace.records
+    )
+
+
+def test_same_day_event_does_not_feed_network_dynamics_until_next_tick() -> None:
+    logger.info(
+        "test_same_day_event_does_not_feed_network_dynamics_until_next_tick"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1011)
+    network_config = load_yaml(
+        ROOT / "config/engine/extremist_network_dynamics_v1.yaml"
+    )
+    _force_spain_morocco_and_spain_protest(states)
+
+    esp = states["ESP"]
+    esp.latents["communal_fear"] = 0.20
+    esp.latents["civilizational_narrative_strength"] = 0.40
+    esp.latents["foreign_support_nonstate"] = 0.30
+    esp.latents["prison_control"] = 0.80
+    esp.latents["police_effective_capacity"] = 0.70
+    esp.latents["intelligence_effectiveness"] = 0.70
+    for variable in (
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+        "revolutionary_extremist_pressure",
+    ):
+        esp.latents[variable] = 0.25
+
+    trace = TraceLedger()
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_extremist_network_dynamics=True,
+        extremist_network_config=network_config,
+    )
+
+    interstate = [
+        event
+        for event in result.events
+        if event.event_type == "INTERSTATE_INCIDENT_V1"
+        and "ESP" in event.actors
+    ]
+    assert interstate
+    assert result.states["ESP"].latents["communal_fear"] > 0.20
+
+    esp_network_trace = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "extremist_network_dynamics_proposal"
+        and item["target_node"] == "ESP"
+    )
+    assert esp_network_trace["driver_inputs"]["communal_fear"] == pytest.approx(0.20)
