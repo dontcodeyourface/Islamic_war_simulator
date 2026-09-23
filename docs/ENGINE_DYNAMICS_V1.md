@@ -4,7 +4,7 @@
 **Status:** canonical design / pre-code  
 **Version:** 1.0  
 **Date:** 2026-09-23  
-**Depends on:** Snapshot v1 / schema 1.0  
+**Depends on:** Snapshot v1 / schema 1.0, EngineState v1, Normalization and Parameters v1  
 **Engine implemented:** no
 
 ## 1. Objective
