@@ -11,6 +11,19 @@ from .trace import TraceLedger
 
 logger = logging.getLogger(__name__)
 
+FORBIDDEN_DIRECT_NETWORK_INPUTS = frozenset(
+    {
+        "religious_fraction_muslim",
+        "religious_fraction_christian",
+        "religious_fraction_other",
+        "foreign_born_fraction",
+        "second_generation_fraction",
+        "demographic_momentum",
+        "migration_pressure",
+        "dependency_pressure",
+    }
+)
+
 
 def _parameter_ids(profile: str) -> tuple[str, str]:
     logger.info("_parameter_ids profile=%s", profile)
@@ -126,7 +139,10 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     if len(all_keys) != len(set(all_keys)):
         raise ValueError("Duplicate extremist-network input key")
 
-    forbidden = set(str(item) for item in config.get("forbidden_direct_inputs", []))
+    configured_forbidden = set(
+        str(item) for item in config.get("forbidden_direct_inputs", [])
+    )
+    forbidden = configured_forbidden | set(FORBIDDEN_DIRECT_NETWORK_INPUTS)
     used_variables = {
         item["variable"] for item in (*driver_inputs, *damping_inputs)
     }
