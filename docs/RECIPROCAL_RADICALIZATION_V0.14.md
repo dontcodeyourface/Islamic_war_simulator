@@ -42,30 +42,41 @@ damping_score =
         intelligence_effectiveness
     )
 
+room = 1 - target_pressure
+
 cross_component =
     cross_reaction_gain
     * source_pressure
     * communal_fear
+    * room
 
 narrative_component =
     narrative_amplification_gain
     * civilizational_narrative_strength
-    * target_pressure
+    * source_pressure
+    * room
 
 damping_component =
     damping_gain
     * damping_score
     * target_pressure
 
-raw_delta =
+unbounded_delta =
     cross_component
     + narrative_component
     - damping_component
+
+raw_delta =
+    clamp(
+        unbounded_delta,
+        -max_single_day_latent_delta,
+        +max_single_day_latent_delta
+    )
 ```
 
 The reverse direction uses the exact same equation with source and target exchanged.
 
-All gains come from the versioned `RECIPROCAL_RADICALIZATION_*` parameter family.
+Feedback gains come from the versioned `RECIPROCAL_RADICALIZATION_*` parameter family. The daily cap comes from `DYNAMIC_GAINS_*`.
 
 ## Synchronous semantics
 
