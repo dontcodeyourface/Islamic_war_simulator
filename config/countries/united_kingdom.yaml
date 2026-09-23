@@ -1,0 +1,303 @@
+identity:
+  country_name: "United Kingdom"
+  iso2: "GB"
+  iso3: "GBR"
+  snapshot_version: "0.2"
+  snapshot_date: "2026-09-22"
+
+population:
+  total:
+    value: 69487000
+    unit: "persons"
+    geographic_scope: "United Kingdom"
+    reference_date: "2025-06-30"
+    source_ids: ["UK-ONS-POP-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "ONS provisional mid-2025 population estimate."
+  foreign_residents: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", freshness_class: null, estimated: false, derived: false, imputed: false, notes: "Not populated in v0.2."}
+  age:
+    under_15: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    age_15_64: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    age_65_plus: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+religion:
+  christian_share:
+    value: null
+    unit: "percent"
+    geographic_scope: "United Kingdom"
+    reference_date: null
+    source_ids: ["UK-ONS-RELIGION-EW-2021", "PEW-RELIGION-2020"]
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "No whole-UK official 2021 census value inserted because constituent-country census systems differ. Pew estimates Christianity at roughly 49% in 2020; retained in provenance pending exact table import."
+  muslim_share:
+    value: null
+    unit: "percent"
+    geographic_scope: "United Kingdom"
+    reference_date: null
+    source_ids: ["UK-ONS-RELIGION-EW-2021", "PEW-RELIGION-2020"]
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "England and Wales 2021: 6.5% Muslim. This is not silently generalized to the whole UK."
+  unaffiliated_share:
+    value: null
+    unit: "percent"
+    geographic_scope: "United Kingdom"
+    reference_date: null
+    source_ids: ["UK-ONS-RELIGION-EW-2021"]
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "England and Wales 2021: 37.2% no religion; whole-UK value deferred."
+  muslim_first_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_second_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+manpower:
+  legally_eligible: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  trained_or_prior_service: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_30d: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_180d: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  sustainable_365d: {value: null, unit: "persons", geographic_scope: "United Kingdom", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+armed_forces:
+  active_total:
+    value: 137480
+    unit: "UK_Regular_Forces"
+    geographic_scope: "United Kingdom Armed Forces"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Excludes Gurkhas, Volunteer Reserves and Other Personnel under MOD statistical definitions."
+  active_land:
+    value: 73660
+    unit: "UK_Regular_Army"
+    geographic_scope: "British Army"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Gurkhas separately reported by MOD."
+  active_naval:
+    value: 32430
+    unit: "UK_Regular_Forces"
+    geographic_scope: "Royal Navy and Royal Marines"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  active_air:
+    value: 31390
+    unit: "UK_Regular_Forces"
+    geographic_scope: "Royal Air Force"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  reserve_total:
+    value: 32130
+    unit: "Volunteer_Reserves"
+    geographic_scope: "United Kingdom Armed Forces"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  reserve_ready:
+    value: 28880
+    unit: "Trained_Future_Reserves_2020"
+    geographic_scope: "United Kingdom Armed Forces"
+    reference_date: "2026-07-01"
+    source_ids: ["UK-MOD-PERSONNEL-2026-07"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Not equivalent to instant mobilization."
+  conscription:
+    enabled: {value: false, unit: "boolean", geographic_scope: "United Kingdom", reference_date: "2026", source_ids: [], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Professional volunteer force."}
+  readiness:
+    deployable_share: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    command_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+military_domains:
+  land: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["UK-MOD-PERSONNEL-2026-07"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  air: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["UK-MOD-PERSONNEL-2026-07"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  naval: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["UK-MOD-PERSONNEL-2026-07"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  isr_c4isr:
+    satellite_access: {value: "national_and_allied", unit: "categorical", reference_date: "2026", source_ids: ["UK-DI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    allied_isr_access: {value: "Five_Eyes_NATO", unit: "categorical", reference_date: "2026", source_ids: ["UK-DI-2026", "UK-GCHQ-ACCOUNTABILITY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No numeric score assigned."}
+  electronic_warfare:
+    presence: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["UK-MIS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantification deferred."}
+  drones:
+    presence: {value: "present_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["UK-AI-DEFENCE-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Specific production rate deferred."}
+  counter_uas:
+    presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Dedicated quantitative research pending."}
+  strategic_deterrence:
+    nuclear_weapon_state: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["UK-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    national_nuclear_deterrent: {value: "continuous_at_sea_deterrent", unit: "categorical", reference_date: "2026", source_ids: ["UK-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "No tactical targeting model."}
+    allied_extended_deterrence: {value: "assigned_to_NATO_defence", unit: "categorical", reference_date: "2026", source_ids: ["UK-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    nuclear_sharing_role: {value: false, unit: "boolean", reference_date: "2026", source_ids: ["UK-NUCLEAR-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Independent national deterrent."}
+
+weapon_categories:
+  INFANTRY_SYSTEMS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ARMORED_SYSTEMS: {value: "present_and_domestic_industry_supported", unit: "categorical", reference_date: "2026", source_ids: ["UK-INDUSTRY-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  INDIRECT_FIRE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  GROUND_AIR_DEFENCE: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  COMBAT_AIR: {value: "present_and_domestic_industry_supported", unit: "categorical", reference_date: "2026", source_ids: ["UK-EXPORTS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SURFACE_NAVAL: {value: "present_and_major_shipbuilding_base", unit: "categorical", reference_date: "2026", source_ids: ["UK-EXPORTS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SUBMARINE: {value: "present_nuclear_powered", unit: "categorical", reference_date: "2026", source_ids: ["UK-NUCLEAR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  UNCREWED_AERIAL_SYSTEMS: {value: "present_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["UK-AI-DEFENCE-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  CYBER_CAPABILITY: {value: "high_institutional_presence", unit: "categorical", reference_date: "2026", source_ids: ["UK-GCHQ-ACCOUNTABILITY", "UK-MIS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No offensive score assigned."}
+  ISR_C4ISR: {value: "high_institutional_presence", unit: "categorical", reference_date: "2026", source_ids: ["UK-DI-2026", "UK-MIS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  LOGISTICS: {value: "global_support_structure_present", unit: "categorical", reference_date: "2026", source_ids: ["UK-MOD-PERSONNEL-2026-07"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Performance index deferred."}
+
+defence_industry:
+  military_expenditure_usd:
+    value: 89000000000
+    unit: "USD"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "SIPRI estimate."
+  direct_defence_employment:
+    value: 164000
+    unit: "direct_jobs_supported_by_MOD_industry_spend"
+    reference_date: "2024/25"
+    source_ids: ["UK-MOD-JOBS-2026"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "MOD-supported direct jobs, not entire private defence workforce."
+  defence_exports_local_currency:
+    value: 20000000000
+    unit: "GBP_plus_export_deals"
+    reference_date: "2025"
+    source_ids: ["UK-EXPORTS-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Government announcement: over £20bn defence export deals in 2025."
+  ammunition_capacity: {value: "expanding", unit: "categorical", reference_date: "2024/25", source_ids: ["UK-MOD-JOBS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Weapons/ammunition manufacturing employment increased sharply; production rate deferred."}
+  aerospace_capacity: {value: "major_domestic_and_multinational", unit: "categorical", reference_date: "2025", source_ids: ["UK-EXPORTS-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  naval_shipbuilding_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2025", source_ids: ["UK-EXPORTS-2025", "UK-NUCLEAR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electronics_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2026", source_ids: ["UK-AI-DEFENCE-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_90d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_365d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+intelligence:
+  national_service_names:
+    - "Security Service (MI5)"
+    - "Secret Intelligence Service (SIS/MI6)"
+    - "Government Communications Headquarters (GCHQ)"
+  military_intelligence_services:
+    - "Defence Intelligence"
+    - "Military Intelligence Services"
+  counterterrorism_fusion_centres:
+    - "Joint Terrorism Analysis Centre (JTAC)"
+  humint: {value: "national_external_service_present", unit: "categorical", reference_date: "2026", source_ids: ["UK-GCHQ-ACCOUNTABILITY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  sigint: {value: "GCHQ_present", unit: "categorical", reference_date: "2026", source_ids: ["UK-GCHQ-ACCOUNTABILITY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  geoint_imint: {value: "NCGI_and_Defence_Intelligence", unit: "categorical", reference_date: "2026", source_ids: ["UK-DI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  counterintelligence: {value: "MI5_and_defence_structures", unit: "categorical", reference_date: "2026", source_ids: ["UK-MI5", "UK-MIS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  allied_intelligence_sharing: {value: "Five_Eyes_NATO", unit: "categorical", reference_date: "2026", source_ids: ["UK-GCHQ-ACCOUNTABILITY", "UK-DI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  analytic_fusion: {value: "Defence_Intelligence_approx_5000_staff", unit: "categorical", reference_date: "2026", source_ids: ["UK-DI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Headcount is institutional capacity, not effectiveness."}
+
+cyber:
+  military_cyber_command: {value: "Cyber_and_Specialist_Operations_Command", unit: "organization", reference_date: "2026", source_ids: ["UK-MIS-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  offensive_capacity: {value: null, unit: "index", reference_date: null, source_ids: ["UK-GCHQ-ACCOUNTABILITY"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No operational scoring from public sources."}
+  defensive_maturity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+ai:
+  national_strategy: {value: "advanced_national_AI_ecosystem", unit: "categorical", reference_date: "2026", source_ids: ["UK-AI-DEFENCE-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Civilian national-AI metrics to be added separately."}
+  defence_ai_policy:
+    value: "Defence_AI_Strategy_plus_2026_acceleration"
+    unit: "categorical"
+    reference_date: "2026-06-10"
+    source_ids: ["UK-AI-DEFENCE-2026", "UK-DEFENCE-AI-STRATEGY"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "MOD explicitly prioritizes rapid AI adoption."
+  defence_ai_integration: {value: "institutionalized_DAIC_DAU_and_service_integration", unit: "categorical", reference_date: "2026", source_ids: ["UK-DEFENCE-AI-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Effectiveness score deferred."}
+  frontier_model_access: {value: "high_domestic_and_allied_access", unit: "categorical", reference_date: "2026", source_ids: ["UK-AI-DEFENCE-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: "Quantification deferred."}
+  model_security: {value: "responsible_AI_governance_present", unit: "categorical", reference_date: "2025", source_ids: ["UK-RAI-2025"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+economy:
+  gdp_current_usd: {value: 4002587541846, unit: "USD", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD."}
+  gdp_per_capita_usd: {value: 57602.0, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  real_gdp_growth: {value: 1.4, unit: "percent", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  unemployment_rate: {value: 4.7, unit: "percent", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}
+  inflation_rate: {value: 3.9, unit: "percent", reference_date: "2025", source_ids: ["WB-UK-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  fiscal_war_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+geography:
+  strategic_depth: {value: "island_state_with_overseas_basing_and_North_Atlantic_access", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative score deferred."}
+  atlantic_access: {value: true, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  mediterranean_access: {value: false, unit: "boolean_direct_mainland", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Overseas/sovereign-base access is modeled separately later."}
+  territorial_exclaves: []
+
+alliances:
+  memberships: ["NATO"]
+  major_security_partnerships: ["Five Eyes", "AUKUS", "Joint Expeditionary Force", "European bilateral defence relationships"]
+  interoperability:
+    common_standards: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    intelligence_sharing: {value: "Five_Eyes_NATO", unit: "categorical", reference_date: "2026", source_ids: ["UK-GCHQ-ACCOUNTABILITY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    command_integration: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+governance:
+  political_stability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "WGI/V-Dem layer deferred."}
+  government_effectiveness: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  elite_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No political inference at raw-data stage."}
+
+provenance_notes:
+  unresolved_conflicts:
+    - "Religion statistics are split across England/Wales, Scotland and Northern Ireland census systems; whole-UK figures are deliberately not synthesized yet."
+  known_data_gaps:
+    - "Mobilization throughput and deployability."
+    - "Drone/EW/counter-UAS production and stock depth."
+    - "Munitions inventory and industrial surge."
+  methodological_warnings:
+    - "UK Regular Forces excludes several personnel categories reported separately by MOD."
+    - "Religion is not combatant alignment."
+    - "Nuclear deterrence is a strategic state variable only."

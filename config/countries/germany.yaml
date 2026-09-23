@@ -1,0 +1,363 @@
+identity:
+  country_name: "Germany"
+  iso2: "DE"
+  iso3: "DEU"
+  snapshot_version: "0.2"
+  snapshot_date: "2026-09-22"
+
+population:
+  total:
+    value: 83363000
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2026-03-31"
+    source_ids: ["DE-DESTATIS-POP-2026Q1"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Destatis quarterly population result."
+  male:
+    value: 41127000
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2026-03-31"
+    source_ids: ["DE-DESTATIS-POP-2026Q1"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  female:
+    value: 42236000
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2026-03-31"
+    source_ids: ["DE-DESTATIS-POP-2026Q1"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  foreign_residents:
+    value: 12396000
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2026-03-31"
+    source_ids: ["DE-DESTATIS-POP-2026Q1"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "14.9% of population."
+  citizens:
+    value: 70967000
+    unit: "persons_German_population"
+    geographic_scope: "Germany"
+    reference_date: "2026-03-31"
+    source_ids: ["DE-DESTATIS-POP-2026Q1"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  age:
+    under_15: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    age_15_64: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    age_65_plus: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+religion:
+  christian_share:
+    value: 55.9
+    unit: "percent"
+    geographic_scope: "Germany"
+    reference_date: "2019"
+    source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "BAMF report cites 45.7 million members of Christian churches; church membership and self-identification are not identical."
+  muslim_share:
+    value: "6.4-6.7"
+    unit: "percent"
+    geographic_scope: "Germany"
+    reference_date: "2019"
+    source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "5.3-5.6 million Muslims with migration background from predominantly Muslim countries in the BAMF methodology."
+  muslim_population_estimate:
+    value: "5300000-5600000"
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: "2019"
+    source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"]
+    quality: "high"
+    freshness_class: "aging"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Methodological scope is specific; not all conceivable Muslim identities may be captured."
+  muslim_first_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Study includes migration-background structure, but generation-by-religion counts are not inserted until directly extracted."}
+  muslim_second_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-BAMF-MUSLIM-LIFE-2020"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  muslim_third_plus_generation: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+manpower:
+  legally_eligible: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  trained_or_prior_service: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: ["DE-RESERVE-2025"], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Ordered reserve is not total prior-service population."}
+  mobilizable_30d: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  mobilizable_180d: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  sustainable_365d: {value: null, unit: "persons", geographic_scope: "Germany", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+armed_forces:
+  active_total:
+    value: 186356
+    unit: "military_personnel"
+    geographic_scope: "Bundeswehr"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Includes military personnel across service and support organizations."
+  active_land:
+    value: 64697
+    unit: "military_personnel"
+    geographic_scope: "Heer"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  active_air:
+    value: 28577
+    unit: "military_personnel"
+    geographic_scope: "Luftwaffe"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  active_naval:
+    value: 15961
+    unit: "military_personnel"
+    geographic_scope: "Marine"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  active_cyber_space:
+    value: 13771
+    unit: "military_personnel"
+    geographic_scope: "Cyber- und Informationsraum"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "CIR also includes electronic warfare, IT, space-enabled command support and operational communication."
+  active_joint_support:
+    value: 48035
+    unit: "military_personnel"
+    geographic_scope: "Unterstützungsbereich"
+    reference_date: "2026-08-31"
+    source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: null
+  reserve_total:
+    value: null
+    unit: "persons"
+    geographic_scope: "Germany"
+    reference_date: null
+    source_ids: ["DE-RESERVE-2025"]
+    quality: "unavailable"
+    freshness_class: null
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Total legally available reserve not populated."
+  reserve_ready:
+    value: 60200
+    unit: "ordered_reservists"
+    geographic_scope: "Bundeswehr"
+    reference_date: "2025-12-31"
+    source_ids: ["DE-RESERVE-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "Reservists assigned to positions; about 21,300 performed reserve service in 2025."
+  conscription:
+    enabled: {value: "new_service_framework", unit: "categorical", geographic_scope: "Germany", reference_date: "2026", source_ids: ["DE-RESERVE-2025"], quality: "medium", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "New military service legal framework entered into force in 2026; detailed compulsory/voluntary mechanics require dedicated legal snapshot."}
+  readiness:
+    deployable_share: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+    command_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+military_domains:
+  land: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  air: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  naval: {presence: {value: true, unit: "boolean", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}}
+  isr_c4isr:
+    satellite_access: {value: "national_and_allied", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    secure_communications: {value: "CIR_integrated", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electronic_warfare:
+    presence: {value: "CIR_integrated", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  drones:
+    presence: {value: "present_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["DE-AI-2026", "DE-INDUSTRY-STRATEGY"], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Detailed stock and production deferred."}
+  counter_uas:
+    presence: {value: null, unit: "categorical", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Dedicated source pass required."}
+  strategic_deterrence:
+    nuclear_weapon_state: {value: false, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", freshness_class: "structural", estimated: false, derived: false, imputed: false, notes: null}
+    national_nuclear_deterrent: {value: false, unit: "boolean", reference_date: "2026", source_ids: [], quality: "high", freshness_class: "structural", estimated: false, derived: false, imputed: false, notes: null}
+    allied_extended_deterrence: {value: "NATO", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: null}
+    nuclear_sharing_role: {value: "NATO_nuclear_sharing_participant", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Primary-source provenance to be added before normalization."}
+
+weapon_categories:
+  INFANTRY_SYSTEMS: {value: "present", unit: "categorical", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ARMORED_SYSTEMS: {value: "present_and_major_domestic_industry", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  INDIRECT_FIRE: {value: "present_and_domestic_industry", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  GROUND_AIR_DEFENCE: {value: "present_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  COMBAT_AIR: {value: "present_and_multinational_industry_supported", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SURFACE_NAVAL: {value: "present_and_domestic_industry_supported", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  SUBMARINE: {value: "present_and_domestic_industry_supported", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ELECTRONIC_WARFARE: {value: "CIR_integrated", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  CYBER_CAPABILITY: {value: "CIR_integrated", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  ISR_C4ISR: {value: "CIR_integrated", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  LOGISTICS: {value: "large_support_command_structure", unit: "categorical", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Effectiveness score deferred."}
+
+defence_industry:
+  military_expenditure_usd:
+    value: 114000000000
+    unit: "USD"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: "SIPRI estimate; 2.3% of GDP in 2025."
+  military_expenditure_gdp_share:
+    value: 2.3
+    unit: "percent_GDP"
+    reference_date: "2025"
+    source_ids: ["SIPRI-MILEX-2025"]
+    quality: "high"
+    freshness_class: "recent"
+    estimated: true
+    derived: false
+    imputed: false
+    notes: null
+  ammunition_capacity: {value: "major_and_expanding", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Specific annual throughput deferred."}
+  drone_capacity: {value: "expanding", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  vehicle_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  aerospace_capacity: {value: "major_domestic_and_multinational", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  naval_shipbuilding_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  electronics_capacity: {value: "major_domestic", unit: "categorical", reference_date: "2026", source_ids: ["DE-INDUSTRY-STRATEGY"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_90d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  surge_multiplier_365d: {value: null, unit: "ratio", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+intelligence:
+  national_service_names:
+    - "Bundesnachrichtendienst (BND)"
+    - "Bundesamt für Verfassungsschutz (BfV)"
+  military_intelligence_services:
+    - "Militärischer Abschirmdienst (MAD)"
+  counterterrorism_fusion_centres: []
+  humint: {value: "external_intelligence_service_present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative performance not scored."}
+  sigint: {value: "present", unit: "categorical", reference_date: "2026", source_ids: [], quality: "medium", estimated: false, derived: false, imputed: false, notes: "Public quantitative score deferred."}
+  geoint_imint: {value: "military_and_allied_access", unit: "categorical", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "medium", estimated: false, derived: false, imputed: false, notes: null}
+  counterintelligence: {value: "MAD_present", unit: "categorical", reference_date: "2026", source_ids: ["DE-BUNDESWEHR-PERSONNEL-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  allied_intelligence_sharing: {value: "NATO_EU_bilateral", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+cyber:
+  military_cyber_command: {value: "Cyber- und Informationsraum", unit: "service_branch", reference_date: "2026", source_ids: ["DE-CIR-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "Fourth service branch; includes cyber, IT, EW, space-enabled command support and information activities."}
+  offensive_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  defensive_maturity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+
+ai:
+  national_strategy: {value: "industrial_AI_and_national_AI_ecosystem_acceleration", unit: "categorical", reference_date: "2026", source_ids: ["DE-AI-GOV-2026"], quality: "high", freshness_class: "current", estimated: false, derived: false, imputed: false, notes: "Cross-government strategy explicitly includes defence innovation discussion."}
+  defence_ai_policy:
+    value: "Bundeswehr_AI_operationalization"
+    unit: "categorical"
+    reference_date: "2026-05-11"
+    source_ids: ["DE-AI-2026"]
+    quality: "high"
+    freshness_class: "current"
+    estimated: false
+    derived: false
+    imputed: false
+    notes: "Bundeswehr identifies AI as a disruptive technology requiring military operationalization and security."
+  defence_ai_integration: {value: "institutional_active_development", unit: "categorical", reference_date: "2026", source_ids: ["DE-AI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: "No effectiveness score."}
+  frontier_model_access: {value: "European_and_global_ecosystem_access", unit: "categorical", reference_date: "2026", source_ids: ["DE-AI-GOV-2026"], quality: "medium", estimated: true, derived: false, imputed: false, notes: null}
+  compute_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Dedicated AI infrastructure snapshot pending."}
+  model_security: {value: "explicit_security_focus", unit: "categorical", reference_date: "2026", source_ids: ["DE-AI-2026"], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+economy:
+  gdp_current_usd: {value: 5050000000000, unit: "USD", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: "World Bank current USD, rounded from profile."}
+  gdp_per_capita_usd: {value: 60496.4, unit: "USD_per_person", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  real_gdp_growth: {value: 0.2, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  unemployment_rate: {value: 3.7, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: true, derived: false, imputed: false, notes: null}
+  inflation_rate: {value: 2.2, unit: "percent", reference_date: "2025", source_ids: ["WB-DE-ECON-2025"], quality: "high", freshness_class: "recent", estimated: false, derived: false, imputed: false, notes: null}
+  fiscal_war_capacity: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "Large 2026 defence expansion should be modeled from budgets separately."}
+
+geography:
+  strategic_depth: {value: "central_continental_European_state", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: "Quantitative score deferred."}
+  atlantic_access: {value: true, unit: "boolean_via_North_Sea", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  mediterranean_access: {value: false, unit: "boolean_direct", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+  territorial_exclaves: []
+
+alliances:
+  memberships: ["NATO", "European Union"]
+  major_security_partnerships: ["EU Common Security and Defence Policy", "Franco-German and European defence cooperation"]
+  interoperability:
+    common_standards: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    intelligence_sharing: {value: "NATO_EU_bilateral", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+    command_integration: {value: "NATO_integrated", unit: "categorical", reference_date: "2026", source_ids: [], quality: "high", estimated: false, derived: false, imputed: false, notes: null}
+
+governance:
+  political_stability: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "WGI/V-Dem layer deferred."}
+  government_effectiveness: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: null}
+  elite_cohesion: {value: null, unit: "index", reference_date: null, source_ids: [], quality: "unavailable", estimated: false, derived: false, imputed: false, notes: "No political inference at raw-data stage."}
+
+provenance_notes:
+  unresolved_conflicts:
+    - "BAMF Muslim estimate has a specific migration-background methodology and should not be treated as a perfect census of religion."
+  known_data_gaps:
+    - "Full reserve pool and 30/180/365-day mobilization throughput."
+    - "Ammunition stocks and production rates."
+    - "Drone/counter-UAS quantities."
+    - "AI compute and defence integration metrics."
+  methodological_warnings:
+    - "Ordered reservists are not equivalent to immediately deployable reservists."
+    - "Religion is not combatant alignment."
+    - "Germany has no national nuclear arsenal; alliance deterrence is modeled separately."

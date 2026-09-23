@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "0.2"
 schema_name: "country_snapshot"
 status: "canonical-pre-engine"
 
@@ -6,12 +6,22 @@ status: "canonical-pre-engine"
 datum_template:
   value: null
   unit: null
+  geographic_scope: null
   reference_date: null
   source_ids: []
   quality: "unavailable"   # high | medium | low | unavailable
+  freshness_class: null    # current | recent | aging | stale | structural
   estimated: false
   derived: false
   imputed: false
+  uncertainty:
+    mode: "unknown"        # deterministic | interval | distribution | scenario | unknown
+    lower: null
+    upper: null
+    distribution: null     # uniform | triangular | beta | normal | lognormal | empirical | custom
+    parameters: {}
+    correlation_group: null
+    confidence: null
   notes: null
 
 required_sections:
@@ -160,6 +170,12 @@ military_domains:
     electronic: {}
     kinetic: {}
     cost_exchange_sustainability: {}
+  strategic_deterrence:
+    nuclear_weapon_state: {}
+    national_nuclear_deterrent: {}
+    allied_extended_deterrence: {}
+    nuclear_sharing_role: {}
+    strategic_warning_resilience: {}
 
 weapon_categories:
   INFANTRY_SYSTEMS: {}
@@ -301,3 +317,8 @@ provenance_notes:
   unresolved_conflicts: []
   known_data_gaps: []
   methodological_warnings: []
+  uncertainty_policy:
+    unresolved_fields_may_be_sampled: true
+    sampling_requires_explicit_bounds_or_distribution: true
+    no_unbounded_sampling_from_null: true
+    preserve_cross_variable_correlations: true
