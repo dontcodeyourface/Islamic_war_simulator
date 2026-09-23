@@ -1,0 +1,68 @@
+schema_version: "1.0"
+status: "implementation-v0.6"
+purpose: "Owner-module resolver contract for committing DeltaProposal objects into new EngineState values."
+
+mode:
+  proposal_resolution: true
+  direct_event_mutation: false
+  phase_transitions_allowed: false
+  graph_spillover_allowed: false
+  day_advance: false
+
+equation:
+  equation_id: "OWNER_RESOLVE_SUM_CLAMP_V1"
+  parameter_id:
+    synthetic_smoke_v1: "OWNER_RESOLVER_POLICY_SYN_V1"
+    calibrated_v1: "OWNER_RESOLVER_POLICY_CAL_V1"
+
+grouping_key:
+  - target_node
+  - variable
+
+policy:
+  aggregation: "sum"
+  deterministic_order: "proposal_id_ascending"
+  numeric_sum: "math.fsum"
+  bounds_source: "engine_state_registry"
+  stale_proposal: "fail_closed"
+  owner_mismatch: "fail_closed"
+  duplicate_proposal_id: "fail_closed"
+  unknown_variable: "fail_closed"
+  unknown_node: "fail_closed"
+
+resolution_fields:
+  - resolution_id
+  - target_node
+  - variable
+  - owner_module
+  - proposal_ids
+  - value_before
+  - raw_sum_delta
+  - proposed_unbounded_value
+  - lower_bound
+  - upper_bound
+  - bounded_delta
+  - value_after
+  - clamp_amount
+  - equation_id
+  - parameter_ids
+  - apply_status
+
+apply_status:
+  committed: "COMMITTED"
+
+immutability:
+  original_state_must_remain_unchanged: true
+  resolver_returns_new_state_objects: true
+  state_day_is_preserved: true
+
+trace:
+  record_type: "owner_resolution"
+  clamp_must_be_visible: true
+  proposal_lineage_required: true
+
+rules:
+  resolver_must_not_classify_phase: true
+  resolver_must_not_generate_events: true
+  resolver_must_not_apply_recovery: true
+  resolver_must_not_advance_clock: true
