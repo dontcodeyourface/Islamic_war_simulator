@@ -377,3 +377,59 @@ def test_spillover_effect_is_frozen_at_creation_across_latency() -> None:
     assert proposal.raw_delta == frozen_effect
     assert proposal.value_before == 0.25
     assert proposal.proposed_unbounded_value == 0.25 + frozen_effect
+
+
+
+def test_spillover_id_changes_when_state_effect_policy_changes() -> None:
+    logger.info("test_spillover_id_changes_when_state_effect_policy_changes")
+    states_a, graph_a, parameters_a, config_a = _runtime()
+    states_b, graph_b, parameters_b, config_b = _runtime()
+    config_b = copy.deepcopy(config_b)
+    regional_rule = next(
+        item
+        for item in config_b["rules"]
+        if item["rule_id"] == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+    )
+    regional_rule["apply_to_state"] = False
+
+    result_a = evaluate_graph_spillovers(
+        day=1,
+        states=states_a,
+        graph=graph_a,
+        spillover_config=config_a,
+        parameter_registry=parameters_a,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+    result_b = evaluate_graph_spillovers(
+        day=1,
+        states=states_b,
+        graph=graph_b,
+        spillover_config=config_b,
+        parameter_registry=parameters_b,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+
+    candidate_a = next(
+        item
+        for item in result_a.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+    )
+    candidate_b = next(
+        item
+        for item in result_b.candidates
+        if item.rule_id == "REGIONAL_CONFLICT_PRESSURE_TRACE_V1"
+        and item.source_node == "ESP"
+        and item.target_node == "MAR"
+        and item.channel == "geographic_proximity"
+    )
+
+    assert candidate_a.apply_to_state is True
+    assert candidate_b.apply_to_state is False
+    assert candidate_a.spillover_id != candidate_b.spillover_id
