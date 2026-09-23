@@ -241,6 +241,8 @@ def _latency_days(
     day: int,
     source_node: str,
     target_node: str,
+    source_variable: str,
+    target_variable: str,
     channel: str,
     rule_id: str,
     interval: Any,
@@ -270,6 +272,8 @@ def _latency_days(
             "day": day,
             "source_node": source_node,
             "target_node": target_node,
+            "source_variable": source_variable,
+            "target_variable": target_variable,
             "channel": channel,
             "rule_id": rule_id,
             "latency_contract": "DETERMINISTIC_HASH_INTERVAL_V1",
@@ -354,7 +358,7 @@ def evaluate_graph_spillovers(
     queue: SpilloverQueueState,
     trace: TraceLedger,
 ) -> SpilloverPassResult:
-    """Evaluate trace-only cross-node transmissions and deterministic latency queues."""
+    """Evaluate cross-node transmissions, deterministic latencies and maturation."""
     logger.info(
         "evaluate_graph_spillovers day=%s states=%s edges=%s profile=%s",
         day,
@@ -470,6 +474,8 @@ def evaluate_graph_spillovers(
                             rule_id=rule["rule_id"],
                             source_node=source_node,
                             target_node=target_node,
+                            source_variable=source_variable,
+                            target_variable=target_variable,
                             channel=channel,
                             edge_id=edge.edge_id(),
                             edge_weight=edge_weight,
