@@ -28,6 +28,12 @@ from .reciprocal import propose_reciprocal_radicalization_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
 from .rng import RNGManager
 from .security import propose_security_chain_dynamics
+from .security_regime import (
+    SecurityRegimeEvaluationResult,
+    SecurityRegimePersistenceState,
+    SecurityRegimeTransitionProposal,
+    evaluate_security_regime,
+)
 from .spillover import (
     GraphSpilloverRecord,
     SpilloverQueueState,
@@ -79,6 +85,9 @@ class DayTransactionResult:
     network_proposals: tuple[DeltaProposal, ...]
     reciprocal_radicalization_proposals: tuple[DeltaProposal, ...]
     security_chain_proposals: tuple[DeltaProposal, ...]
+    security_regime_persistence: dict[str, SecurityRegimePersistenceState]
+    security_regime_evaluations: tuple[SecurityRegimeEvaluationResult, ...]
+    security_regime_proposals: tuple[SecurityRegimeTransitionProposal, ...]
     phase_persistence: dict[str, PhasePersistenceState]
     phase_evaluations: tuple[PhaseEvaluationResult, ...]
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...]
@@ -125,6 +134,18 @@ class DayTransactionResult:
             ],
             "security_chain_proposals": [
                 item.to_dict() for item in self.security_chain_proposals
+            ],
+            "security_regime_persistence": {
+                node_id: persistence.to_dict()
+                for node_id, persistence in sorted(
+                    self.security_regime_persistence.items()
+                )
+            },
+            "security_regime_evaluations": [
+                item.to_dict() for item in self.security_regime_evaluations
+            ],
+            "security_regime_proposals": [
+                item.to_dict() for item in self.security_regime_proposals
             ],
             "phase_persistence": {
                 node_id: persistence.to_dict()
@@ -228,6 +249,81 @@ def _normalize_phase_persistence_inputs(
     return normalized
 
 
+def _normalize_security_regime_persistence_inputs(
+    *,
+    states: dict[str, EngineState],
+    day_from: int,
+    persistence: dict[str, SecurityRegimePersistenceState | None] | None,
+) -> dict[str, SecurityRegimePersistenceState | None]:
+    logger.info(
+        "_normalize_security_regime_persistence_inputs day_from=%s supplied=%s",
+        day_from,
+        persistence is not None,
+    )
+    if persistence is None:
+        if day_from != 0:
+            raise ValueError(
+                "Security regime persistence is required after day zero "
+                "when the evaluator is enabled"
+            )
+        return {node_id: None for node_id in sorted(states)}
+
+    if set(persistence) != set(states):
+        raise ValueError("Security regime persistence nodes must equal state nodes")
+
+    normalized: dict[str, SecurityRegimePersistenceState | None] = {}
+    for node_id in sorted(states):
+        item = persistence[node_id]
+        if item is None:
+            if day_from != 0:
+                raise ValueError(
+                    f"Missing security regime persistence for {node_id} after day zero"
+                )
+            normalized[node_id] = None
+            continue
+        if item.node_id != node_id:
+            raise ValueError(
+                f"Security regime persistence node mismatch key={node_id} "
+                f"value={item.node_id}"
+            )
+        if item.last_evaluated_day != day_from:
+            raise ValueError(
+                f"Security regime persistence day mismatch for {node_id}: "
+                f"expected {day_from}, got {item.last_evaluated_day}"
+            )
+        current = states[node_id].regimes["security_force_regime"]
+        if item.current_regime != current:
+            raise ValueError(
+                f"Security regime persistence mismatch for {node_id}: "
+                f"{item.current_regime} != {current}"
+            )
+        normalized[node_id] = item
+    return normalized
+
+
+def _security_regime_inputs_fingerprint(
+    *,
+    persistence: dict[str, SecurityRegimePersistenceState | None],
+    context_flags: dict[str, dict[str, bool]],
+    regime_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info(
+        "_security_regime_inputs_fingerprint nodes=%s",
+        len(persistence),
+    )
+    return {
+        "persistence": {
+            node_id: item.to_dict() if item is not None else None
+            for node_id, item in sorted(persistence.items())
+        },
+        "context_flags": {
+            node_id: dict(sorted(flags.items()))
+            for node_id, flags in sorted(context_flags.items())
+        },
+        "regime_config_hash": canonical_hash(regime_config),
+    }
+
+
 def _normalize_spillover_queue_inputs(
     *,
     day_from: int,
@@ -290,6 +386,7 @@ def _transaction_id(
     network_inputs: dict[str, Any] | None = None,
     reciprocal_inputs: dict[str, Any] | None = None,
     security_inputs: dict[str, Any] | None = None,
+    security_regime_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -313,6 +410,7 @@ def _transaction_id(
             "network_inputs": network_inputs,
             "reciprocal_inputs": reciprocal_inputs,
             "security_inputs": security_inputs,
+            "security_regime_inputs": security_regime_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -551,6 +649,48 @@ def _evaluate_and_commit_phases(
     )
 
 
+def _evaluate_security_regimes(
+    *,
+    states: dict[str, EngineState],
+    persistence: dict[str, SecurityRegimePersistenceState | None],
+    context_flags: dict[str, dict[str, bool]],
+    regime_config: dict[str, Any],
+    parameter_registry: dict[str, Any],
+    profile: str,
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    dict[str, SecurityRegimePersistenceState],
+    tuple[SecurityRegimeEvaluationResult, ...],
+    tuple[SecurityRegimeTransitionProposal, ...],
+]:
+    logger.info("_evaluate_security_regimes states=%s", len(states))
+    persistence_out: dict[str, SecurityRegimePersistenceState] = {}
+    evaluations: list[SecurityRegimeEvaluationResult] = []
+    proposals: list[SecurityRegimeTransitionProposal] = []
+
+    for node_id in sorted(states):
+        result = evaluate_security_regime(
+            state=states[node_id],
+            persistence=persistence[node_id],
+            context_flags=context_flags.get(node_id, {}),
+            regime_config=regime_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=trace,
+        )
+        persistence_out[node_id] = result.persistence
+        evaluations.append(result)
+        proposals.extend(result.proposals)
+
+    return (
+        persistence_out,
+        tuple(evaluations),
+        tuple(sorted(proposals, key=lambda item: item.proposal_id)),
+    )
+
+
 def _checkpoint_node(
     *,
     node_id: str,
@@ -646,6 +786,12 @@ def run_day_transaction(
     reciprocal_radicalization_config: dict[str, Any] | None = None,
     enable_security_chain_dynamics: bool = False,
     security_chain_config: dict[str, Any] | None = None,
+    enable_security_regime_evaluator: bool = False,
+    security_regime_config: dict[str, Any] | None = None,
+    security_regime_persistence: (
+        dict[str, SecurityRegimePersistenceState | None] | None
+    ) = None,
+    security_regime_context_flags: dict[str, dict[str, bool]] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -672,7 +818,50 @@ def run_day_transaction(
     network_inputs: dict[str, Any] | None = None
     reciprocal_inputs: dict[str, Any] | None = None
     security_inputs: dict[str, Any] | None = None
+    security_regime_inputs: dict[str, Any] | None = None
+    normalized_security_regime_persistence: dict[
+        str, SecurityRegimePersistenceState | None
+    ] = {}
+    normalized_security_regime_context_flags = {
+        node_id: dict(flags)
+        for node_id, flags in (security_regime_context_flags or {}).items()
+    }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_security_regime_evaluator:
+        if security_regime_config is None:
+            raise ValueError(
+                "Security regime evaluator requires security_regime_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "security_regime_evaluator_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Security regime evaluator is disabled by the day transaction contract"
+            )
+        normalized_security_regime_persistence = (
+            _normalize_security_regime_persistence_inputs(
+                states=states,
+                day_from=day_from,
+                persistence=security_regime_persistence,
+            )
+        )
+        unknown_security_context_nodes = (
+            set(normalized_security_regime_context_flags) - set(states)
+        )
+        if unknown_security_context_nodes:
+            raise ValueError(
+                "Unknown security regime context nodes: "
+                f"{sorted(unknown_security_context_nodes)}"
+            )
+        security_regime_inputs = _security_regime_inputs_fingerprint(
+            persistence=normalized_security_regime_persistence,
+            context_flags=normalized_security_regime_context_flags,
+            regime_config=security_regime_config,
+        )
 
     if enable_security_chain_dynamics:
         if security_chain_config is None:
@@ -804,6 +993,7 @@ def run_day_transaction(
         network_inputs=network_inputs,
         reciprocal_inputs=reciprocal_inputs,
         security_inputs=security_inputs,
+        security_regime_inputs=security_regime_inputs,
     )
 
     working_rng = rng.clone()
@@ -946,6 +1136,29 @@ def run_day_transaction(
         engine_state_registry=engine_state_registry,
     )
 
+    security_regime_persistence_out: dict[
+        str, SecurityRegimePersistenceState
+    ] = {}
+    security_regime_evaluations: tuple[SecurityRegimeEvaluationResult, ...] = ()
+    security_regime_proposals: tuple[SecurityRegimeTransitionProposal, ...] = ()
+
+    if enable_security_regime_evaluator:
+        assert security_regime_config is not None
+        (
+            security_regime_persistence_out,
+            security_regime_evaluations,
+            security_regime_proposals,
+        ) = _evaluate_security_regimes(
+            states=advanced_states,
+            persistence=normalized_security_regime_persistence,
+            context_flags=normalized_security_regime_context_flags,
+            regime_config=security_regime_config,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+
     phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
     phase_arbitrations: tuple[PhaseArbitrationRecord, ...] = ()
@@ -1020,6 +1233,15 @@ def run_day_transaction(
         security_chain_proposal_ids=[
             proposal.proposal_id for proposal in security_chain_proposals
         ],
+        security_regime_proposal_ids=[
+            proposal.proposal_id for proposal in security_regime_proposals
+        ],
+        security_regime_persistence={
+            node_id: item.to_dict()
+            for node_id, item in sorted(
+                security_regime_persistence_out.items()
+            )
+        },
         spillover_queue=(
             spillover_queue_out.to_dict()
             if spillover_queue_out is not None
@@ -1056,6 +1278,9 @@ def run_day_transaction(
             reciprocal_radicalization_proposals
         ),
         security_chain_proposals=security_chain_proposals,
+        security_regime_persistence=security_regime_persistence_out,
+        security_regime_evaluations=security_regime_evaluations,
+        security_regime_proposals=security_regime_proposals,
         phase_persistence=phase_persistence_out,
         phase_evaluations=phase_evaluations,
         phase_arbitrations=phase_arbitrations,

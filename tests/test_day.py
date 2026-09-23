@@ -1679,3 +1679,234 @@ def test_security_chain_config_changes_transaction_identity() -> None:
 
     assert result_a.transaction_id != result_b.transaction_id
     assert result_a.states == result_b.states
+
+
+
+def test_security_regime_evaluator_is_read_only_inside_day_transaction() -> None:
+    logger.info(
+        "test_security_regime_evaluator_is_read_only_inside_day_transaction"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1019
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    for state in states.values():
+        state.regimes["security_force_regime"] = "COHESIVE"
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+    states["ESP"].latents["security_chain_cohesion"] = 0.70
+    states["ESP"].latents["operational_fatigue"] = 0.50
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in sorted(states.items())
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+    )
+
+    assert len(result.security_regime_evaluations) == len(states)
+    assert len(result.security_regime_proposals) == 1
+    proposal = result.security_regime_proposals[0]
+    assert proposal.node_id == "ESP"
+    assert proposal.from_regime == "COHESIVE"
+    assert proposal.to_regime == "STRAINED"
+    assert proposal.persistence_required == 1
+    assert proposal.persistence_observed == 1
+
+    for node_id in sorted(states):
+        assert states[node_id].to_dict() == before[node_id]
+        assert result.states[node_id].regimes["security_force_regime"] == "COHESIVE"
+        assert result.security_regime_persistence[
+            node_id
+        ].last_evaluated_day == 1
+
+    assert trace.records[-1]["security_regime_proposal_ids"] == [
+        proposal.proposal_id
+    ]
+
+
+def test_security_regime_evaluator_observes_post_resolution_security_state() -> None:
+    logger.info(
+        "test_security_regime_evaluator_observes_post_resolution_security_state"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1020
+    )
+    parameters = _disable_all_events(parameters)
+    security_config = load_yaml(
+        ROOT / "config/engine/security_chain_dynamics_v1.yaml"
+    )
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    _set_security_chain_test_state(states)
+    esp = states["ESP"]
+    esp.regimes["security_force_regime"] = "COHESIVE"
+    esp.latents["security_chain_cohesion"] = 0.751
+    esp.latents["operational_fatigue"] = 0.50
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_chain_dynamics=True,
+        security_chain_config=security_config,
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+    )
+
+    assert result.states["ESP"].latents[
+        "security_chain_cohesion"
+    ] < 0.75
+    esp_eval = next(
+        item
+        for item in result.security_regime_evaluations
+        if item.persistence.node_id == "ESP"
+    )
+    assert esp_eval.evaluations[0].conditions_passed is True
+    assert esp_eval.evaluations[0].matured is True
+    assert len(esp_eval.proposals) == 1
+    assert esp_eval.proposals[0].to_regime == "STRAINED"
+    assert result.states["ESP"].regimes["security_force_regime"] == "COHESIVE"
+
+
+def test_security_regime_persistence_is_required_after_day_zero() -> None:
+    logger.info("test_security_regime_persistence_is_required_after_day_zero")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1021
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    for state in states.values():
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.55
+        state.latents["constitutional_loyalty"] = 0.65
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+    )
+    assert all(
+        item.last_evaluated_day == 1
+        for item in first.security_regime_persistence.values()
+    )
+
+    rng_before = rng.describe()
+    trace = TraceLedger()
+    with pytest.raises(
+        ValueError,
+        match="Security regime persistence is required after day zero",
+    ):
+        run_day_transaction(
+            states=first.states,
+            graph=graph,
+            day_config=day_config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=rng,
+            manifest=manifest,
+            trace=trace,
+            enable_security_regime_evaluator=True,
+            security_regime_config=regime_config,
+            security_regime_persistence=None,
+            security_regime_context_flags={},
+        )
+    assert rng.describe() == rng_before
+    assert trace.records == []
+
+
+def test_security_regime_persistence_continues_across_atomic_days() -> None:
+    logger.info("test_security_regime_persistence_continues_across_atomic_days")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1022
+    )
+    parameters = _disable_all_events(parameters)
+    regime_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    for state in states.values():
+        state.regimes["security_force_regime"] = "STRAINED"
+        state.latents["security_chain_cohesion"] = 0.55
+        state.latents["constitutional_loyalty"] = 0.65
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+    )
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_security_regime_evaluator=True,
+        security_regime_config=regime_config,
+        security_regime_persistence={
+            node_id: item
+            for node_id, item in first.security_regime_persistence.items()
+        },
+        security_regime_context_flags={},
+    )
+
+    esp_eval = next(
+        item
+        for item in second.security_regime_evaluations
+        if item.persistence.node_id == "ESP"
+    )
+    assert esp_eval.evaluations[0].persistence_observed == 2
+    assert esp_eval.evaluations[0].persistence_required == 8
+    assert second.security_regime_proposals == ()
