@@ -118,9 +118,17 @@ def _init_rule_map(engine_state_registry: dict[str, Any]) -> dict[str, str]:
     return result
 
 
-def _sample_prior(prior: dict[str, Any], rng: RNGManager) -> tuple[float, int]:
-    logger.info("_sample_prior distribution=%s", prior["distribution"])
-    stream = rng.stream("uncertainty_sampling")
+def _sample_prior(
+    prior: dict[str, Any],
+    rng: RNGManager,
+    stream_name: str,
+) -> tuple[float, int]:
+    logger.info(
+        "_sample_prior distribution=%s stream_name=%s",
+        prior["distribution"],
+        stream_name,
+    )
+    stream = rng.stream(stream_name)
     distribution = prior["distribution"]
     if distribution == "beta":
         draw_index = stream.draw_index
@@ -151,6 +159,8 @@ def initialize_synthetic_state(
         get_value(snapshot, "identity.country_name"),
     )
     latent_registry = extract_latent_registry(engine_state_registry)
+    node_id = str(get_value(snapshot, "identity.iso3"))
+    prior_stream_name = f"uncertainty_sampling:{node_id}"
     prior_map = normalization_registry["synthetic_smoke_defaults"][
         "missing_latent_prior_classes"
     ]
@@ -160,20 +170,24 @@ def initialize_synthetic_state(
     latents: dict[str, float] = {}
     for latent_id in latent_registry:
         prior_id = prior_map[latent_id]
-        value, draw_index = _sample_prior(priors[prior_id], rng)
+        value, draw_index = _sample_prior(
+            priors[prior_id],
+            rng,
+            prior_stream_name,
+        )
         latents[latent_id] = float(value)
         trace.append_initialization(
-            node_id=str(get_value(snapshot, "identity.iso3")),
+            node_id=node_id,
             variable=latent_id,
             value=float(value),
             init_rule_id=init_rules[latent_id],
             prior_id=prior_id,
-            rng_stream="uncertainty_sampling",
+            rng_stream=prior_stream_name,
             draw_index=draw_index,
         )
 
     state = EngineState(
-        node_id=str(get_value(snapshot, "identity.iso3")),
+        node_id=node_id,
         day=0,
         physical_stocks=_extract_physical_stocks(snapshot),
         latents=latents,
@@ -216,6 +230,8 @@ def initialize_hybrid_state(
         raise ValueError("v0.2 initializer currently supports synthetic_smoke_v1 only")
 
     latent_registry = extract_latent_registry(engine_state_registry)
+    node_id = str(get_value(snapshot, "identity.iso3"))
+    prior_stream_name = f"uncertainty_sampling:{node_id}"
     prior_map = normalization_registry["synthetic_smoke_defaults"][
         "missing_latent_prior_classes"
     ]
@@ -240,7 +256,7 @@ def initialize_hybrid_state(
             latents[latent_id] = empirical.value
             empirical_count += 1
             trace.append_initialization(
-                node_id=str(get_value(snapshot, "identity.iso3")),
+                node_id=node_id,
                 variable=latent_id,
                 value=empirical.value,
                 init_rule_id=init_rules[latent_id],
@@ -271,7 +287,7 @@ def initialize_hybrid_state(
             latents[latent_id] = baseline.value
             baseline_count += 1
             trace.append_initialization(
-                node_id=str(get_value(snapshot, "identity.iso3")),
+                node_id=node_id,
                 variable=latent_id,
                 value=baseline.value,
                 init_rule_id=init_rules[latent_id],
@@ -293,16 +309,20 @@ def initialize_hybrid_state(
             continue
 
         prior_id = prior_map[latent_id]
-        value, draw_index = _sample_prior(priors[prior_id], rng)
+        value, draw_index = _sample_prior(
+            priors[prior_id],
+            rng,
+            prior_stream_name,
+        )
         latents[latent_id] = float(value)
         prior_count += 1
         trace.append_initialization(
-            node_id=str(get_value(snapshot, "identity.iso3")),
+            node_id=node_id,
             variable=latent_id,
             value=float(value),
             init_rule_id=init_rules[latent_id],
             prior_id=prior_id,
-            rng_stream="uncertainty_sampling",
+            rng_stream=prior_stream_name,
             draw_index=draw_index,
             source_type="prior",
             empirical_fraction=0.0,
@@ -312,7 +332,7 @@ def initialize_hybrid_state(
 
     total = len(latent_registry)
     state = EngineState(
-        node_id=str(get_value(snapshot, "identity.iso3")),
+        node_id=node_id,
         day=0,
         physical_stocks=_extract_physical_stocks(snapshot),
         latents=latents,
