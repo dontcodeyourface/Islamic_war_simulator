@@ -139,6 +139,30 @@ def _force_spain_morocco_and_spain_protest(states: dict) -> None:
     states["ESP"].latents["public_order_stress"] = 0.40
 
 
+def _force_only_spain_morocco_interstate_event(parameters: dict) -> dict:
+    logger.info("_force_only_spain_morocco_interstate_event")
+    patched = copy.deepcopy(parameters)
+    hazards = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "EVENT_HAZARD_WEIGHTS_SYN_V1"
+    ]["value"]
+    interstate = hazards["INTERSTATE_INCIDENT_V1"]
+    interstate["base_score"] = 0.0
+    interstate["generated_threshold"] = 0.9
+    interstate["weights"] = {
+        "external_conflict_pressure_mean": 1.0,
+        "geographic_proximity": 0.0,
+        "land_border": 0.0,
+        "alliance_deterrence": 0.0,
+    }
+    hazards["MASS_PROTEST_TRIGGER_V1"]["generated_threshold"] = 2.0
+    probability = patched["parameter_sets"]["synthetic_smoke_v1"]["parameters"][
+        "EVENT_HAZARD_PROBABILITY_SYN_V1"
+    ]["value"]
+    probability["p_floor"] = 0.0
+    probability["score_scale"] = 0.0
+    return patched
+
+
 def test_no_event_day_advances_all_nodes_once_without_mutating_inputs() -> None:
     logger.info("test_no_event_day_advances_all_nodes_once_without_mutating_inputs")
     states, graph, day_config, registry, parameters, rng, manifest = _runtime()
@@ -808,3 +832,97 @@ def test_matured_graph_spillover_is_resolved_on_next_day() -> None:
         proposal.value_before == pytest.approx(0.0)
         for proposal in mar_proposals
     )
+
+
+
+def test_matured_spillover_and_event_share_one_owner_resolution() -> None:
+    logger.info("test_matured_spillover_and_event_share_one_owner_resolution")
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(seed=1006)
+    spillover_config = load_yaml(ROOT / "config/engine/graph_spillover_v1.yaml")
+
+    day_one_parameters = _disable_all_events(parameters)
+    day_one_latencies = day_one_parameters["parameter_sets"]["synthetic_smoke_v1"][
+        "parameters"
+    ]["GRAPH_LATENCIES_SYN_V1"]["value"]
+    day_one_latencies["geographic_proximity"] = [1, 1]
+    day_one_latencies["land_border"] = [1, 1]
+
+    for state in states.values():
+        state.latents["external_conflict_pressure"] = 0.0
+    states["ESP"].latents["external_conflict_pressure"] = 0.8
+    states["MAR"].latents["external_conflict_pressure"] = 1.0
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=day_one_parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=None,
+    )
+    assert first.spillover_queue is not None
+    assert first.spillover_proposals == ()
+
+    day_two_parameters = _force_only_spain_morocco_interstate_event(parameters)
+    day_two_latencies = day_two_parameters["parameter_sets"]["synthetic_smoke_v1"][
+        "parameters"
+    ]["GRAPH_LATENCIES_SYN_V1"]["value"]
+    day_two_latencies["geographic_proximity"] = [1, 1]
+    day_two_latencies["land_border"] = [1, 1]
+
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=day_two_parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_graph_spillover=True,
+        spillover_config=spillover_config,
+        spillover_queue=first.spillover_queue,
+    )
+
+    esp_external = [
+        proposal
+        for proposal in second.proposals
+        if proposal.target_node == "ESP"
+        and proposal.variable == "external_conflict_pressure"
+    ]
+    event_proposals = [
+        proposal
+        for proposal in esp_external
+        if proposal.event_type == "INTERSTATE_INCIDENT_V1"
+    ]
+    spillover_proposals = [
+        proposal
+        for proposal in esp_external
+        if proposal.event_type == "GRAPH_SPILLOVER_V1"
+    ]
+
+    assert len(event_proposals) == 1
+    assert len(spillover_proposals) == 2
+    assert all(proposal.value_before == pytest.approx(0.8) for proposal in esp_external)
+    assert event_proposals[0].raw_delta == pytest.approx(0.06)
+
+    expected_delta = sum(proposal.raw_delta for proposal in esp_external)
+    resolution = next(
+        record
+        for record in second.resolutions
+        if record.target_node == "ESP"
+        and record.variable == "external_conflict_pressure"
+    )
+    assert set(resolution.proposal_ids) == {
+        proposal.proposal_id for proposal in esp_external
+    }
+    assert resolution.raw_sum_delta == pytest.approx(expected_delta)
+    assert resolution.value_before == pytest.approx(0.8)
+    assert resolution.value_after == pytest.approx(0.8 + expected_delta)
