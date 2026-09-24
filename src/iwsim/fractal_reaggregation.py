@@ -78,6 +78,9 @@ class FractalCollapseCommitRecord:
     from_level: str
     to_level: str
     child_node_ids: tuple[str, ...]
+    catalog_child_ids: tuple[str, ...]
+    lineage_generation: int
+    lineage_policy_id: str | None
     aggregation_rule_id: str
     audit_id: str
     parent_state_hash_before: str
@@ -103,6 +106,9 @@ class FractalCollapseCommitRecord:
             "from_level": self.from_level,
             "to_level": self.to_level,
             "child_node_ids": list(self.child_node_ids),
+            "catalog_child_ids": list(self.catalog_child_ids),
+            "lineage_generation": self.lineage_generation,
+            "lineage_policy_id": self.lineage_policy_id,
             "aggregation_rule_id": self.aggregation_rule_id,
             "audit_id": self.audit_id,
             "parent_state_hash_before": self.parent_state_hash_before,
@@ -734,6 +740,9 @@ def _collapsed_parent_metadata(
     parent_state: EngineState,
     action: FractalRefinementActionProposal,
     child_node_ids: tuple[str, ...],
+    catalog_child_ids: tuple[str, ...],
+    lineage_generation: int,
+    lineage_policy_id: str | None,
     audit_id: str,
     policy: dict[str, Any],
 ) -> dict[str, Any]:
@@ -748,6 +757,15 @@ def _collapsed_parent_metadata(
             "fractal_last_collapse_day": action.day,
             "fractal_last_collapse_action_id": action.action_id,
             "fractal_last_collapsed_child_ids": list(child_node_ids),
+            "fractal_last_collapsed_catalog_child_ids": list(
+                catalog_child_ids
+            ),
+            "fractal_last_collapsed_lineage_generation": (
+                lineage_generation
+            ),
+            "fractal_last_collapsed_lineage_policy_id": (
+                lineage_policy_id
+            ),
             "fractal_last_aggregation_rule_id": policy[
                 "aggregation_rule_id"
             ],
@@ -882,6 +900,36 @@ def collapse_l2_to_l1(
         policy=policy,
     )
     child_node_ids = tuple(item.node_id for item in children)
+    catalog_child_ids = tuple(
+        (
+            item.catalog_child_id
+            if item.catalog_child_id is not None
+            else item.node_id
+        )
+        for item in children
+    )
+    lineage_generations = {
+        int(item.lineage_generation) for item in children
+    }
+    if len(lineage_generations) != 1:
+        raise ValueError(
+            "Fractal collapse active siblings have inconsistent "
+            "lineage generations"
+        )
+    lineage_generation = next(iter(lineage_generations))
+    lineage_policy_ids = {
+        item.lineage_policy_id for item in children
+    }
+    if len(lineage_policy_ids) != 1:
+        raise ValueError(
+            "Fractal collapse active siblings have inconsistent "
+            "lineage policy IDs"
+        )
+    lineage_policy_id = next(iter(lineage_policy_ids))
+    if len(catalog_child_ids) != len(set(catalog_child_ids)):
+        raise ValueError(
+            "Fractal collapse active siblings have duplicate catalog identity"
+        )
 
     (
         physical_stocks,
@@ -936,6 +984,9 @@ def collapse_l2_to_l1(
             parent_state=parent_state,
             action=action,
             child_node_ids=child_node_ids,
+            catalog_child_ids=catalog_child_ids,
+            lineage_generation=lineage_generation,
+            lineage_policy_id=lineage_policy_id,
             audit_id=audit.audit_id,
             policy=policy,
         ),
@@ -968,6 +1019,9 @@ def collapse_l2_to_l1(
         "parent_node_id": parent_state.node_id,
         "day": action.day,
         "child_node_ids": list(child_node_ids),
+        "catalog_child_ids": list(catalog_child_ids),
+        "lineage_generation": lineage_generation,
+        "lineage_policy_id": lineage_policy_id,
         "aggregation_rule_id": policy["aggregation_rule_id"],
         "audit_id": audit.audit_id,
         "parent_state_hash_before": parent_hash_before,
@@ -987,6 +1041,9 @@ def collapse_l2_to_l1(
         from_level=action.from_level,
         to_level=action.to_level,
         child_node_ids=child_node_ids,
+        catalog_child_ids=catalog_child_ids,
+        lineage_generation=lineage_generation,
+        lineage_policy_id=lineage_policy_id,
         aggregation_rule_id=policy["aggregation_rule_id"],
         audit_id=audit.audit_id,
         parent_state_hash_before=parent_hash_before,
@@ -1013,6 +1070,13 @@ def collapse_l2_to_l1(
             "fractal_lineage_closed",
             parent_node_id=parent_state.node_id,
             child_node_id=child_node_id,
+            catalog_child_id=(
+                node.catalog_child_id
+                if node.catalog_child_id is not None
+                else node.node_id
+            ),
+            lineage_generation=node.lineage_generation,
+            lineage_policy_id=node.lineage_policy_id,
             day=action.day,
             de_refinement_day=node.de_refinement_day,
             commit_id=record.commit_id,
