@@ -409,8 +409,52 @@ def _validate_children(
         if child.metadata.get("fractal_child_dynamics_active") is not False:
             raise ValueError(
                 f"Fractal collapse child {child.node_id} dynamics must "
-                "remain disabled in v0.23"
+                "remain disabled in v0.24"
             )
+
+        legacy_generation_one = (
+            topology_node.lineage_generation == 1
+            and topology_node.catalog_child_id is None
+            and topology_node.lineage_policy_id is None
+        )
+        if not legacy_generation_one:
+            expected_catalog_child_id = (
+                topology_node.catalog_child_id
+                if topology_node.catalog_child_id is not None
+                else topology_node.node_id
+            )
+            if (
+                child.metadata.get("fractal_catalog_child_id")
+                != expected_catalog_child_id
+            ):
+                raise ValueError(
+                    f"Fractal collapse child {child.node_id} catalog "
+                    "lineage mismatch"
+                )
+            if (
+                child.metadata.get("fractal_lineage_generation")
+                != topology_node.lineage_generation
+            ):
+                raise ValueError(
+                    f"Fractal collapse child {child.node_id} generation "
+                    "lineage mismatch"
+                )
+            if (
+                child.metadata.get("fractal_lineage_policy_id")
+                != topology_node.lineage_policy_id
+            ):
+                raise ValueError(
+                    f"Fractal collapse child {child.node_id} lifecycle "
+                    "policy mismatch"
+                )
+            if (
+                child.metadata.get("fractal_runtime_node_id")
+                != topology_node.node_id
+            ):
+                raise ValueError(
+                    f"Fractal collapse child {child.node_id} runtime "
+                    "lineage mismatch"
+                )
         selected[child.node_id] = child
 
     return children, selected
