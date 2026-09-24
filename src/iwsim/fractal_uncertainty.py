@@ -482,6 +482,29 @@ def apply_fractal_uncertainty(
     by_parent: dict[str, list[FractalTopologyNode]] = {}
     for child_id in requested_ids:
         topology_node = topology_by_id[child_id]
+        child_state = states[child_id]
+        if topology_node.level != "L2_REGION":
+            raise ValueError(
+                f"Fractal uncertainty child {child_id} must be L2_REGION"
+            )
+        if topology_node.created_day != child_store.last_initialized_day:
+            raise ValueError(
+                f"Fractal uncertainty may only sample children created on "
+                f"the current day: child={child_id} "
+                f"created_day={topology_node.created_day} "
+                f"current_day={child_store.last_initialized_day}"
+            )
+        metadata_created_day = child_state.metadata.get(
+            "fractal_created_day"
+        )
+        if metadata_created_day != topology_node.created_day:
+            raise ValueError(
+                f"Fractal uncertainty child {child_id} creation lineage mismatch"
+            )
+        if "fractal_uncertainty_applied_day" in child_state.metadata:
+            raise ValueError(
+                f"Fractal uncertainty already applied to child {child_id}"
+            )
         if (
             topology_node.inherited_uncertainty_policy_id
             != policy["topology_policy_id"]
