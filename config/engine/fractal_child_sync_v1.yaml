@@ -1,0 +1,55 @@
+schema_version: "1.0"
+status: "implementation-v0.25"
+purpose: "Synchronize active L2 child states to the current L1 parent while child dynamics remain disabled."
+
+mode:
+  enabled: true
+  active_l2_only: true
+  complete_sibling_set_required: true
+  child_dynamics_allowed: false
+  country_graph_child_activation: false
+  rng_used: false
+  preserve_local_latent_shape: true
+  shrink_local_offsets_only_for_bounds: true
+
+physical_stock_policies:
+  additive_integer_conserved:
+    - "population_total"
+    - "working_age_population"
+    - "dependent_population"
+    - "displaced_people"
+    - "reception_population"
+    - "available_police_personnel"
+    - "prison_population"
+
+  intensive_inherit_parent:
+    - "fuel_stock_days_equivalent"
+    - "strategic_food_stock_days"
+
+  parent_only_null:
+    - "available_military_personnel"
+    - "foreign_reserves_usd"
+    - "gold_reserves_tonnes"
+
+latent_policy:
+  mode: "recenter_weighted_offsets"
+  max_offset_scale: 1.0
+  tolerance: 1.0e-12
+
+regime_policy:
+  mode: "inherit_parent_exact"
+
+metadata_policy:
+  mode: "preserve_lineage_append_parent_sync"
+  policy_id: "FRACTAL_CHILD_PARENT_SYNC_V1"
+
+safety:
+  synchronization_is_state_consistency_not_local_fact: true
+  civilian_identity_direct_sync_input: false
+  religion_direct_sync_input: false
+  ethnicity_direct_sync_input: false
+  political_identity_direct_sync_input: false
+  tactical_target_selection: false
+  route_planning: false
+  weapon_selection: false
+  operational_execution: false
