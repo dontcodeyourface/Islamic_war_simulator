@@ -211,10 +211,23 @@ def test_materialization_creates_lineage_and_advances_parent_level() -> None:
         item.catalog_source_id == "SYNTHETIC_TEST_CATALOG"
         for item in children
     )
+    assert {item.catalog_child_id for item in children} == {
+        "TST::R1",
+        "TST::R2",
+        "TST::R3",
+    }
+    assert all(item.lineage_generation == 1 for item in children)
+    assert all(
+        item.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+        for item in children
+    )
     assert persistence_after.current_level == "L2_REGION"
     assert persistence_after.expand_streak == 0
     assert persistence_after.collapse_streak == 0
     assert record.child_node_ids == ("TST::R1", "TST::R2", "TST::R3")
+    assert record.catalog_child_ids == ("TST::R1", "TST::R2", "TST::R3")
+    assert record.lineage_generation == 1
+    assert record.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
     assert record.topology_hash_before == topology.topology_hash()
     assert record.topology_hash_after == topology_after.topology_hash()
 
