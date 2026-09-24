@@ -1047,6 +1047,10 @@ def commit_fractal_collapses(
         topology.last_committed_day,
         len(actions),
     )
+    _validate_config(
+        reaggregation_config=reaggregation_config,
+        engine_state_registry=engine_state_registry,
+    )
     states_out = dict(parent_states)
     persistence_out = dict(persistence)
     topology_out = topology
@@ -1092,6 +1096,17 @@ def commit_fractal_collapses(
         persistence_out[action.node_id] = persistence_after
         commits.append(commit_record)
         audits.append(audit)
+
+    active_topology_ids = {
+        item.node_id for item in topology_out.nodes if item.active
+    }
+    child_store_ids = set(child_store_out.state_map())
+    if child_store_ids != active_topology_ids:
+        raise RuntimeError(
+            "Fractal collapse topology/child-store mismatch "
+            f"active_topology={sorted(active_topology_ids)} "
+            f"child_store={sorted(child_store_ids)}"
+        )
 
     return FractalCollapseResult(
         states=states_out,
