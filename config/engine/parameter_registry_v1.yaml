@@ -363,6 +363,21 @@ parameter_sets:
           collapse_persistence_days: 34
         rationale: "Engineering adaptive-resolution trigger with hysteresis."
 
+      FRACTAL_L2_LOCAL_VARIATION_SYN_V1:
+        type: fractal_local_variation_parameter_set
+        value:
+          distribution: normal
+          mean: 0.0
+          sd: 1.0
+          mean_tolerance: 1.0e-12
+          group_width_fraction:
+            LOCAL_INSTITUTIONAL_RESILIENCE_V1: 0.08
+            LOCAL_SECURITY_RESILIENCE_V1: 0.10
+            LOCAL_NONSTATE_PRESSURE_V1: 0.10
+            LOCAL_ECONOMIC_RESILIENCE_V1: 0.08
+            LOCAL_RESOURCE_RESILIENCE_V1: 0.08
+        rationale: "Engineering-only L2 heterogeneity widths. Draws are centered across sibling regions and rescaled to preserve each parent latent's weighted mean; not calibrated regional evidence."
+
       INIT_NORMALIZATION_SYN_V1:
         type: initialization_normalization_set
         value:
@@ -434,6 +449,7 @@ parameter_sets:
       SECURITY_CHAIN_DYNAMICS_CAL_V1: null
       RECIPROCAL_RADICALIZATION_CAL_V1: null
       FRACTAL_REFINEMENT_CAL_V1: null
+      FRACTAL_L2_LOCAL_VARIATION_CAL_V1: null
     missing_policy: "fatal"
 
 trace_requirements:

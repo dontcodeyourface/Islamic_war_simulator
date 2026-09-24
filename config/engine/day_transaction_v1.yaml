@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.21.1"
+status: "implementation-v0.22"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -45,8 +45,11 @@ mode:
   fractal_child_state_initialization_allowed: true
   fractal_child_state_initialization_requires_explicit_enable_flag: true
   fractal_child_state_contract: "config/engine/fractal_child_state_v1.yaml"
+  fractal_uncertainty_allowed: true
+  fractal_uncertainty_requires_explicit_enable_flag: true
+  fractal_uncertainty_contract: "config/engine/fractal_uncertainty_v1.yaml"
   fractal_child_engine_state_activation_allowed: false
-  fractal_child_random_variation_allowed: false
+  fractal_child_random_variation_allowed: true
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
   recovery_contract: "config/engine/recovery_v1.yaml"
@@ -97,6 +100,10 @@ transaction_rules:
   fractal_child_state_store_history_required_after_day_zero: true
   fractal_child_state_initialization_after_topology_commit: true
   fractal_child_additive_conservation_required: true
+  fractal_uncertainty_after_child_initialization: true
+  fractal_uncertainty_only_new_children: true
+  fractal_uncertainty_preserve_parent_weighted_latent_mean: true
+  fractal_uncertainty_preserve_physical_stocks_and_regimes: true
   fractal_child_dynamics_allowed: false
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
@@ -123,6 +130,8 @@ trace:
   include_fractal_materialization_commit_ids: true
   include_fractal_child_initialization_ids: true
   include_fractal_conservation_audit_ids: true
+  include_fractal_uncertainty_ids: true
+  include_fractal_uncertainty_audit_ids: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -139,7 +148,8 @@ ordering:
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
   fractal_refinement_evaluation: "after_phase_commit"
   fractal_materialization: "after_fractal_refinement"
-  fractal_child_state_initialization: "after_fractal_materialization_before_checkpoint"
+  fractal_child_state_initialization: "after_fractal_materialization"
+  fractal_uncertainty: "after_fractal_child_state_initialization_before_checkpoint"
 
 safety_abstraction:
   tactical_target_selection: false

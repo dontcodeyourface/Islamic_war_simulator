@@ -66,6 +66,8 @@ Read-only phase-evaluation infrastructure: [docs/PHASE_EVALUATOR_V0.8.md](docs/P
 
 Atomic phase-transition infrastructure: [docs/PHASE_TRANSITION_V0.9.md](docs/PHASE_TRANSITION_V0.9.md), backed by [`config/engine/phase_transition_v1.yaml`](config/engine/phase_transition_v1.yaml). Mature phase proposals can now be deterministically arbitrated and committed atomically with phase-persistence history inside the daily transaction; de-escalation remains disabled.
 
+Adaptive fractal execution now reaches **v0.22**: v0.19 evaluates persistent refine/collapse pressure, v0.20 materializes explicit L2 topology, v0.21 initializes child EngineState with exact additive-stock conservation, and [docs/FRACTAL_UNCERTAINTY_V0.22.md](docs/FRACTAL_UNCERTAINTY_V0.22.md) adds one-time correlated local latent variation while preserving each parent's weighted latent mean. Child dynamics and collapse/reaggregation remain disabled.
+
 ---
 
 ## 2. Core analytical rule
