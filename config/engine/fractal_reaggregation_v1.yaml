@@ -1,0 +1,58 @@
+schema_version: "1.0"
+status: "implementation-v0.23"
+purpose: "Atomic conservative L2->L1 collapse and parent-state reaggregation."
+
+mode:
+  enabled: true
+  collapse_commit_allowed: true
+  l2_to_l1_only: true
+  complete_active_sibling_set_required: true
+  child_dynamics_allowed: false
+  country_graph_child_activation: false
+  remove_collapsed_children_from_store: true
+  mark_topology_children_inactive: true
+  de_refinement_day_required: true
+  preserve_original_parent_object: true
+
+aggregation_rule_id: "FRACTAL_PARENT_REAGGREGATION_V1"
+
+physical_stock_policies:
+  additive_integer_sum:
+    - "population_total"
+    - "working_age_population"
+    - "dependent_population"
+    - "displaced_people"
+    - "reception_population"
+    - "available_police_personnel"
+    - "prison_population"
+
+  intensive_initialization_weighted_mean:
+    - "fuel_stock_days_equivalent"
+    - "strategic_food_stock_days"
+
+  parent_only_retain_current:
+    - "available_military_personnel"
+    - "foreign_reserves_usd"
+    - "gold_reserves_tonnes"
+
+latent_policy:
+  mode: "initialization_weighted_mean"
+  tolerance: 1.0e-12
+
+regime_policy:
+  mode: "all_children_consensus_required"
+
+metadata_policy:
+  mode: "retain_parent_append_collapse_lineage"
+  policy_id: "FRACTAL_PARENT_COLLAPSE_METADATA_V1"
+
+safety:
+  collapse_is_resolution_change_not_political_outcome: true
+  civilian_identity_direct_aggregation_input: false
+  religion_direct_aggregation_input: false
+  ethnicity_direct_aggregation_input: false
+  political_identity_direct_aggregation_input: false
+  tactical_target_selection: false
+  route_planning: false
+  weapon_selection: false
+  operational_execution: false
