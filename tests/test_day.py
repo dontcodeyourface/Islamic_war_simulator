@@ -4066,3 +4066,217 @@ def test_fractal_reaggregation_config_changes_transaction_identity() -> None:
     )
     assert result_a.fractal_collapse_commits == ()
     assert result_b.fractal_collapse_commits == ()
+
+
+
+def test_fractal_second_refinement_uses_new_runtime_generation() -> None:
+    logger.info(
+        "test_fractal_second_refinement_uses_new_runtime_generation"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+    from iwsim.fractal_child_state import FractalChildStateStore
+    from iwsim.fractal_materialization import (
+        FractalTopologyNode,
+        FractalTopologyState,
+    )
+
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1052
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    uncertainty_config = load_yaml(
+        ROOT / "config/engine/fractal_uncertainty_v1.yaml"
+    )
+    reaggregation_config = load_yaml(
+        ROOT / "config/engine/fractal_reaggregation_v1.yaml"
+    )
+
+    for state in states.values():
+        state.day = 35
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=35,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    topology = FractalTopologyState(
+        last_committed_day=35,
+        nodes=(
+            FractalTopologyNode(
+                node_id="ESP::R1",
+                label="Region 1",
+                parent_node_id="ESP",
+                level="L2_REGION",
+                created_day=1,
+                refinement_action_id="old-expand-generation-1",
+                refinement_reason="violence",
+                source_variables=("public_order_stress",),
+                initialization_weight=0.6,
+                initialization_weight_policy_id=(
+                    "FRACTAL_CHILD_INIT_WEIGHTS_V1"
+                ),
+                inherited_uncertainty_policy_id=(
+                    "FRACTAL_UNCERTAINTY_WIDENING_V1"
+                ),
+                aggregation_rule_id="FRACTAL_PARENT_REAGGREGATION_V1",
+                catalog_source_id="SYNTHETIC_DAY_TEST",
+                de_refinement_day=20,
+                active=False,
+                catalog_child_id="ESP::R1",
+                lineage_generation=1,
+                lineage_policy_id="FRACTAL_TOPOLOGY_GENERATION_V1",
+            ),
+            FractalTopologyNode(
+                node_id="ESP::R2",
+                label="Region 2",
+                parent_node_id="ESP",
+                level="L2_REGION",
+                created_day=1,
+                refinement_action_id="old-expand-generation-1",
+                refinement_reason="violence",
+                source_variables=("public_order_stress",),
+                initialization_weight=0.4,
+                initialization_weight_policy_id=(
+                    "FRACTAL_CHILD_INIT_WEIGHTS_V1"
+                ),
+                inherited_uncertainty_policy_id=(
+                    "FRACTAL_UNCERTAINTY_WIDENING_V1"
+                ),
+                aggregation_rule_id="FRACTAL_PARENT_REAGGREGATION_V1",
+                catalog_source_id="SYNTHETIC_DAY_TEST",
+                de_refinement_day=20,
+                active=False,
+                catalog_child_id="ESP::R2",
+                lineage_generation=1,
+                lineage_policy_id="FRACTAL_TOPOLOGY_GENERATION_V1",
+            ),
+        ),
+    )
+    child_store = FractalChildStateStore(
+        last_initialized_day=35,
+        states=(),
+    )
+    topology_before = topology.to_dict()
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=topology,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=child_store,
+        enable_fractal_uncertainty=True,
+        fractal_uncertainty_config=uncertainty_config,
+        enable_fractal_reaggregation=True,
+        fractal_reaggregation_config=reaggregation_config,
+    )
+
+    assert topology.to_dict() == topology_before
+    assert result.fractal_topology is not None
+    assert len(result.fractal_materialization_commits) == 1
+    commit = result.fractal_materialization_commits[0]
+    assert commit.parent_node_id == "ESP"
+    assert commit.lineage_generation == 2
+    assert commit.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+    assert commit.catalog_child_ids == ("ESP::R1", "ESP::R2")
+    assert commit.child_node_ids == (
+        "ESP::R1::g2",
+        "ESP::R2::g2",
+    )
+
+    active = result.fractal_topology.active_children("ESP")
+    assert {item.node_id for item in active} == {
+        "ESP::R1::g2",
+        "ESP::R2::g2",
+    }
+    assert {item.catalog_child_id for item in active} == {
+        "ESP::R1",
+        "ESP::R2",
+    }
+    assert all(item.lineage_generation == 2 for item in active)
+    assert all(
+        item.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+        for item in active
+    )
+
+    historical = [
+        item
+        for item in result.fractal_topology.nodes
+        if not item.active and item.parent_node_id == "ESP"
+    ]
+    assert {item.node_id for item in historical} == {
+        "ESP::R1",
+        "ESP::R2",
+    }
+    assert all(item.lineage_generation == 1 for item in historical)
+    assert all(item.de_refinement_day == 20 for item in historical)
+
+    assert result.fractal_child_state_store is not None
+    children = result.fractal_child_state_store.state_map()
+    assert set(children) == {"ESP::R1::g2", "ESP::R2::g2"}
+    assert len(result.fractal_child_initialization_records) == 2
+    for record in result.fractal_child_initialization_records:
+        assert record.lineage_generation == 2
+        assert record.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+        assert record.catalog_child_id in {"ESP::R1", "ESP::R2"}
+        child = children[record.child_node_id]
+        assert child.metadata["fractal_catalog_child_id"] == (
+            record.catalog_child_id
+        )
+        assert child.metadata["fractal_lineage_generation"] == 2
+        assert child.metadata["fractal_lineage_policy_id"] == (
+            "FRACTAL_TOPOLOGY_GENERATION_V1"
+        )
+        assert child.metadata["fractal_runtime_node_id"] == child.node_id
+
+    assert len(result.fractal_uncertainty_audits) == 1
+    assert result.fractal_uncertainty_audits[0].preserved is True
+    assert result.fractal_collapse_commits == ()
+    assert result.fractal_reaggregation_audits == ()
+    assert result.fractal_refinement_persistence[
+        "ESP"
+    ].current_level == "L2_REGION"
+
+    created = [
+        item
+        for item in trace.records
+        if item["record_type"] == "fractal_lineage_created"
+        and item["parent_node_id"] == "ESP"
+    ]
+    assert {item["node_id"] for item in created} == {
+        "ESP::R1::g2",
+        "ESP::R2::g2",
+    }
+    assert all(item["lineage_generation"] == 2 for item in created)
