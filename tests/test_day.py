@@ -3628,6 +3628,33 @@ def test_security_recovery_commit_matures_on_day_13_and_resets_memories() -> Non
 
 
 
+def _set_fractal_low_pressure_state(state) -> None:
+    logger.info("_set_fractal_low_pressure_state node=%s", state.node_id)
+    for variable in (
+        "public_order_stress",
+        "terrorism_threat_pressure",
+        "organized_armed_actor_capacity",
+        "regional_fragmentation_pressure",
+        "criminal_network_power",
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+        "revolutionary_extremist_pressure",
+        "displacement_pressure",
+    ):
+        state.latents[variable] = 0.0
+    for variable in (
+        "government_legitimacy",
+        "state_cohesion",
+        "security_chain_cohesion",
+        "electricity_functionality",
+        "fuel_distribution_functionality",
+        "transport_logistics_functionality",
+        "telecom_internet_functionality",
+        "water_resilience",
+    ):
+        state.latents[variable] = 1.0
+
+
 def test_fractal_uncertainty_applies_after_child_initialization_atomically() -> None:
     logger.info(
         "test_fractal_uncertainty_applies_after_child_initialization_atomically"
@@ -3713,3 +3740,329 @@ def test_fractal_uncertainty_applies_after_child_initialization_atomically() -> 
 
     assert set(result.states) == set(states)
     assert result.states["ESP"].latents["polarization"] == pytest.approx(0.5)
+
+
+
+def test_fractal_collapse_reaggregates_current_l2_state_atomically() -> None:
+    logger.info(
+        "test_fractal_collapse_reaggregates_current_l2_state_atomically"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+    from iwsim.fractal_child_state import FractalChildStateStore
+    from iwsim.fractal_materialization import FractalTopologyState
+    from iwsim.state import EngineState
+
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1050
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    uncertainty_config = load_yaml(
+        ROOT / "config/engine/fractal_uncertainty_v1.yaml"
+    )
+    reaggregation_config = load_yaml(
+        ROOT / "config/engine/fractal_reaggregation_v1.yaml"
+    )
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+    initial_persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    expanded = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=initial_persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_uncertainty=True,
+        fractal_uncertainty_config=uncertainty_config,
+    )
+    assert expanded.fractal_topology is not None
+    assert expanded.fractal_child_state_store is not None
+    assert set(
+        expanded.fractal_child_state_store.state_map()
+    ) == {"ESP::R1", "ESP::R2"}
+
+    day34_states: dict[str, EngineState] = {}
+    for node_id, prior in sorted(expanded.states.items()):
+        current = EngineState(
+            node_id=prior.node_id,
+            day=34,
+            physical_stocks=dict(prior.physical_stocks),
+            latents=dict(prior.latents),
+            regimes=dict(prior.regimes),
+            metadata=dict(prior.metadata),
+        )
+        for variable in current.latents:
+            current.latents[variable] = 0.5
+        _set_fractal_low_pressure_state(current)
+        day34_states[node_id] = current
+
+    topology34 = FractalTopologyState(
+        last_committed_day=34,
+        nodes=expanded.fractal_topology.nodes,
+    )
+    esp_low_latents = dict(day34_states["ESP"].latents)
+    day34_child_states = tuple(
+        EngineState(
+            node_id=child.node_id,
+            day=34,
+            physical_stocks=dict(child.physical_stocks),
+            latents=dict(esp_low_latents),
+            regimes=dict(child.regimes),
+            metadata=dict(child.metadata),
+        )
+        for child in expanded.fractal_child_state_store.states
+    )
+    child_store34 = FractalChildStateStore(
+        last_initialized_day=34,
+        states=day34_child_states,
+    )
+    persistence34 = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level=(
+                "L2_REGION" if node_id == "ESP" else "L1_COUNTRY"
+            ),
+            last_evaluated_day=34,
+            expand_streak=0,
+            collapse_streak=33 if node_id == "ESP" else 0,
+        )
+        for node_id in day34_states
+    }
+
+    before_parent_only = {
+        variable: day34_states["ESP"].physical_stocks[variable]
+        for variable in (
+            "available_military_personnel",
+            "foreign_reserves_usd",
+            "gold_reserves_tonnes",
+        )
+    }
+    trace = TraceLedger()
+    collapsed = run_day_transaction(
+        states=day34_states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence34,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=topology34,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=child_store34,
+        enable_fractal_uncertainty=True,
+        fractal_uncertainty_config=uncertainty_config,
+        enable_fractal_reaggregation=True,
+        fractal_reaggregation_config=reaggregation_config,
+    )
+
+    collapse_actions = [
+        item
+        for item in collapsed.fractal_refinement_actions
+        if item.action == "COLLAPSE"
+    ]
+    assert len(collapse_actions) == 1
+    assert collapse_actions[0].node_id == "ESP"
+    assert collapse_actions[0].persistence_observed == 34
+    assert collapsed.fractal_materialization_commits == ()
+    assert collapsed.fractal_child_initialization_records == ()
+    assert collapsed.fractal_uncertainty_records == ()
+
+    assert len(collapsed.fractal_collapse_commits) == 1
+    assert len(collapsed.fractal_reaggregation_audits) == 1
+    commit = collapsed.fractal_collapse_commits[0]
+    audit = collapsed.fractal_reaggregation_audits[0]
+    assert commit.parent_node_id == "ESP"
+    assert commit.from_level == "L2_REGION"
+    assert commit.to_level == "L1_COUNTRY"
+    assert audit.parent_node_id == "ESP"
+    assert audit.conserved is True
+
+    assert collapsed.fractal_topology is not None
+    assert collapsed.fractal_topology.active_children("ESP") == ()
+    closed_children = [
+        item
+        for item in collapsed.fractal_topology.nodes
+        if item.parent_node_id == "ESP"
+    ]
+    assert {item.node_id for item in closed_children} == {
+        "ESP::R1",
+        "ESP::R2",
+    }
+    assert all(
+        item.active is False and item.de_refinement_day == 35
+        for item in closed_children
+    )
+
+    assert collapsed.fractal_child_state_store is not None
+    assert collapsed.fractal_child_state_store.last_initialized_day == 35
+    assert collapsed.fractal_child_state_store.states == ()
+    assert collapsed.fractal_refinement_persistence[
+        "ESP"
+    ] == FractalRefinementPersistenceState(
+        node_id="ESP",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=35,
+        expand_streak=0,
+        collapse_streak=0,
+    )
+
+    esp_after = collapsed.states["ESP"]
+    assert esp_after.day == 35
+    assert esp_after.physical_stocks["population_total"] == 101
+    assert esp_after.physical_stocks["working_age_population"] == 61
+    assert esp_after.physical_stocks["dependent_population"] == 40
+    assert esp_after.physical_stocks[
+        "available_police_personnel"
+    ] == 11
+    for variable, expected in before_parent_only.items():
+        assert esp_after.physical_stocks[variable] == expected
+    for variable, expected in esp_low_latents.items():
+        assert esp_after.latents[variable] == pytest.approx(
+            expected,
+            abs=audit.tolerance,
+        )
+
+    esp_checkpoint = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "daily_checkpoint"
+        and item["node_id"] == "ESP"
+    )
+    assert esp_checkpoint["fractal_collapse_commit_ids"] == [
+        commit.commit_id
+    ]
+    assert esp_checkpoint["fractal_reaggregation_audit_ids"] == [
+        audit.audit_id
+    ]
+    assert trace.records[-1]["fractal_collapse_commit_ids"] == [
+        commit.commit_id
+    ]
+    assert trace.records[-1]["fractal_reaggregation_audit_ids"] == [
+        audit.audit_id
+    ]
+
+
+def test_fractal_reaggregation_config_changes_transaction_identity() -> None:
+    logger.info(
+        "test_fractal_reaggregation_config_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1051)
+    runtime_b = _runtime(seed=1051)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    reaggregation_a = load_yaml(
+        ROOT / "config/engine/fractal_reaggregation_v1.yaml"
+    )
+    reaggregation_b = copy.deepcopy(reaggregation_a)
+    reaggregation_b["status"] = "identity-test-variant"
+    empty_catalog = {"schema_version": "1.0", "parents": {}}
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_reaggregation=True,
+        fractal_reaggregation_config=reaggregation_a,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=None,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=empty_catalog,
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_reaggregation=True,
+        fractal_reaggregation_config=reaggregation_b,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+    assert (
+        result_a.fractal_child_state_store
+        == result_b.fractal_child_state_store
+    )
+    assert result_a.fractal_collapse_commits == ()
+    assert result_b.fractal_collapse_commits == ()
