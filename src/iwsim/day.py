@@ -2403,6 +2403,26 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    unknown_fractal_actions = {
+        item.action
+        for item in fractal_refinement_actions
+        if item.action not in {"EXPAND", "COLLAPSE"}
+    }
+    if unknown_fractal_actions:
+        raise ValueError(
+            f"Unknown fractal actions: {sorted(unknown_fractal_actions)}"
+        )
+    fractal_expansion_actions = tuple(
+        item
+        for item in fractal_refinement_actions
+        if item.action == "EXPAND"
+    )
+    fractal_collapse_actions = tuple(
+        item
+        for item in fractal_refinement_actions
+        if item.action == "COLLAPSE"
+    )
+
     fractal_topology_out: FractalTopologyState | None = None
     fractal_materialization_commits: tuple[
         FractalMaterializationCommitRecord, ...
@@ -2418,7 +2438,7 @@ def run_day_transaction(
             fractal_materialization_commits,
         ) = _commit_fractal_materializations(
             day=day_to,
-            actions=fractal_refinement_actions,
+            actions=fractal_expansion_actions,
             persistence=fractal_refinement_persistence_out,
             topology=normalized_fractal_topology,
             region_catalog=fractal_region_catalog,
@@ -2481,6 +2501,35 @@ def run_day_transaction(
         fractal_child_state_store_out = uncertainty_result.store
         fractal_uncertainty_records = uncertainty_result.records
         fractal_uncertainty_audits = uncertainty_result.audits
+
+    fractal_collapse_commits: tuple[
+        FractalCollapseCommitRecord, ...
+    ] = ()
+    fractal_reaggregation_audits: tuple[
+        FractalReaggregationAuditRecord, ...
+    ] = ()
+
+    if enable_fractal_reaggregation:
+        assert fractal_topology_out is not None
+        assert fractal_child_state_store_out is not None
+        assert fractal_reaggregation_config is not None
+        collapse_result = commit_fractal_collapses(
+            parent_states=final_states,
+            actions=fractal_collapse_actions,
+            persistence=fractal_refinement_persistence_out,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            reaggregation_config=fractal_reaggregation_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        final_states = collapse_result.states
+        fractal_topology_out = collapse_result.topology
+        fractal_child_state_store_out = collapse_result.child_store
+        fractal_refinement_persistence_out = collapse_result.persistence
+        fractal_collapse_commits = collapse_result.commits
+        fractal_reaggregation_audits = collapse_result.audits
 
     for node_id in sorted(states):
         _checkpoint_node(
