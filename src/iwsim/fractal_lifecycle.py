@@ -201,6 +201,21 @@ def allocate_lineage_generation(
                 f"Inactive topology node {node.node_id} requires "
                 "de_refinement_day before a new generation"
             )
+        lineage_policy_id = getattr(node, "lineage_policy_id", None)
+        if generation > 1 and lineage_policy_id != policy["policy_id"]:
+            raise ValueError(
+                f"Topology node {node.node_id} generation {generation} "
+                "has invalid lineage policy ID"
+            )
+        if (
+            generation == 1
+            and lineage_policy_id is not None
+            and lineage_policy_id != policy["policy_id"]
+        ):
+            raise ValueError(
+                f"Topology node {node.node_id} has incompatible lineage "
+                "policy ID"
+            )
 
     historical_catalog_ids = tuple(sorted(history_by_catalog))
     if historical_catalog_ids and historical_catalog_ids != current_catalog_ids:
