@@ -1699,6 +1699,34 @@ def run_day_transaction(
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
 
+    if enable_fractal_reaggregation:
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Fractal reaggregation requires child-state initialization"
+            )
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Fractal reaggregation requires fractal materialization"
+            )
+        if fractal_reaggregation_config is None:
+            raise ValueError(
+                "Fractal reaggregation requires fractal_reaggregation_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_reaggregation_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal reaggregation is disabled by the day transaction contract"
+            )
+        fractal_reaggregation_inputs = (
+            _fractal_reaggregation_inputs_fingerprint(
+                reaggregation_config=fractal_reaggregation_config,
+            )
+        )
+
     if enable_fractal_uncertainty:
         if not enable_fractal_child_state_initialization:
             raise ValueError(
@@ -2086,6 +2114,7 @@ def run_day_transaction(
         fractal_materialization_inputs=fractal_materialization_inputs,
         fractal_child_state_inputs=fractal_child_state_inputs,
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
+        fractal_reaggregation_inputs=fractal_reaggregation_inputs,
     )
 
     working_rng = rng.clone()
