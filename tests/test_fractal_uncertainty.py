@@ -7,6 +7,7 @@ import pytest
 
 from iwsim.config import load_yaml
 from iwsim.fractal_child_state import (
+    FractalChildStateStore,
     empty_fractal_child_state_store,
     initialize_fractal_child_states,
 )
@@ -261,5 +262,97 @@ def test_calibrated_profile_fails_closed_without_registered_parameters() -> None
             parameter_registry=parameters,
             profile="calibrated_v1",
             rng=RNGManager(2205),
+            trace=TraceLedger(),
+        )
+
+
+
+def test_uncertainty_cannot_be_reapplied_to_same_children() -> None:
+    logger.info("test_uncertainty_cannot_be_reapplied_to_same_children")
+    parent, topology, initialized, registry, parameters, config = _fixture()
+    child_ids = tuple(
+        item.child_node_id
+        for item in initialized.initialization_records
+    )
+    first = apply_fractal_uncertainty(
+        parent_states={"TST": parent},
+        topology=topology,
+        child_store=initialized.store,
+        new_child_ids=child_ids,
+        uncertainty_config=config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=RNGManager(2206),
+        trace=TraceLedger(),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="already applied",
+    ):
+        apply_fractal_uncertainty(
+            parent_states={"TST": parent},
+            topology=topology,
+            child_store=first.store,
+            new_child_ids=child_ids,
+            uncertainty_config=config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=RNGManager(2207),
+            trace=TraceLedger(),
+        )
+
+
+def test_uncertainty_rejects_children_created_on_prior_day() -> None:
+    logger.info("test_uncertainty_rejects_children_created_on_prior_day")
+    parent, topology, initialized, registry, parameters, config = _fixture()
+    day_two_parent = EngineState(
+        node_id=parent.node_id,
+        day=2,
+        physical_stocks=dict(parent.physical_stocks),
+        latents=dict(parent.latents),
+        regimes=dict(parent.regimes),
+        metadata=dict(parent.metadata),
+    )
+    day_two_children = tuple(
+        EngineState(
+            node_id=state.node_id,
+            day=2,
+            physical_stocks=dict(state.physical_stocks),
+            latents=dict(state.latents),
+            regimes=dict(state.regimes),
+            metadata=dict(state.metadata),
+        )
+        for state in initialized.store.states
+    )
+    day_two_store = FractalChildStateStore(
+        last_initialized_day=2,
+        states=day_two_children,
+    )
+    day_two_topology = FractalTopologyState(
+        last_committed_day=2,
+        nodes=topology.nodes,
+    )
+    child_ids = tuple(
+        item.child_node_id
+        for item in initialized.initialization_records
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="may only sample children created on the current day",
+    ):
+        apply_fractal_uncertainty(
+            parent_states={"TST": day_two_parent},
+            topology=day_two_topology,
+            child_store=day_two_store,
+            new_child_ids=child_ids,
+            uncertainty_config=config,
+            engine_state_registry=registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            rng=RNGManager(2208),
             trace=TraceLedger(),
         )
