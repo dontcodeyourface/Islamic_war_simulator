@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ from iwsim.fractal import (
     evaluate_fractal_refinement,
 )
 from iwsim.fractal_materialization import (
+    FractalTopologyState,
     empty_fractal_topology,
     materialize_l1_to_l2,
 )
@@ -287,6 +289,248 @@ def test_materialization_rejects_collapse_action_in_v0_20() -> None:
             action=collapse,
             persistence=persistence,
             topology=empty_fractal_topology(0),
+            region_catalog=_catalog(),
+            materialization_config=config,
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
+
+
+
+def _closed_generation_one_topology(
+    *,
+    action,
+    persistence,
+    config,
+    manifest,
+    closed_day: int = 10,
+) -> FractalTopologyState:
+    logger.info(
+        "_closed_generation_one_topology closed_day=%s",
+        closed_day,
+    )
+    first, _, _ = materialize_l1_to_l2(
+        action=action,
+        persistence=persistence,
+        topology=empty_fractal_topology(0),
+        region_catalog=_catalog(),
+        materialization_config=config,
+        manifest=manifest,
+        trace=TraceLedger(),
+    )
+    return FractalTopologyState(
+        last_committed_day=closed_day,
+        nodes=tuple(
+            replace(
+                item,
+                active=False,
+                de_refinement_day=closed_day,
+            )
+            for item in first.nodes
+        ),
+    )
+
+
+def test_materialization_second_refinement_creates_new_lineage_generation() -> None:
+    logger.info(
+        "test_materialization_second_refinement_creates_new_lineage_generation"
+    )
+    action, persistence, config, manifest = _fixture()
+    closed = _closed_generation_one_topology(
+        action=action,
+        persistence=persistence,
+        config=config,
+        manifest=manifest,
+    )
+    second_action = replace(
+        action,
+        action_id="fractal-expand-generation-2",
+        day=11,
+    )
+    second_persistence = FractalRefinementPersistenceState(
+        node_id="TST",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=11,
+        expand_streak=action.persistence_required,
+        collapse_streak=0,
+    )
+    before = closed.to_dict()
+    trace = TraceLedger()
+
+    topology_after, persistence_after, record = materialize_l1_to_l2(
+        action=second_action,
+        persistence=second_persistence,
+        topology=closed,
+        region_catalog=_catalog(),
+        materialization_config=config,
+        manifest=manifest,
+        trace=trace,
+    )
+
+    assert closed.to_dict() == before
+    historical = [
+        item for item in topology_after.nodes if not item.active
+    ]
+    active = topology_after.active_children("TST")
+
+    assert {item.node_id for item in historical} == {
+        "TST::R1",
+        "TST::R2",
+        "TST::R3",
+    }
+    assert all(item.lineage_generation == 1 for item in historical)
+    assert all(item.de_refinement_day == 10 for item in historical)
+
+    assert {item.node_id for item in active} == {
+        "TST::R1::g2",
+        "TST::R2::g2",
+        "TST::R3::g2",
+    }
+    assert {item.catalog_child_id for item in active} == {
+        "TST::R1",
+        "TST::R2",
+        "TST::R3",
+    }
+    assert all(item.lineage_generation == 2 for item in active)
+    assert all(
+        item.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+        for item in active
+    )
+    assert persistence_after.current_level == "L2_REGION"
+
+    assert record.lineage_generation == 2
+    assert record.lineage_policy_id == "FRACTAL_TOPOLOGY_GENERATION_V1"
+    assert record.catalog_child_ids == (
+        "TST::R1",
+        "TST::R2",
+        "TST::R3",
+    )
+    assert record.child_node_ids == (
+        "TST::R1::g2",
+        "TST::R2::g2",
+        "TST::R3::g2",
+    )
+    created = [
+        item
+        for item in trace.records
+        if item["record_type"] == "fractal_lineage_created"
+    ]
+    assert {item["node_id"] for item in created} == set(
+        record.child_node_ids
+    )
+    assert all(item["lineage_generation"] == 2 for item in created)
+
+
+def test_materialization_rejects_catalog_child_set_change_after_history() -> None:
+    logger.info(
+        "test_materialization_rejects_catalog_child_set_change_after_history"
+    )
+    action, persistence, config, manifest = _fixture()
+    closed = _closed_generation_one_topology(
+        action=action,
+        persistence=persistence,
+        config=config,
+        manifest=manifest,
+    )
+    changed_catalog = copy.deepcopy(_catalog())
+    changed_catalog["parents"]["TST"]["children"][2]["child_id"] = "TST::R4"
+    second_action = replace(
+        action,
+        action_id="fractal-expand-catalog-change",
+        day=11,
+    )
+    second_persistence = FractalRefinementPersistenceState(
+        node_id="TST",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=11,
+        expand_streak=action.persistence_required,
+        collapse_streak=0,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="catalog child set changed across generations",
+    ):
+        materialize_l1_to_l2(
+            action=second_action,
+            persistence=second_persistence,
+            topology=closed,
+            region_catalog=changed_catalog,
+            materialization_config=config,
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
+
+
+def test_materialization_rejects_reserved_generation_suffix_in_catalog() -> None:
+    logger.info(
+        "test_materialization_rejects_reserved_generation_suffix_in_catalog"
+    )
+    action, persistence, config, manifest = _fixture()
+    catalog = copy.deepcopy(_catalog())
+    catalog["parents"]["TST"]["children"][0]["child_id"] = "TST::R1::g2"
+
+    with pytest.raises(ValueError, match="reserved generation suffix"):
+        materialize_l1_to_l2(
+            action=action,
+            persistence=persistence,
+            topology=empty_fractal_topology(0),
+            region_catalog=catalog,
+            materialization_config=config,
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
+
+
+def test_materialization_rejects_inconsistent_sibling_generation_history() -> None:
+    logger.info(
+        "test_materialization_rejects_inconsistent_sibling_generation_history"
+    )
+    action, persistence, config, manifest = _fixture()
+    closed = _closed_generation_one_topology(
+        action=action,
+        persistence=persistence,
+        config=config,
+        manifest=manifest,
+    )
+    r1 = next(item for item in closed.nodes if item.node_id == "TST::R1")
+    inconsistent = FractalTopologyState(
+        last_committed_day=20,
+        nodes=(
+            *closed.nodes,
+            replace(
+                r1,
+                node_id="TST::R1::g2",
+                catalog_child_id="TST::R1",
+                lineage_generation=2,
+                lineage_policy_id="FRACTAL_TOPOLOGY_GENERATION_V1",
+                created_day=11,
+                de_refinement_day=20,
+                refinement_action_id="old-generation-2",
+            ),
+        ),
+    )
+    third_action = replace(
+        action,
+        action_id="fractal-expand-inconsistent-history",
+        day=21,
+    )
+    third_persistence = FractalRefinementPersistenceState(
+        node_id="TST",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=21,
+        expand_streak=action.persistence_required,
+        collapse_streak=0,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="sibling lineage generation history is inconsistent",
+    ):
+        materialize_l1_to_l2(
+            action=third_action,
+            persistence=third_persistence,
+            topology=inconsistent,
             region_catalog=_catalog(),
             materialization_config=config,
             manifest=manifest,
