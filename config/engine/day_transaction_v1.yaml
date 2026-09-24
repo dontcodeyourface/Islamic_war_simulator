@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.21"
+status: "implementation-v0.21.1"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -32,7 +32,9 @@ mode:
   security_regime_recovery_evaluator_allowed: true
   security_regime_recovery_evaluator_requires_explicit_enable_flag: true
   security_regime_recovery_contract: "config/engine/security_regime_recovery_v1.yaml"
-  security_regime_recovery_commit_allowed: false
+  security_regime_recovery_commit_allowed: true
+  security_regime_recovery_commit_requires_explicit_enable_flag: true
+  security_regime_recovery_transition_contract: "config/engine/security_regime_recovery_transition_v1.yaml"
   fractal_refinement_evaluator_allowed: true
   fractal_refinement_requires_explicit_enable_flag: true
   fractal_refinement_contract: "config/engine/fractal_refinement_v1.yaml"
@@ -79,6 +81,9 @@ transaction_rules:
   security_regime_recovery_persistence_must_commit_only_after_success: true
   security_regime_recovery_history_required_after_day_zero_when_enabled: true
   security_regime_recovery_same_day_escalation_suppresses_recovery: true
+  security_regime_recovery_commit_is_atomic_with_day_transaction: true
+  security_regime_recovery_commit_resets_escalation_and_recovery_streaks: true
+  security_regime_recovery_max_commits_per_node_per_day: 1
   fractal_refinement_uses_post_phase_committed_state: true
   fractal_refinement_persistence_must_commit_only_after_success: true
   fractal_refinement_history_required_after_day_zero_when_enabled: true
@@ -113,6 +118,7 @@ trace:
   include_clamp_resolution_ids: true
   include_phase_commit_ids: true
   include_security_regime_commit_ids: true
+  include_security_regime_recovery_commit_ids: true
   include_refinement_action_ids: true
   include_fractal_materialization_commit_ids: true
   include_fractal_child_initialization_ids: true
@@ -127,8 +133,9 @@ ordering:
   proposals: "event_recovery_matured_spillover_network_reciprocal_and_security_collected_then_proposal_id_ascending_before_resolution"
   security_regime_evaluation: "after_state_resolution_and_clock_advance"
   security_regime_commit: "after_security_regime_evaluation"
-  security_regime_recovery_evaluation: "after_security_regime_commit_before_phase_evaluation"
-  phase_evaluation: "after_security_regime_recovery_evaluation"
+  security_regime_recovery_evaluation: "after_security_regime_commit"
+  security_regime_recovery_commit: "after_security_regime_recovery_evaluation_before_phase_evaluation"
+  phase_evaluation: "after_security_regime_recovery_commit"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
   fractal_refinement_evaluation: "after_phase_commit"
   fractal_materialization: "after_fractal_refinement"
