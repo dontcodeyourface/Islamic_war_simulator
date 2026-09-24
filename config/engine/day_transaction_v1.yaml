@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.22"
+status: "implementation-v0.23"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -48,6 +48,9 @@ mode:
   fractal_uncertainty_allowed: true
   fractal_uncertainty_requires_explicit_enable_flag: true
   fractal_uncertainty_contract: "config/engine/fractal_uncertainty_v1.yaml"
+  fractal_reaggregation_allowed: true
+  fractal_reaggregation_requires_explicit_enable_flag: true
+  fractal_reaggregation_contract: "config/engine/fractal_reaggregation_v1.yaml"
   fractal_child_engine_state_activation_allowed: false
   fractal_child_random_variation_allowed: true
   recovery_allowed: true
@@ -95,7 +98,12 @@ transaction_rules:
   fractal_materialization_topology_history_required_after_day_zero: true
   fractal_materialization_requires_explicit_region_catalog: true
   fractal_materialization_updates_refinement_level_only_after_commit: true
-  fractal_collapse_commit_allowed: false
+  fractal_collapse_commit_allowed: true
+  fractal_collapse_reaggregation_after_uncertainty: true
+  fractal_collapse_requires_complete_active_sibling_set: true
+  fractal_collapse_removes_child_states: true
+  fractal_collapse_marks_topology_lineage_inactive: true
+  fractal_collapse_preserves_parent_only_stocks: true
   fractal_child_state_store_separate_from_l1_states: true
   fractal_child_state_store_history_required_after_day_zero: true
   fractal_child_state_initialization_after_topology_commit: true
@@ -132,6 +140,8 @@ trace:
   include_fractal_conservation_audit_ids: true
   include_fractal_uncertainty_ids: true
   include_fractal_uncertainty_audit_ids: true
+  include_fractal_collapse_commit_ids: true
+  include_fractal_reaggregation_audit_ids: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -149,7 +159,8 @@ ordering:
   fractal_refinement_evaluation: "after_phase_commit"
   fractal_materialization: "after_fractal_refinement"
   fractal_child_state_initialization: "after_fractal_materialization"
-  fractal_uncertainty: "after_fractal_child_state_initialization_before_checkpoint"
+  fractal_uncertainty: "after_fractal_child_state_initialization"
+  fractal_reaggregation: "after_fractal_uncertainty_before_checkpoint"
 
 safety_abstraction:
   tactical_target_selection: false
