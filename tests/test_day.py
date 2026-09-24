@@ -3625,3 +3625,91 @@ def test_security_recovery_commit_matures_on_day_13_and_resets_memories() -> Non
     assert trace.records[-1][
         "security_regime_recovery_commit_ids"
     ] == [commit.commit_id]
+
+
+
+def test_fractal_uncertainty_applies_after_child_initialization_atomically() -> None:
+    logger.info(
+        "test_fractal_uncertainty_applies_after_child_initialization_atomically"
+    )
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1049
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    uncertainty_config = load_yaml(
+        ROOT / "config/engine/fractal_uncertainty_v1.yaml"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_uncertainty=True,
+        fractal_uncertainty_config=uncertainty_config,
+    )
+
+    assert result.fractal_child_state_store is not None
+    assert len(result.fractal_uncertainty_records) == 5
+    assert len(result.fractal_uncertainty_audits) == 1
+    assert result.fractal_uncertainty_audits[0].preserved is True
+
+    children = result.fractal_child_state_store.state_map()
+    assert children["ESP::R1"].latents["polarization"] != pytest.approx(
+        children["ESP::R2"].latents["polarization"]
+    )
+    for variable, parent_value in dict(
+        result.fractal_uncertainty_audits[0].parent_values
+    ).items():
+        weighted = (
+            0.6 * children["ESP::R1"].latents[variable]
+            + 0.4 * children["ESP::R2"].latents[variable]
+        )
+        assert weighted == pytest.approx(
+            parent_value,
+            abs=result.fractal_uncertainty_audits[0].tolerance,
+        )
+
+    assert set(result.states) == set(states)
+    assert result.states["ESP"].latents["polarization"] == pytest.approx(0.5)

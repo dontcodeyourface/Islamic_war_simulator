@@ -106,6 +106,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_child_state_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-uncertainty-config",
+        default="config/engine/fractal_uncertainty_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -287,6 +291,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_child_state_config = load_yaml(
         root / args.fractal_child_state_config
     )
+    fractal_uncertainty_config = load_yaml(
+        root / args.fractal_uncertainty_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -368,6 +375,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_refinement_evaluator",
             "fractal_l2_materialization",
             "fractal_child_state_initialization",
+            "fractal_uncertainty_widening",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -438,6 +446,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         enable_fractal_child_state_initialization=True,
         fractal_child_state_config=fractal_child_state_config,
         fractal_child_state_store=None,
+        enable_fractal_uncertainty=True,
+        fractal_uncertainty_config=fractal_uncertainty_config,
     )
 
     out = Path(args.out)
@@ -541,6 +551,14 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_conservation_audit_ids": [
                 item.audit_id
                 for item in result.fractal_conservation_audits
+            ],
+            "fractal_uncertainty_ids": [
+                item.variation_id
+                for item in result.fractal_uncertainty_records
+            ],
+            "fractal_uncertainty_audit_ids": [
+                item.audit_id
+                for item in result.fractal_uncertainty_audits
             ],
             "fractal_child_state_store": (
                 result.fractal_child_state_store.to_dict()

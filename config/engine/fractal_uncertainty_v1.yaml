@@ -1,0 +1,84 @@
+schema_version: "1.0"
+status: "implementation-v0.22"
+purpose: "One-time bounded synthetic local variation for newly created L2 child latents."
+
+mode:
+  enabled: true
+  apply_only_on_new_children: true
+  child_dynamics_allowed: false
+  physical_stocks_immutable: true
+  regimes_immutable: true
+  preserve_parent_weighted_mean: true
+  calibrated_fallback_allowed: false
+
+policy_id: "FRACTAL_L2_LOCAL_VARIATION_V1"
+topology_uncertainty_policy_id: "FRACTAL_UNCERTAINTY_WIDENING_V1"
+
+parameter_id_by_profile:
+  synthetic_smoke_v1: "FRACTAL_L2_LOCAL_VARIATION_SYN_V1"
+  calibrated_v1: "FRACTAL_L2_LOCAL_VARIATION_CAL_V1"
+
+groups:
+  LOCAL_INSTITUTIONAL_RESILIENCE_V1:
+    variables:
+      social_cohesion: same
+      polarization: inverse
+      communal_fear: inverse
+      government_legitimacy: same
+      state_cohesion: same
+      elite_cohesion: same
+      administrative_capacity: same
+      judicial_continuity: same
+      fiscal_capacity: same
+      salary_payment_continuity: same
+      center_region_cohesion: same
+      territorial_control: same
+      regional_fragmentation_pressure: inverse
+  LOCAL_SECURITY_RESILIENCE_V1:
+    variables:
+      police_effective_capacity: same
+      intelligence_effectiveness: same
+      security_chain_cohesion: same
+      command_cohesion: same
+      constitutional_loyalty: same
+      operational_fatigue: inverse
+      public_order_stress: inverse
+      prison_control: same
+      terrorism_threat_pressure: inverse
+  LOCAL_NONSTATE_PRESSURE_V1:
+    variables:
+      criminal_network_power: same
+      black_market_expansion: same
+      violent_islamist_pressure: same
+      violent_ultranationalist_pressure: same
+      revolutionary_extremist_pressure: same
+      organized_armed_actor_capacity: same
+      foreign_support_nonstate: same
+      civilizational_narrative_strength: same
+  LOCAL_ECONOMIC_RESILIENCE_V1:
+    variables:
+      economic_output: same
+      inflation_pressure: inverse
+      unemployment_pressure: inverse
+      financial_buffer: same
+      trade_access: same
+  LOCAL_RESOURCE_RESILIENCE_V1:
+    variables:
+      energy_resilience: same
+      electricity_functionality: same
+      fuel_distribution_functionality: same
+      food_resilience: same
+      water_resilience: same
+      transport_logistics_functionality: same
+      telecom_internet_functionality: same
+      health_system_functionality: same
+
+safety:
+  civilian_identity_direct_variation_input: false
+  religion_direct_variation_input: false
+  ethnicity_direct_variation_input: false
+  political_identity_direct_variation_input: false
+  variation_is_uncertainty_not_local_fact: true
+  tactical_target_selection: false
+  route_planning: false
+  weapon_selection: false

@@ -33,6 +33,11 @@ from .fractal_child_state import (
     empty_fractal_child_state_store,
     initialize_fractal_child_states,
 )
+from .fractal_uncertainty import (
+    FractalUncertaintyAuditRecord,
+    FractalUncertaintyRecord,
+    apply_fractal_uncertainty,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -159,6 +164,12 @@ class DayTransactionResult:
     fractal_conservation_audits: tuple[
         FractalConservationAuditRecord, ...
     ]
+    fractal_uncertainty_records: tuple[
+        FractalUncertaintyRecord, ...
+    ]
+    fractal_uncertainty_audits: tuple[
+        FractalUncertaintyAuditRecord, ...
+    ]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -279,6 +290,12 @@ class DayTransactionResult:
             "fractal_conservation_audits": [
                 item.to_dict() for item in self.fractal_conservation_audits
             ],
+            "fractal_uncertainty_records": [
+                item.to_dict() for item in self.fractal_uncertainty_records
+            ],
+            "fractal_uncertainty_audits": [
+                item.to_dict() for item in self.fractal_uncertainty_audits
+            ],
         }
 
 
@@ -364,6 +381,16 @@ def _fractal_child_state_inputs_fingerprint(
     return {
         "child_store": child_store.to_dict(),
         "initialization_config_hash": canonical_hash(initialization_config),
+    }
+
+
+def _fractal_uncertainty_inputs_fingerprint(
+    *,
+    uncertainty_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info("_fractal_uncertainty_inputs_fingerprint")
+    return {
+        "uncertainty_config_hash": canonical_hash(uncertainty_config),
     }
 
 
@@ -799,6 +826,7 @@ def _transaction_id(
     fractal_refinement_inputs: dict[str, Any] | None = None,
     fractal_materialization_inputs: dict[str, Any] | None = None,
     fractal_child_state_inputs: dict[str, Any] | None = None,
+    fractal_uncertainty_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -827,6 +855,7 @@ def _transaction_id(
             "fractal_refinement_inputs": fractal_refinement_inputs,
             "fractal_materialization_inputs": fractal_materialization_inputs,
             "fractal_child_state_inputs": fractal_child_state_inputs,
+            "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1587,6 +1616,8 @@ def run_day_transaction(
     enable_fractal_child_state_initialization: bool = False,
     fractal_child_state_config: dict[str, Any] | None = None,
     fractal_child_state_store: FractalChildStateStore | None = None,
+    enable_fractal_uncertainty: bool = False,
+    fractal_uncertainty_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1618,6 +1649,7 @@ def run_day_transaction(
     fractal_refinement_inputs: dict[str, Any] | None = None
     fractal_materialization_inputs: dict[str, Any] | None = None
     fractal_child_state_inputs: dict[str, Any] | None = None
+    fractal_uncertainty_inputs: dict[str, Any] | None = None
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -1634,6 +1666,30 @@ def run_day_transaction(
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_fractal_uncertainty:
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Fractal uncertainty requires child-state initialization"
+            )
+        if fractal_uncertainty_config is None:
+            raise ValueError(
+                "Fractal uncertainty requires fractal_uncertainty_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_uncertainty_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal uncertainty is disabled by the day transaction contract"
+            )
+        fractal_uncertainty_inputs = (
+            _fractal_uncertainty_inputs_fingerprint(
+                uncertainty_config=fractal_uncertainty_config,
+            )
+        )
 
     if enable_fractal_child_state_initialization:
         if not enable_fractal_materialization:
@@ -1997,6 +2053,7 @@ def run_day_transaction(
         fractal_refinement_inputs=fractal_refinement_inputs,
         fractal_materialization_inputs=fractal_materialization_inputs,
         fractal_child_state_inputs=fractal_child_state_inputs,
+        fractal_uncertainty_inputs=fractal_uncertainty_inputs,
     )
 
     working_rng = rng.clone()
@@ -2316,6 +2373,12 @@ def run_day_transaction(
     fractal_conservation_audits: tuple[
         FractalConservationAuditRecord, ...
     ] = ()
+    fractal_uncertainty_records: tuple[
+        FractalUncertaintyRecord, ...
+    ] = ()
+    fractal_uncertainty_audits: tuple[
+        FractalUncertaintyAuditRecord, ...
+    ] = ()
 
     if enable_fractal_child_state_initialization:
         assert fractal_topology_out is not None
@@ -2334,6 +2397,29 @@ def run_day_transaction(
             child_result.initialization_records
         )
         fractal_conservation_audits = child_result.conservation_audits
+
+    if enable_fractal_uncertainty:
+        assert fractal_topology_out is not None
+        assert fractal_child_state_store_out is not None
+        assert fractal_uncertainty_config is not None
+        uncertainty_result = apply_fractal_uncertainty(
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            new_child_ids=tuple(
+                item.child_node_id
+                for item in fractal_child_initialization_records
+            ),
+            uncertainty_config=fractal_uncertainty_config,
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            rng=working_rng,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = uncertainty_result.store
+        fractal_uncertainty_records = uncertainty_result.records
+        fractal_uncertainty_audits = uncertainty_result.audits
 
     for node_id in sorted(states):
         _checkpoint_node(
@@ -2382,6 +2468,12 @@ def run_day_transaction(
         ],
         fractal_conservation_audit_ids=[
             item.audit_id for item in fractal_conservation_audits
+        ],
+        fractal_uncertainty_ids=[
+            item.variation_id for item in fractal_uncertainty_records
+        ],
+        fractal_uncertainty_audit_ids=[
+            item.audit_id for item in fractal_uncertainty_audits
         ],
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
@@ -2514,4 +2606,6 @@ def run_day_transaction(
             fractal_child_initialization_records
         ),
         fractal_conservation_audits=fractal_conservation_audits,
+        fractal_uncertainty_records=fractal_uncertainty_records,
+        fractal_uncertainty_audits=fractal_uncertainty_audits,
     )
