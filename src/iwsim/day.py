@@ -1498,6 +1498,12 @@ def _checkpoint_node(
     fractal_child_initialization_records: tuple[
         FractalChildStateInitializationRecord, ...
     ],
+    fractal_collapse_commits: tuple[
+        FractalCollapseCommitRecord, ...
+    ],
+    fractal_reaggregation_audits: tuple[
+        FractalReaggregationAuditRecord, ...
+    ],
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> None:
@@ -1563,6 +1569,20 @@ def _checkpoint_node(
             if item.parent_node_id == node_id
         )
     )
+    node_collapse_commits = tuple(
+        sorted(
+            item.commit_id
+            for item in fractal_collapse_commits
+            if item.parent_node_id == node_id
+        )
+    )
+    node_reaggregation_audits = tuple(
+        sorted(
+            item.audit_id
+            for item in fractal_reaggregation_audits
+            if item.parent_node_id == node_id
+        )
+    )
     node_spillovers = tuple(
         sorted(
             proposal.event_id
@@ -1588,6 +1608,8 @@ def _checkpoint_node(
         ),
         refinement_actions=node_refinement_actions,
         fractal_child_initialization_ids=node_child_initializations,
+        fractal_collapse_commit_ids=node_collapse_commits,
+        fractal_reaggregation_audit_ids=node_reaggregation_audits,
     )
 
 
@@ -2548,6 +2570,8 @@ def run_day_transaction(
             fractal_child_initialization_records=(
                 fractal_child_initialization_records
             ),
+            fractal_collapse_commits=fractal_collapse_commits,
+            fractal_reaggregation_audits=fractal_reaggregation_audits,
             manifest=manifest,
             trace=staged_trace,
         )
@@ -2584,6 +2608,12 @@ def run_day_transaction(
         ],
         fractal_uncertainty_audit_ids=[
             item.audit_id for item in fractal_uncertainty_audits
+        ],
+        fractal_collapse_commit_ids=[
+            item.commit_id for item in fractal_collapse_commits
+        ],
+        fractal_reaggregation_audit_ids=[
+            item.audit_id for item in fractal_reaggregation_audits
         ],
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
@@ -2718,4 +2748,6 @@ def run_day_transaction(
         fractal_conservation_audits=fractal_conservation_audits,
         fractal_uncertainty_records=fractal_uncertainty_records,
         fractal_uncertainty_audits=fractal_uncertainty_audits,
+        fractal_collapse_commits=fractal_collapse_commits,
+        fractal_reaggregation_audits=fractal_reaggregation_audits,
     )
