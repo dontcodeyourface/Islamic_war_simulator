@@ -62,6 +62,9 @@ class FractalChildStateInitializationRecord:
     child_state_hash: str
     refinement_action_id: str
     catalog_source_id: str
+    catalog_child_id: str
+    lineage_generation: int
+    lineage_policy_id: str | None
     additive_integer_variables: tuple[str, ...]
     inherited_intensive_variables: tuple[str, ...]
     parent_only_variables: tuple[str, ...]
@@ -86,6 +89,9 @@ class FractalChildStateInitializationRecord:
             "child_state_hash": self.child_state_hash,
             "refinement_action_id": self.refinement_action_id,
             "catalog_source_id": self.catalog_source_id,
+            "catalog_child_id": self.catalog_child_id,
+            "lineage_generation": self.lineage_generation,
+            "lineage_policy_id": self.lineage_policy_id,
             "additive_integer_variables": list(
                 self.additive_integer_variables
             ),
@@ -462,6 +468,14 @@ def _child_metadata(
                 topology_node.initialization_weight
             ),
             "fractal_catalog_source_id": topology_node.catalog_source_id,
+            "fractal_catalog_child_id": (
+                topology_node.catalog_child_id
+                if topology_node.catalog_child_id is not None
+                else topology_node.node_id
+            ),
+            "fractal_lineage_generation": topology_node.lineage_generation,
+            "fractal_lineage_policy_id": topology_node.lineage_policy_id,
+            "fractal_runtime_node_id": topology_node.node_id,
             "fractal_initialization_weight_policy_id": (
                 topology_node.initialization_weight_policy_id
             ),
@@ -504,6 +518,13 @@ def _initialization_id(
             "child_state_hash": child_state.state_hash(),
             "initialization_weight": topology_node.initialization_weight,
             "refinement_action_id": topology_node.refinement_action_id,
+            "catalog_child_id": (
+                topology_node.catalog_child_id
+                if topology_node.catalog_child_id is not None
+                else topology_node.node_id
+            ),
+            "lineage_generation": topology_node.lineage_generation,
+            "lineage_policy_id": topology_node.lineage_policy_id,
             "latent_policy_id": policy["latent_policy_id"],
             "regime_policy_id": policy["regime_policy_id"],
             "metadata_policy_id": policy["metadata_policy_id"],
@@ -718,6 +739,13 @@ def initialize_fractal_child_states(
                 child_state_hash=child_state.state_hash(),
                 refinement_action_id=topology_node.refinement_action_id,
                 catalog_source_id=topology_node.catalog_source_id,
+                catalog_child_id=(
+                    topology_node.catalog_child_id
+                    if topology_node.catalog_child_id is not None
+                    else topology_node.node_id
+                ),
+                lineage_generation=topology_node.lineage_generation,
+                lineage_policy_id=topology_node.lineage_policy_id,
                 additive_integer_variables=policy[
                     "additive_integer_conserved"
                 ],

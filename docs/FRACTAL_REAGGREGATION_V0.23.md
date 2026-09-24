@@ -102,7 +102,7 @@ Any validation or conservation failure aborts the staged day transaction.
 
 v0.23 preserves inactive topology lineage after collapse.
 
-Re-expanding the same catalog regions after a later stress recurrence requires an explicit lifecycle/reactivation policy so historical lineage is not overwritten. That policy is intentionally separate from this collapse PR.
+Re-expanding the same catalog regions after a later stress recurrence requires an explicit lifecycle policy so historical lineage is not overwritten. That follow-up is implemented by [FRACTAL_LIFECYCLE_V0.24.md](FRACTAL_LIFECYCLE_V0.24.md), which creates immutable runtime generations instead of reopening closed lineage instances.
 
 ## Safety boundary
 

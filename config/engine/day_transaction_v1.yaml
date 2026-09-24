@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.23"
+status: "implementation-v0.24"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -98,6 +98,11 @@ transaction_rules:
   fractal_materialization_topology_history_required_after_day_zero: true
   fractal_materialization_requires_explicit_region_catalog: true
   fractal_materialization_updates_refinement_level_only_after_commit: true
+  fractal_materialization_preserves_closed_runtime_lineage: true
+  fractal_materialization_catalog_child_identity_stable: true
+  fractal_materialization_generation_monotonic: true
+  fractal_materialization_closed_instance_reactivation_forbidden: true
+  fractal_materialization_catalog_topology_change_requires_migration: true
   fractal_collapse_commit_allowed: true
   fractal_collapse_reaggregation_after_uncertainty: true
   fractal_collapse_requires_complete_active_sibling_set: true

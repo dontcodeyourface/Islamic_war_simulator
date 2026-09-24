@@ -10,6 +10,10 @@ from .fractal import (
     FractalRefinementActionProposal,
     FractalRefinementPersistenceState,
 )
+from .fractal_lifecycle import (
+    allocate_lineage_generation,
+    validate_lifecycle_config,
+)
 from .manifest import RunManifest
 from .trace import TraceLedger
 
@@ -33,6 +37,9 @@ class FractalTopologyNode:
     catalog_source_id: str
     de_refinement_day: int | None = None
     active: bool = True
+    catalog_child_id: str | None = None
+    lineage_generation: int = 1
+    lineage_policy_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -61,6 +68,13 @@ class FractalTopologyNode:
             "catalog_source_id": self.catalog_source_id,
             "de_refinement_day": self.de_refinement_day,
             "active": self.active,
+            "catalog_child_id": (
+                self.catalog_child_id
+                if self.catalog_child_id is not None
+                else self.node_id
+            ),
+            "lineage_generation": self.lineage_generation,
+            "lineage_policy_id": self.lineage_policy_id,
         }
 
 
@@ -121,6 +135,9 @@ class FractalMaterializationCommitRecord:
     from_level: str
     to_level: str
     child_node_ids: tuple[str, ...]
+    catalog_child_ids: tuple[str, ...]
+    lineage_generation: int
+    lineage_policy_id: str
     catalog_hash: str
     topology_hash_before: str
     topology_hash_after: str
@@ -141,6 +158,9 @@ class FractalMaterializationCommitRecord:
             "from_level": self.from_level,
             "to_level": self.to_level,
             "child_node_ids": list(self.child_node_ids),
+            "catalog_child_ids": list(self.catalog_child_ids),
+            "lineage_generation": self.lineage_generation,
+            "lineage_policy_id": self.lineage_policy_id,
             "catalog_hash": self.catalog_hash,
             "topology_hash_before": self.topology_hash_before,
             "topology_hash_after": self.topology_hash_after,
@@ -158,28 +178,31 @@ def _validate_materialization_config(config: dict[str, Any]) -> dict[str, Any]:
     logger.info("_validate_materialization_config")
     mode = config.get("mode", {})
     if mode.get("expansion_commit_allowed") is not True:
-        raise ValueError("v0.20 requires expansion_commit_allowed=true")
+        raise ValueError("v0.24 requires expansion_commit_allowed=true")
     if mode.get("collapse_commit_allowed") is not False:
-        raise ValueError("v0.20 collapse commit must remain disabled")
+        raise ValueError("v0.24 topology materializer does not commit collapse")
     if mode.get("engine_state_child_activation") is not False:
         raise ValueError(
-            "v0.20 must not activate child EngineState dynamics"
+            "v0.24 must not activate child EngineState dynamics"
         )
     if mode.get("country_graph_child_activation") is not False:
         raise ValueError(
-            "v0.20 must not insert children into CountryGraph"
+            "v0.24 must not insert children into CountryGraph"
         )
     if mode.get("explicit_catalog_required") is not True:
-        raise ValueError("v0.20 requires an explicit region catalog")
+        raise ValueError("v0.24 requires an explicit region catalog")
 
     min_children = int(config["catalog_constraints"]["min_children"])
     max_children = int(config["catalog_constraints"]["max_children"])
     if min_children < 2 or max_children < min_children:
         raise ValueError("Invalid fractal child-count constraints")
 
+    lifecycle = validate_lifecycle_config(config)
+
     return {
         "min_children": min_children,
         "max_children": max_children,
+        "lifecycle_policy_id": lifecycle["policy_id"],
     }
 
 
@@ -195,7 +218,7 @@ def _validate_topology(topology: FractalTopologyState) -> None:
     for item in topology.nodes:
         if item.level != "L2_REGION":
             raise ValueError(
-                f"v0.20 topology node {item.node_id} must be L2_REGION"
+                f"v0.24 topology node {item.node_id} must be L2_REGION"
             )
         if item.initialization_weight <= 0.0:
             raise ValueError(
@@ -204,6 +227,15 @@ def _validate_topology(topology: FractalTopologyState) -> None:
         if not math.isfinite(item.initialization_weight):
             raise ValueError(
                 f"Fractal node {item.node_id} has non-finite weight"
+            )
+        if int(item.lineage_generation) < 1:
+            raise ValueError(
+                f"Fractal node {item.node_id} has invalid lineage generation"
+            )
+        if item.lineage_generation > 1 and not item.catalog_child_id:
+            raise ValueError(
+                f"Fractal node {item.node_id} generation "
+                f"{item.lineage_generation} requires catalog_child_id"
             )
 
 
@@ -294,6 +326,9 @@ def _commit_id(
     catalog_hash: str,
     topology_hash_before: str,
     child_node_ids: tuple[str, ...],
+    catalog_child_ids: tuple[str, ...],
+    lineage_generation: int,
+    lineage_policy_id: str,
 ) -> str:
     logger.info(
         "_commit_id parent=%s action_id=%s children=%s",
@@ -310,7 +345,10 @@ def _commit_id(
             "catalog_hash": catalog_hash,
             "topology_hash_before": topology_hash_before,
             "child_node_ids": list(child_node_ids),
-            "commit_contract": "FRACTAL_L2_MATERIALIZATION_V1",
+            "catalog_child_ids": list(catalog_child_ids),
+            "lineage_generation": lineage_generation,
+            "lineage_policy_id": lineage_policy_id,
+            "commit_contract": "FRACTAL_L2_MATERIALIZATION_V2",
         }
     )
     return f"fractal-commit-{digest[:24]}"
@@ -345,9 +383,9 @@ def materialize_l1_to_l2(
             f"Fractal action {action.action_id} is not commit-eligible"
         )
     if action.action != "EXPAND":
-        raise ValueError("v0.20 materializer supports EXPAND only")
+        raise ValueError("v0.24 materializer supports EXPAND only")
     if action.from_level != "L1_COUNTRY" or action.to_level != "L2_REGION":
-        raise ValueError("v0.20 supports only L1_COUNTRY -> L2_REGION")
+        raise ValueError("v0.24 supports only L1_COUNTRY -> L2_REGION")
     if persistence.node_id != action.node_id:
         raise ValueError("Fractal action/persistence node mismatch")
     if persistence.current_level != "L1_COUNTRY":
@@ -377,14 +415,39 @@ def materialize_l1_to_l2(
         region_catalog=region_catalog,
         constraints=constraints,
     )
+    allocations = allocate_lineage_generation(
+        parent_node_id=action.node_id,
+        catalog_child_ids=tuple(
+            item["child_id"] for item in children
+        ),
+        topology=topology,
+        materialization_config=materialization_config,
+    )
+    allocation_by_catalog = {
+        item.catalog_child_id: item for item in allocations
+    }
+    lineage_generations = {
+        item.lineage_generation for item in allocations
+    }
+    lineage_policy_ids = {
+        item.lineage_policy_id for item in allocations
+    }
+    if len(lineage_generations) != 1 or len(lineage_policy_ids) != 1:
+        raise RuntimeError(
+            "Fractal materialization allocated inconsistent sibling lineage"
+        )
+    lineage_generation = next(iter(lineage_generations))
+    lineage_policy_id = next(iter(lineage_policy_ids))
+
     catalog_hash = canonical_hash(region_catalog)
     topology_hash_before = topology.topology_hash()
 
     new_nodes = list(topology.nodes)
     for child in children:
+        allocation = allocation_by_catalog[child["child_id"]]
         new_nodes.append(
             FractalTopologyNode(
-                node_id=child["child_id"],
+                node_id=allocation.runtime_node_id,
                 label=child["label"],
                 parent_node_id=action.node_id,
                 level="L2_REGION",
@@ -401,6 +464,9 @@ def materialize_l1_to_l2(
                 ),
                 aggregation_rule_id=action.aggregation_rule_id,
                 catalog_source_id=child["source_id"],
+                catalog_child_id=allocation.catalog_child_id,
+                lineage_generation=allocation.lineage_generation,
+                lineage_policy_id=allocation.lineage_policy_id,
             )
         )
 
@@ -418,6 +484,10 @@ def materialize_l1_to_l2(
         collapse_streak=0,
     )
     child_node_ids = tuple(
+        allocation_by_catalog[item["child_id"]].runtime_node_id
+        for item in children
+    )
+    catalog_child_ids = tuple(
         item["child_id"] for item in children
     )
     commit_id = _commit_id(
@@ -426,6 +496,9 @@ def materialize_l1_to_l2(
         catalog_hash=catalog_hash,
         topology_hash_before=topology_hash_before,
         child_node_ids=child_node_ids,
+        catalog_child_ids=catalog_child_ids,
+        lineage_generation=lineage_generation,
+        lineage_policy_id=lineage_policy_id,
     )
     record = FractalMaterializationCommitRecord(
         commit_id=commit_id,
@@ -435,6 +508,9 @@ def materialize_l1_to_l2(
         from_level=action.from_level,
         to_level=action.to_level,
         child_node_ids=child_node_ids,
+        catalog_child_ids=catalog_child_ids,
+        lineage_generation=lineage_generation,
+        lineage_policy_id=lineage_policy_id,
         catalog_hash=catalog_hash,
         topology_hash_before=topology_hash_before,
         topology_hash_after=topology_after.topology_hash(),

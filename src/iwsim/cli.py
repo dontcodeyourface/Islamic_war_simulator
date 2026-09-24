@@ -381,6 +381,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "phase_commit",
             "fractal_refinement_evaluator",
             "fractal_l2_materialization",
+            "fractal_topology_lifecycle",
             "fractal_child_state_initialization",
             "fractal_uncertainty_widening",
             "fractal_collapse_reaggregation",

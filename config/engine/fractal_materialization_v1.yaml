@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.20"
-purpose: "Commit L1->L2 fractal topology materialization with immutable lineage."
+status: "implementation-v0.24"
+purpose: "Commit L1->L2 materialization with immutable generational topology lineage."
 
 mode:
   expansion_commit_allowed: true
@@ -15,6 +15,18 @@ catalog_constraints:
   child_ids_must_be_parent_namespaced: true
   initialization_weights_must_sum_to_one: true
 
+lifecycle:
+  policy_id: "FRACTAL_TOPOLOGY_GENERATION_V1"
+  preserve_closed_lineage: true
+  never_reactivate_closed_runtime_node: true
+  first_generation_uses_catalog_child_id: true
+  subsequent_generation_suffix: "::g{generation}"
+  generation_starts_at: 1
+  generation_advances_by_one: true
+  current_catalog_child_set_must_match_history: true
+  complete_sibling_generation_history_required: true
+  reserved_catalog_generation_suffix_forbidden: true
+
 lineage:
   preserve_parent_node: true
   preserve_refinement_action_id: true
@@ -25,6 +37,9 @@ lineage:
   preserve_inherited_uncertainty_policy_id: true
   preserve_aggregation_rule_id: true
   preserve_catalog_source_id: true
+  preserve_catalog_child_id: true
+  preserve_lineage_generation: true
+  preserve_lineage_policy_id: true
 
 safety:
   no_implicit_region_generation: true
