@@ -38,6 +38,11 @@ from .fractal_uncertainty import (
     FractalUncertaintyRecord,
     apply_fractal_uncertainty,
 )
+from .fractal_reaggregation import (
+    FractalCollapseCommitRecord,
+    FractalReaggregationAuditRecord,
+    commit_fractal_collapses,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -170,6 +175,12 @@ class DayTransactionResult:
     fractal_uncertainty_audits: tuple[
         FractalUncertaintyAuditRecord, ...
     ]
+    fractal_collapse_commits: tuple[
+        FractalCollapseCommitRecord, ...
+    ]
+    fractal_reaggregation_audits: tuple[
+        FractalReaggregationAuditRecord, ...
+    ]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -296,6 +307,12 @@ class DayTransactionResult:
             "fractal_uncertainty_audits": [
                 item.to_dict() for item in self.fractal_uncertainty_audits
             ],
+            "fractal_collapse_commits": [
+                item.to_dict() for item in self.fractal_collapse_commits
+            ],
+            "fractal_reaggregation_audits": [
+                item.to_dict() for item in self.fractal_reaggregation_audits
+            ],
         }
 
 
@@ -391,6 +408,16 @@ def _fractal_uncertainty_inputs_fingerprint(
     logger.info("_fractal_uncertainty_inputs_fingerprint")
     return {
         "uncertainty_config_hash": canonical_hash(uncertainty_config),
+    }
+
+
+def _fractal_reaggregation_inputs_fingerprint(
+    *,
+    reaggregation_config: dict[str, Any],
+) -> dict[str, Any]:
+    logger.info("_fractal_reaggregation_inputs_fingerprint")
+    return {
+        "reaggregation_config_hash": canonical_hash(reaggregation_config),
     }
 
 
@@ -827,6 +854,7 @@ def _transaction_id(
     fractal_materialization_inputs: dict[str, Any] | None = None,
     fractal_child_state_inputs: dict[str, Any] | None = None,
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
+    fractal_reaggregation_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -856,6 +884,7 @@ def _transaction_id(
             "fractal_materialization_inputs": fractal_materialization_inputs,
             "fractal_child_state_inputs": fractal_child_state_inputs,
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
+            "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1469,6 +1498,12 @@ def _checkpoint_node(
     fractal_child_initialization_records: tuple[
         FractalChildStateInitializationRecord, ...
     ],
+    fractal_collapse_commits: tuple[
+        FractalCollapseCommitRecord, ...
+    ],
+    fractal_reaggregation_audits: tuple[
+        FractalReaggregationAuditRecord, ...
+    ],
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> None:
@@ -1534,6 +1569,20 @@ def _checkpoint_node(
             if item.parent_node_id == node_id
         )
     )
+    node_collapse_commits = tuple(
+        sorted(
+            item.commit_id
+            for item in fractal_collapse_commits
+            if item.parent_node_id == node_id
+        )
+    )
+    node_reaggregation_audits = tuple(
+        sorted(
+            item.audit_id
+            for item in fractal_reaggregation_audits
+            if item.parent_node_id == node_id
+        )
+    )
     node_spillovers = tuple(
         sorted(
             proposal.event_id
@@ -1559,6 +1608,8 @@ def _checkpoint_node(
         ),
         refinement_actions=node_refinement_actions,
         fractal_child_initialization_ids=node_child_initializations,
+        fractal_collapse_commit_ids=node_collapse_commits,
+        fractal_reaggregation_audit_ids=node_reaggregation_audits,
     )
 
 
@@ -1618,6 +1669,8 @@ def run_day_transaction(
     fractal_child_state_store: FractalChildStateStore | None = None,
     enable_fractal_uncertainty: bool = False,
     fractal_uncertainty_config: dict[str, Any] | None = None,
+    enable_fractal_reaggregation: bool = False,
+    fractal_reaggregation_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1650,6 +1703,7 @@ def run_day_transaction(
     fractal_materialization_inputs: dict[str, Any] | None = None
     fractal_child_state_inputs: dict[str, Any] | None = None
     fractal_uncertainty_inputs: dict[str, Any] | None = None
+    fractal_reaggregation_inputs: dict[str, Any] | None = None
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -1666,6 +1720,34 @@ def run_day_transaction(
         for node_id, flags in (security_regime_context_flags or {}).items()
     }
     normalized_spillover_queue: SpilloverQueueState | None = None
+
+    if enable_fractal_reaggregation:
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Fractal reaggregation requires child-state initialization"
+            )
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Fractal reaggregation requires fractal materialization"
+            )
+        if fractal_reaggregation_config is None:
+            raise ValueError(
+                "Fractal reaggregation requires fractal_reaggregation_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_reaggregation_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal reaggregation is disabled by the day transaction contract"
+            )
+        fractal_reaggregation_inputs = (
+            _fractal_reaggregation_inputs_fingerprint(
+                reaggregation_config=fractal_reaggregation_config,
+            )
+        )
 
     if enable_fractal_uncertainty:
         if not enable_fractal_child_state_initialization:
@@ -2054,6 +2136,7 @@ def run_day_transaction(
         fractal_materialization_inputs=fractal_materialization_inputs,
         fractal_child_state_inputs=fractal_child_state_inputs,
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
+        fractal_reaggregation_inputs=fractal_reaggregation_inputs,
     )
 
     working_rng = rng.clone()
@@ -2342,6 +2425,26 @@ def run_day_transaction(
             trace=staged_trace,
         )
 
+    unknown_fractal_actions = {
+        item.action
+        for item in fractal_refinement_actions
+        if item.action not in {"EXPAND", "COLLAPSE"}
+    }
+    if unknown_fractal_actions:
+        raise ValueError(
+            f"Unknown fractal actions: {sorted(unknown_fractal_actions)}"
+        )
+    fractal_expansion_actions = tuple(
+        item
+        for item in fractal_refinement_actions
+        if item.action == "EXPAND"
+    )
+    fractal_collapse_actions = tuple(
+        item
+        for item in fractal_refinement_actions
+        if item.action == "COLLAPSE"
+    )
+
     fractal_topology_out: FractalTopologyState | None = None
     fractal_materialization_commits: tuple[
         FractalMaterializationCommitRecord, ...
@@ -2357,7 +2460,7 @@ def run_day_transaction(
             fractal_materialization_commits,
         ) = _commit_fractal_materializations(
             day=day_to,
-            actions=fractal_refinement_actions,
+            actions=fractal_expansion_actions,
             persistence=fractal_refinement_persistence_out,
             topology=normalized_fractal_topology,
             region_catalog=fractal_region_catalog,
@@ -2421,6 +2524,35 @@ def run_day_transaction(
         fractal_uncertainty_records = uncertainty_result.records
         fractal_uncertainty_audits = uncertainty_result.audits
 
+    fractal_collapse_commits: tuple[
+        FractalCollapseCommitRecord, ...
+    ] = ()
+    fractal_reaggregation_audits: tuple[
+        FractalReaggregationAuditRecord, ...
+    ] = ()
+
+    if enable_fractal_reaggregation:
+        assert fractal_topology_out is not None
+        assert fractal_child_state_store_out is not None
+        assert fractal_reaggregation_config is not None
+        collapse_result = commit_fractal_collapses(
+            parent_states=final_states,
+            actions=fractal_collapse_actions,
+            persistence=fractal_refinement_persistence_out,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            reaggregation_config=fractal_reaggregation_config,
+            engine_state_registry=engine_state_registry,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        final_states = collapse_result.states
+        fractal_topology_out = collapse_result.topology
+        fractal_child_state_store_out = collapse_result.child_store
+        fractal_refinement_persistence_out = collapse_result.persistence
+        fractal_collapse_commits = collapse_result.commits
+        fractal_reaggregation_audits = collapse_result.audits
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -2438,6 +2570,8 @@ def run_day_transaction(
             fractal_child_initialization_records=(
                 fractal_child_initialization_records
             ),
+            fractal_collapse_commits=fractal_collapse_commits,
+            fractal_reaggregation_audits=fractal_reaggregation_audits,
             manifest=manifest,
             trace=staged_trace,
         )
@@ -2474,6 +2608,12 @@ def run_day_transaction(
         ],
         fractal_uncertainty_audit_ids=[
             item.audit_id for item in fractal_uncertainty_audits
+        ],
+        fractal_collapse_commit_ids=[
+            item.commit_id for item in fractal_collapse_commits
+        ],
+        fractal_reaggregation_audit_ids=[
+            item.audit_id for item in fractal_reaggregation_audits
         ],
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
@@ -2608,4 +2748,6 @@ def run_day_transaction(
         fractal_conservation_audits=fractal_conservation_audits,
         fractal_uncertainty_records=fractal_uncertainty_records,
         fractal_uncertainty_audits=fractal_uncertainty_audits,
+        fractal_collapse_commits=fractal_collapse_commits,
+        fractal_reaggregation_audits=fractal_reaggregation_audits,
     )

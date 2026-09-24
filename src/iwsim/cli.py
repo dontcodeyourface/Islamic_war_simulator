@@ -110,6 +110,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_uncertainty_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-reaggregation-config",
+        default="config/engine/fractal_reaggregation_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -294,6 +298,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_uncertainty_config = load_yaml(
         root / args.fractal_uncertainty_config
     )
+    fractal_reaggregation_config = load_yaml(
+        root / args.fractal_reaggregation_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -376,6 +383,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_l2_materialization",
             "fractal_child_state_initialization",
             "fractal_uncertainty_widening",
+            "fractal_collapse_reaggregation",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -448,6 +456,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         fractal_child_state_store=None,
         enable_fractal_uncertainty=True,
         fractal_uncertainty_config=fractal_uncertainty_config,
+        enable_fractal_reaggregation=True,
+        fractal_reaggregation_config=fractal_reaggregation_config,
     )
 
     out = Path(args.out)
@@ -559,6 +569,14 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_uncertainty_audit_ids": [
                 item.audit_id
                 for item in result.fractal_uncertainty_audits
+            ],
+            "fractal_collapse_commit_ids": [
+                item.commit_id
+                for item in result.fractal_collapse_commits
+            ],
+            "fractal_reaggregation_audit_ids": [
+                item.audit_id
+                for item in result.fractal_reaggregation_audits
             ],
             "fractal_child_state_store": (
                 result.fractal_child_state_store.to_dict()

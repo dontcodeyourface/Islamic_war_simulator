@@ -84,6 +84,8 @@ class TraceLedger:
         security_regime_transition_ids: tuple[str, ...] = (),
         security_regime_recovery_transition_ids: tuple[str, ...] = (),
         fractal_child_initialization_ids: tuple[str, ...] = (),
+        fractal_collapse_commit_ids: tuple[str, ...] = (),
+        fractal_reaggregation_audit_ids: tuple[str, ...] = (),
     ) -> None:
         logger.info(
             "TraceLedger.append_daily_checkpoint run_id=%s day=%s node_id=%s",
@@ -113,6 +115,12 @@ class TraceLedger:
             ),
             fractal_child_initialization_ids=list(
                 fractal_child_initialization_ids
+            ),
+            fractal_collapse_commit_ids=list(
+                fractal_collapse_commit_ids
+            ),
+            fractal_reaggregation_audit_ids=list(
+                fractal_reaggregation_audit_ids
             ),
         )
 
