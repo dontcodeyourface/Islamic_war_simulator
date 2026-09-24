@@ -445,10 +445,16 @@ def _aggregate_additive(
     child_states: dict[str, EngineState],
 ) -> int | None:
     logger.info("_aggregate_additive variable=%s", variable)
+    for item in children:
+        if variable not in child_states[item.node_id].physical_stocks:
+            raise KeyError(
+                f"Fractal collapse child {item.node_id} missing physical "
+                f"stock {variable}"
+            )
     values = [
         _integer_or_none(
             variable=variable,
-            value=child_states[item.node_id].physical_stocks.get(variable),
+            value=child_states[item.node_id].physical_stocks[variable],
         )
         for item in children
     ]
@@ -468,8 +474,14 @@ def _aggregate_intensive(
     child_states: dict[str, EngineState],
 ) -> float | None:
     logger.info("_aggregate_intensive variable=%s", variable)
+    for item in children:
+        if variable not in child_states[item.node_id].physical_stocks:
+            raise KeyError(
+                f"Fractal collapse child {item.node_id} missing physical "
+                f"stock {variable}"
+            )
     values = [
-        child_states[item.node_id].physical_stocks.get(variable)
+        child_states[item.node_id].physical_stocks[variable]
         for item in children
     ]
     if all(value is None for value in values):
@@ -544,6 +556,44 @@ def _aggregate_physical_stocks(
     return aggregated, additive, intensive, retained
 
 
+def _validate_aggregated_physical_stocks(
+    *,
+    physical_stocks: dict[str, int | float | None],
+    engine_state_registry: dict[str, Any],
+) -> None:
+    logger.info("_validate_aggregated_physical_stocks")
+    definitions = {
+        str(item["id"]): item
+        for item in engine_state_registry["physical_stocks"]
+    }
+    observed = set(physical_stocks)
+    expected = set(definitions)
+    if observed != expected:
+        raise ValueError(
+            "Reaggregated physical-stock coverage mismatch "
+            f"missing={sorted(expected-observed)} "
+            f"extra={sorted(observed-expected)}"
+        )
+    for variable, definition in sorted(definitions.items()):
+        value = physical_stocks[variable]
+        nullable = bool(definition.get("nullable", False))
+        if value is None:
+            if not nullable:
+                raise ValueError(
+                    f"Reaggregated non-null physical stock {variable} is null"
+                )
+            continue
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            raise ValueError(
+                f"Reaggregated physical stock {variable} must be finite"
+            )
+        if numeric < 0.0:
+            raise ValueError(
+                f"Reaggregated physical stock {variable} must be non-negative"
+            )
+
+
 def _aggregate_latents(
     *,
     children: tuple[FractalTopologyNode, ...],
@@ -579,19 +629,36 @@ def _aggregate_regimes(
     engine_state_registry: dict[str, Any],
 ) -> dict[str, str]:
     logger.info("_aggregate_regimes children=%s", len(children))
-    regime_ids = tuple(sorted(engine_state_registry["regimes"]))
+    regime_definitions = engine_state_registry["regimes"]
+    regime_ids = tuple(sorted(regime_definitions))
     result: dict[str, str] = {}
     for regime_id in regime_ids:
+        for item in children:
+            if regime_id not in child_states[item.node_id].regimes:
+                raise KeyError(
+                    f"Fractal collapse child {item.node_id} missing regime "
+                    f"{regime_id}"
+                )
         observed = {
-            str(child_states[item.node_id].regimes.get(regime_id, ""))
+            str(child_states[item.node_id].regimes[regime_id])
             for item in children
         }
-        if "" in observed or len(observed) != 1:
+        if len(observed) != 1:
             raise ValueError(
                 f"Fractal collapse regime {regime_id} requires unanimous "
                 f"sibling consensus, got {sorted(observed)}"
             )
-        result[regime_id] = next(iter(observed))
+        consensus = next(iter(observed))
+        allowed = {
+            str(value)
+            for value in regime_definitions[regime_id]["values"]
+        }
+        if consensus not in allowed:
+            raise ValueError(
+                f"Fractal collapse regime {regime_id} has invalid value "
+                f"{consensus}"
+            )
+        result[regime_id] = consensus
     return result
 
 
@@ -830,6 +897,10 @@ def collapse_l2_to_l1(
     latents = _aggregate_latents(
         children=children,
         child_states=child_states,
+        engine_state_registry=engine_state_registry,
+    )
+    _validate_aggregated_physical_stocks(
+        physical_stocks=physical_stocks,
         engine_state_registry=engine_state_registry,
     )
     regimes = _aggregate_regimes(
