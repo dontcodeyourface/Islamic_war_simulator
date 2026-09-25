@@ -650,3 +650,60 @@ def test_v034c2_regime_persistence_prunes_refined_l2_context() -> None:
         == "fractal_regional_regime_runtime_committed"
     ]
     assert committed[-1]["retired_context_node_ids"] == [context_id]
+
+
+
+def test_v034c2_bootstrap_accepts_only_transitional_active_ancestors() -> None:
+    logger.info(
+        "test_v034c2_bootstrap_accepts_only_transitional_active_ancestors"
+    )
+    context_id = "TST::R1"
+    l3_a = "TST::R1::A"
+    l3_b = "TST::R1::B"
+    child_store = FractalChildStateStore(
+        last_initialized_day=3,
+        states=(
+            _recursive_state(
+                context_id,
+                parent_id="TST",
+                level="L2_REGION",
+                day=3,
+            ),
+            _recursive_state(
+                l3_a,
+                parent_id=context_id,
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                day=3,
+            ),
+            _recursive_state(
+                l3_b,
+                parent_id=context_id,
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                day=3,
+            ),
+        ),
+    )
+    supplied = _persistence_for_nodes(
+        (context_id, l3_a, l3_b),
+        day=3,
+    )
+    validated = bootstrap_or_validate_regional_regime_store(
+        child_store=child_store,
+        active_node_ids=(l3_a, l3_b),
+        supplied_store=supplied,
+    )
+    assert validated.to_dict() == supplied.to_dict()
+
+    invalid = _persistence_for_nodes(
+        ("TST::ORPHAN", l3_a, l3_b),
+        day=3,
+    )
+    with pytest.raises(
+        ValueError,
+        match="non-active, non-ancestor",
+    ):
+        bootstrap_or_validate_regional_regime_store(
+            child_store=child_store,
+            active_node_ids=(l3_a, l3_b),
+            supplied_store=invalid,
+        )
