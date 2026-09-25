@@ -25,6 +25,7 @@ from .fractal_materialization import (
     advance_fractal_topology_without_materialization,
     empty_fractal_topology,
     materialize_l1_to_l2,
+    materialize_next_level,
 )
 from .fractal_child_state import (
     FractalChildStateInitializationRecord,
@@ -528,7 +529,8 @@ def _validate_fractal_topology_consistency(
         len(states),
         len(topology.nodes),
     )
-    known_parents = set(states)
+    topology_ids = {item.node_id for item in topology.nodes}
+    known_parents = set(states) | topology_ids
     topology_parents = {item.parent_node_id for item in topology.nodes}
     unknown = topology_parents - known_parents
     if unknown:
@@ -536,8 +538,21 @@ def _validate_fractal_topology_consistency(
             f"Fractal topology contains unknown parents: {sorted(unknown)}"
         )
 
+    active_l2 = {
+        item.node_id: item
+        for item in topology.nodes
+        if item.active and item.level == "L2_REGION"
+    }
+    expected_persistence = set(states) | set(active_l2)
+    unexpected = set(persistence) - expected_persistence
+    if unexpected:
+        raise ValueError(
+            "Fractal refinement persistence contains inactive/unsupported "
+            f"nodes: {sorted(unexpected)}"
+        )
+
     for node_id in sorted(states):
-        item = persistence[node_id]
+        item = persistence.get(node_id)
         children = topology.active_children(node_id)
         if item is None:
             if children:
@@ -552,7 +567,37 @@ def _validate_fractal_topology_consistency(
             )
         if item.current_level == "L2_REGION" and not children:
             raise ValueError(
-                f"Fractal L2 parent {node_id} requires active L2 children"
+                f"Fractal L1 parent {node_id} at L2 resolution requires "
+                "active L2 children"
+            )
+
+    for node_id, topology_node in sorted(active_l2.items()):
+        item = persistence.get(node_id)
+        children = topology.active_children(node_id)
+        if item is None:
+            if children:
+                raise ValueError(
+                    f"Fractal L2 parent {node_id} has active L3 children "
+                    "without refinement persistence"
+                )
+            if topology_node.created_day != topology.last_committed_day:
+                raise ValueError(
+                    f"Established L2 node {node_id} lacks refinement "
+                    "persistence"
+                )
+            continue
+        if item.current_level == "L2_REGION" and children:
+            raise ValueError(
+                f"Fractal L2 parent {node_id} at L2 resolution cannot "
+                "have active L3 children"
+            )
+        if (
+            item.current_level == "L3_METRO_OR_LOGISTICS_AREA"
+            and not children
+        ):
+            raise ValueError(
+                f"Fractal L2 parent {node_id} at L3 resolution requires "
+                "active L3 children"
             )
 
 
@@ -581,6 +626,7 @@ def _normalize_fractal_refinement_persistence_inputs(
     persistence: (
         dict[str, FractalRefinementPersistenceState | None] | None
     ),
+    topology: FractalTopologyState | None = None,
 ) -> dict[str, FractalRefinementPersistenceState | None]:
     logger.info(
         "_normalize_fractal_refinement_persistence_inputs "
@@ -588,28 +634,52 @@ def _normalize_fractal_refinement_persistence_inputs(
         day_from,
         persistence is not None,
     )
+    active_l2 = {
+        item.node_id: item
+        for item in (topology.nodes if topology is not None else ())
+        if item.active and item.level == "L2_REGION"
+    }
+    expected = set(states) | set(active_l2)
+
     if persistence is None:
         if day_from != 0:
             raise ValueError(
                 "Fractal refinement persistence is required after day zero "
                 "when fractal evaluation is enabled"
             )
-        return {node_id: None for node_id in sorted(states)}
+        return {node_id: None for node_id in sorted(expected)}
 
-    if set(persistence) != set(states):
+    unexpected = set(persistence) - expected
+    if unexpected:
         raise ValueError(
-            "Fractal refinement persistence nodes must equal state nodes"
+            "Fractal refinement persistence contains inactive/unsupported "
+            f"nodes: {sorted(unexpected)}"
+        )
+
+    missing_l1 = set(states) - set(persistence)
+    if missing_l1:
+        raise ValueError(
+            "Fractal refinement persistence missing L1 state nodes: "
+            f"{sorted(missing_l1)}"
         )
 
     normalized: dict[str, FractalRefinementPersistenceState | None] = {}
-    for node_id in sorted(states):
-        item = persistence[node_id]
+    for node_id in sorted(expected):
+        item = persistence.get(node_id)
         if item is None:
-            if day_from != 0:
-                raise ValueError(
-                    f"Missing fractal refinement persistence for "
-                    f"{node_id} after day zero"
-                )
+            if node_id in states:
+                if day_from != 0:
+                    raise ValueError(
+                        f"Missing fractal refinement persistence for "
+                        f"{node_id} after day zero"
+                    )
+            else:
+                topology_node = active_l2[node_id]
+                if topology_node.created_day != day_from:
+                    raise ValueError(
+                        f"Missing established L2 refinement persistence for "
+                        f"{node_id}"
+                    )
             normalized[node_id] = None
             continue
         if item.node_id != node_id:
@@ -1596,6 +1666,8 @@ def _commit_fractal_materializations(
     commits: list[FractalMaterializationCommitRecord] = []
 
     if not actions:
+        if topology.last_committed_day == day:
+            return topology, persistence_out, ()
         topology_out = advance_fractal_topology_without_materialization(
             topology=topology,
             day=day,
@@ -1618,16 +1690,39 @@ def _commit_fractal_materializations(
             topology_out,
             persistence_after,
             commit_record,
-        ) = materialize_l1_to_l2(
+        ) = materialize_next_level(
             action=action,
             persistence=persistence_out[action.node_id],
             topology=topology_out,
-            region_catalog=region_catalog,
+            child_catalog=region_catalog,
             materialization_config=materialization_config,
             manifest=manifest,
             trace=trace,
         )
         persistence_out[action.node_id] = persistence_after
+        if action.to_level == "L2_REGION":
+            for child_node_id in commit_record.child_node_ids:
+                if child_node_id in persistence_out:
+                    raise ValueError(
+                        f"New L2 child persistence already exists: "
+                        f"{child_node_id}"
+                    )
+                persistence_out[child_node_id] = (
+                    FractalRefinementPersistenceState(
+                        node_id=child_node_id,
+                        current_level="L2_REGION",
+                        last_evaluated_day=day,
+                        expand_streak=0,
+                        collapse_streak=0,
+                    )
+                )
+                trace.append(
+                    "fractal_refinement_persistence_initialized",
+                    node_id=child_node_id,
+                    day=day,
+                    current_level="L2_REGION",
+                    source_action_id=action.action_id,
+                )
         commits.append(commit_record)
 
     if topology_out.last_committed_day != day:
