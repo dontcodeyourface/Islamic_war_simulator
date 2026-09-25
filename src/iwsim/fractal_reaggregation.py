@@ -276,6 +276,8 @@ def _validate_action(
     action: FractalRefinementActionProposal,
     persistence: FractalRefinementPersistenceState,
     policy: dict[str, Any],
+    from_level: str = "L2_REGION",
+    to_level: str = "L1_COUNTRY",
 ) -> None:
     logger.info(
         "_validate_action parent=%s action_id=%s",
@@ -288,15 +290,18 @@ def _validate_action(
         )
     if action.action != "COLLAPSE":
         raise ValueError("v0.23 reaggregation accepts COLLAPSE actions only")
-    if action.from_level != "L2_REGION" or action.to_level != "L1_COUNTRY":
-        raise ValueError("v0.23 supports only L2_REGION -> L1_COUNTRY")
+    if action.from_level != from_level or action.to_level != to_level:
+        raise ValueError(
+            f"Fractal collapse requires {from_level} -> {to_level}"
+        )
     if action.aggregation_rule_id != policy["aggregation_rule_id"]:
         raise ValueError("Fractal collapse aggregation rule mismatch")
     if persistence.node_id != action.node_id:
         raise ValueError("Fractal collapse action/persistence node mismatch")
-    if persistence.current_level != "L2_REGION":
+    if persistence.current_level != from_level:
         raise ValueError(
-            f"Fractal collapse parent {action.node_id} is not at L2_REGION"
+            f"Fractal collapse parent {action.node_id} persistence level "
+            f"{persistence.current_level} != {from_level}"
         )
     if persistence.last_evaluated_day != action.day:
         raise ValueError(
@@ -318,6 +323,7 @@ def _validate_children(
     topology: FractalTopologyState,
     child_store: FractalChildStateStore,
     policy: dict[str, Any],
+    expected_child_level: str = "L2_REGION",
 ) -> tuple[
     tuple[FractalTopologyNode, ...],
     dict[str, EngineState],
@@ -367,10 +373,10 @@ def _validate_children(
 
     selected: dict[str, EngineState] = {}
     for topology_node in children:
-        if topology_node.level != "L2_REGION":
+        if topology_node.level != expected_child_level:
             raise ValueError(
-                f"Fractal collapse child {topology_node.node_id} "
-                "must be L2_REGION"
+                f"Fractal collapse child {topology_node.node_id} must be "
+                f"{expected_child_level}"
             )
         if not topology_node.active:
             raise ValueError(
@@ -897,7 +903,7 @@ def _remove_child_states(
     return result
 
 
-def collapse_l2_to_l1(
+def _collapse_adjacent(
     *,
     parent_state: EngineState,
     action: FractalRefinementActionProposal,
@@ -908,6 +914,10 @@ def collapse_l2_to_l1(
     engine_state_registry: dict[str, Any],
     manifest: RunManifest,
     trace: TraceLedger,
+    from_level: str,
+    to_level: str,
+    parent_in_child_store: bool,
+    collapse_contract: str,
 ) -> tuple[
     EngineState,
     FractalTopologyState,
@@ -916,12 +926,12 @@ def collapse_l2_to_l1(
     FractalCollapseCommitRecord,
     FractalReaggregationAuditRecord,
 ]:
-    """Commit one conservative L2->L1 collapse for a single parent."""
     logger.info(
-        "collapse_l2_to_l1 parent=%s day=%s action_id=%s",
+        "_collapse_adjacent parent=%s day=%s from=%s to=%s",
         parent_state.node_id,
         parent_state.day,
-        action.action_id,
+        from_level,
+        to_level,
     )
     policy = _validate_config(
         reaggregation_config=reaggregation_config,
@@ -931,6 +941,8 @@ def collapse_l2_to_l1(
         action=action,
         persistence=persistence,
         policy=policy,
+        from_level=from_level,
+        to_level=to_level,
     )
     if parent_state.node_id != action.node_id:
         raise ValueError("Fractal collapse action does not target parent state")
@@ -946,6 +958,7 @@ def collapse_l2_to_l1(
         topology=topology,
         child_store=child_store,
         policy=policy,
+        expected_child_level=from_level,
     )
     child_node_ids = tuple(item.node_id for item in children)
     catalog_child_ids = tuple(
@@ -1053,9 +1066,24 @@ def collapse_l2_to_l1(
         child_node_ids=child_node_ids,
         day=action.day,
     )
+    if parent_in_child_store:
+        remaining = child_store_after.state_map()
+        if parent_state.node_id not in remaining:
+            raise ValueError(
+                f"Recursive collapse parent {parent_state.node_id} "
+                "missing from child store"
+            )
+        remaining[parent_state.node_id] = parent_after
+        child_store_after = FractalChildStateStore(
+            last_initialized_day=action.day,
+            states=tuple(
+                remaining[node_id]
+                for node_id in sorted(remaining)
+            ),
+        )
     persistence_after = FractalRefinementPersistenceState(
         node_id=persistence.node_id,
-        current_level="L1_COUNTRY",
+        current_level=to_level,
         last_evaluated_day=persistence.last_evaluated_day,
         expand_streak=0,
         collapse_streak=0,
@@ -1078,7 +1106,7 @@ def collapse_l2_to_l1(
         "topology_hash_after": topology_after.topology_hash(),
         "child_store_hash_before": child_store_hash_before,
         "child_store_hash_after": child_store_after.store_hash(),
-        "contract": "FRACTAL_L2_TO_L1_COLLAPSE_V1",
+        "contract": collapse_contract,
     }
     commit_id = f"fractal-collapse-{canonical_hash(payload)[:24]}"
     record = FractalCollapseCommitRecord(
@@ -1140,6 +1168,91 @@ def collapse_l2_to_l1(
         audit,
     )
 
+
+def collapse_l2_to_l1(
+    *,
+    parent_state: EngineState,
+    action: FractalRefinementActionProposal,
+    persistence: FractalRefinementPersistenceState,
+    topology: FractalTopologyState,
+    child_store: FractalChildStateStore,
+    reaggregation_config: dict[str, Any],
+    engine_state_registry: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    EngineState,
+    FractalTopologyState,
+    FractalChildStateStore,
+    FractalRefinementPersistenceState,
+    FractalCollapseCommitRecord,
+    FractalReaggregationAuditRecord,
+]:
+    """Commit one conservative L2->L1 collapse for a country parent."""
+    logger.info(
+        "collapse_l2_to_l1 parent=%s day=%s action_id=%s",
+        parent_state.node_id,
+        parent_state.day,
+        action.action_id,
+    )
+    return _collapse_adjacent(
+        parent_state=parent_state,
+        action=action,
+        persistence=persistence,
+        topology=topology,
+        child_store=child_store,
+        reaggregation_config=reaggregation_config,
+        engine_state_registry=engine_state_registry,
+        manifest=manifest,
+        trace=trace,
+        from_level="L2_REGION",
+        to_level="L1_COUNTRY",
+        parent_in_child_store=False,
+        collapse_contract="FRACTAL_L2_TO_L1_COLLAPSE_V1",
+    )
+
+
+def collapse_l3_to_l2(
+    *,
+    parent_state: EngineState,
+    action: FractalRefinementActionProposal,
+    persistence: FractalRefinementPersistenceState,
+    topology: FractalTopologyState,
+    child_store: FractalChildStateStore,
+    reaggregation_config: dict[str, Any],
+    engine_state_registry: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    EngineState,
+    FractalTopologyState,
+    FractalChildStateStore,
+    FractalRefinementPersistenceState,
+    FractalCollapseCommitRecord,
+    FractalReaggregationAuditRecord,
+]:
+    """Commit one conservative L3->L2 collapse for an active L2 parent."""
+    logger.info(
+        "collapse_l3_to_l2 parent=%s day=%s action_id=%s",
+        parent_state.node_id,
+        parent_state.day,
+        action.action_id,
+    )
+    return _collapse_adjacent(
+        parent_state=parent_state,
+        action=action,
+        persistence=persistence,
+        topology=topology,
+        child_store=child_store,
+        reaggregation_config=reaggregation_config,
+        engine_state_registry=engine_state_registry,
+        manifest=manifest,
+        trace=trace,
+        from_level="L3_METRO_OR_LOGISTICS_AREA",
+        to_level="L2_REGION",
+        parent_in_child_store=True,
+        collapse_contract="FRACTAL_L3_TO_L2_COLLAPSE_V1",
+    )
 
 def commit_fractal_collapses(
     *,
