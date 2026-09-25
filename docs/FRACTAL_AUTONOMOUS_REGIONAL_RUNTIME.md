@@ -476,11 +476,15 @@ Implemented by [FRACTAL_RECURSIVE_TOPOLOGY_V0.34A.md](FRACTAL_RECURSIVE_TOPOLOGY
 - generation-N+1 child re-refinement;
 - explicit deferral of L4/L5 activation.
 
-### v0.34b+ — recursive runtime authority and deeper levels
+### v0.34b — deepest-active recursive runtime authority — IMPLEMENTED
 
-Next, the runtime authority interfaces must be generalized so active L3 children replace their refined L2 parent for delegated regionalizable dynamics. The same authority, conservation, graph projection and aggregation contracts must be reused rather than introducing a separate engine per level.
+Implemented by [FRACTAL_RECURSIVE_RUNTIME_V0.34B.md](FRACTAL_RECURSIVE_RUNTIME_V0.34B.md).
 
-Only after L3 runtime validation should materialization/runtime activation continue to L4 actor networks and L5 event clusters.
+When an L2 node has active L3 children, the L2 node remains materialized as parent/context state but delegated regionalizable execution moves to the deepest active L3 leaves. Recursive child-state initialization now derives L3 state from the live L2 parent and preserves additive conservation. Autonomous child execution processes only authority leaves and retains parent-context states unchanged.
+
+### v0.34c+ — recursive graph/regimes/reaggregation and deeper levels
+
+Next, graph projection, regional categorical regimes, event/spillover execution, parent-child coupling and conservative reaggregation must be generalized through L3. A canonical L2 -> L3 -> L2 end-to-end lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 
