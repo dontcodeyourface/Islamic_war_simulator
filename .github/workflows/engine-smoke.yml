@@ -1,14 +1,45 @@
-# Temporary v0.28 diagnostic workflow; restored before merge.
+# Engine infrastructure CI v1 - synchronized - v0.7
 name: engine-smoke
 
 on:
+  push:
+    branches:
+      - feat/engine-infra-v0.1
   pull_request:
     paths:
+      - "src/**"
+      - "tests/**"
+      - "config/engine/**"
+      - "config/graph/**"
+      - "config/geography/**"
+      - "config/countries/**"
+      - "pyproject.toml"
       - ".github/workflows/engine-smoke.yml"
 
 jobs:
-  runner:
+  pytest:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
-      - name: Runner sanity
-        run: echo runner-ok
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Tests
+        run: pytest
+      - name: Spain smoke replay
+        run: |
+          iwsim smoke             --repo-root .             --country config/countries/spain.yaml             --seed 42             --days 30             --git-commit "${GITHUB_SHA}"             --out /tmp/iwsim-spain
+      - name: Morocco smoke replay
+        run: |
+          iwsim smoke             --repo-root .             --country config/countries/morocco.yaml             --seed 42             --days 30             --git-commit "${GITHUB_SHA}"             --out /tmp/iwsim-morocco
+      - name: Atomic day smoke
+        run: |
+          iwsim day-smoke --repo-root . --seed 42 --git-commit "${GITHUB_SHA}" --out /tmp/iwsim-day
