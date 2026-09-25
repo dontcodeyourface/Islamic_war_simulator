@@ -582,3 +582,232 @@ def test_v030_projected_spillover_rejects_state_coverage_drift() -> None:
             queue=empty_spillover_queue(0),
             trace=TraceLedger(),
         )
+
+
+
+def _l3_refined_plan() -> FractalRuntimePlan:
+    logger.info("_l3_refined_plan")
+    nodes = [
+        FractalRuntimeAuthorityNode(
+            runtime_node_id=node_id,
+            parent_node_id=None,
+            level="L1_COUNTRY",
+            catalog_node_id=node_id,
+            lineage_generation=None,
+            authority_scope="FULL",
+            owns_regionalizable_state=True,
+            owns_national_only_state=True,
+            execution_status="L1_FULL_AUTHORITY",
+        )
+        for node_id in ("DEU", "FRA", "GBR", "MAR")
+    ]
+    nodes.extend(
+        [
+            FractalRuntimeAuthorityNode(
+                runtime_node_id="ESP",
+                parent_node_id=None,
+                level="L1_COUNTRY",
+                catalog_node_id="ESP",
+                lineage_generation=None,
+                authority_scope="NATIONAL_ONLY",
+                owns_regionalizable_state=False,
+                owns_national_only_state=True,
+                execution_status="L1_NATIONAL_ONLY_AUTHORITY",
+            ),
+            FractalRuntimeAuthorityNode(
+                runtime_node_id="ESP::CT",
+                parent_node_id="ESP",
+                level="L2_REGION",
+                catalog_node_id="ESP::CT",
+                lineage_generation=1,
+                authority_scope="PARENT_CONTEXT",
+                owns_regionalizable_state=False,
+                owns_national_only_state=False,
+                execution_status=(
+                    "FRACTAL_PARENT_CONTEXT_NO_DUPLICATE_EXECUTION"
+                ),
+            ),
+            FractalRuntimeAuthorityNode(
+                runtime_node_id="ESP::CT::METRO_A",
+                parent_node_id="ESP::CT",
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                catalog_node_id="ESP::CT::METRO_A",
+                lineage_generation=1,
+                authority_scope="REGIONALIZABLE",
+                owns_regionalizable_state=True,
+                owns_national_only_state=False,
+                execution_status="L3_REGIONAL_AUTHORITY_ACTIVE_V0_34B",
+            ),
+            FractalRuntimeAuthorityNode(
+                runtime_node_id="ESP::CT::LOGISTICS_B",
+                parent_node_id="ESP::CT",
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                catalog_node_id="ESP::CT::LOGISTICS_B",
+                lineage_generation=1,
+                authority_scope="REGIONALIZABLE",
+                owns_regionalizable_state=True,
+                owns_national_only_state=False,
+                execution_status="L3_REGIONAL_AUTHORITY_ACTIVE_V0_34B",
+            ),
+        ]
+    )
+    return FractalRuntimePlan(
+        day=9,
+        policy_id="FRACTAL_RUNTIME_AUTHORITY_V1",
+        config_hash="runtime-config-l3-test",
+        topology_hash="topology-l3-test",
+        child_store_hash="child-store-l3-test",
+        autonomous_child_dynamics_allowed=True,
+        nodes=tuple(nodes),
+        refined_parent_ids=("ESP",),
+        active_regional_node_ids=(
+            "ESP::CT::LOGISTICS_B",
+            "ESP::CT::METRO_A",
+        ),
+        inactive_lineage_node_ids=(),
+        regionalizable_physical_stocks=(),
+        national_only_physical_stocks=(),
+        regionalizable_latents=(),
+        national_only_latents=(),
+        regionalizable_regimes=(),
+        national_only_regimes=(),
+    )
+
+
+def _l3_graph_catalog() -> dict:
+    logger.info("_l3_graph_catalog")
+    return {
+        "schema_version": "1.0",
+        "status": "synthetic-l3-test",
+        "edges": [
+            {
+                "a": "ESP::CT::METRO_A",
+                "b": "ESP::CT::LOGISTICS_B",
+                "source_id": "SYN_L3_INTERNAL",
+                "channels": {
+                    "geographic_proximity": {"value": 0.92},
+                    "land_border": {"value": 1.0},
+                    "information_link": {
+                        "a_to_b": 0.65,
+                        "b_to_a": 0.35,
+                    },
+                },
+            },
+            {
+                "a": "ESP::CT::METRO_A",
+                "b": "FRA",
+                "source_id": "SYN_L3_FRA",
+                "channels": {
+                    "geographic_proximity": {"value": 0.44},
+                    "migration_link": {
+                        "a_to_b": 0.21,
+                        "b_to_a": 0.08,
+                    },
+                },
+            },
+        ],
+    }
+
+
+def test_v034c_projected_graph_accepts_deepest_active_l3_leaves() -> None:
+    logger.info(
+        "test_v034c_projected_graph_accepts_deepest_active_l3_leaves"
+    )
+    projected = build_fractal_projected_graph(
+        runtime_plan=_l3_refined_plan(),
+        base_graph=_base_graph(),
+        projection_config=_projection_config(),
+        regional_graph_catalog=_l3_graph_catalog(),
+    )
+
+    node_ids = {item.runtime_node_id for item in projected.nodes}
+    assert "ESP" not in node_ids
+    assert "ESP::CT" not in node_ids
+    assert "ESP::CT::METRO_A" in node_ids
+    assert "ESP::CT::LOGISTICS_B" in node_ids
+    assert len(node_ids) == 6
+
+    internal = projected.edge(
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+    )
+    assert internal.edge_kind == "INTERNAL_L3"
+    assert internal.channel(
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+        "geographic_proximity",
+    ) == pytest.approx(0.92)
+    assert internal.channel(
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+        "information_link",
+    ) == pytest.approx(0.65)
+    assert internal.channel(
+        "ESP::CT::LOGISTICS_B",
+        "ESP::CT::METRO_A",
+        "information_link",
+    ) == pytest.approx(0.35)
+
+
+def test_v034c_l3_external_projection_uses_stable_catalog_ids() -> None:
+    logger.info(
+        "test_v034c_l3_external_projection_uses_stable_catalog_ids"
+    )
+    projected = build_fractal_projected_graph(
+        runtime_plan=_l3_refined_plan(),
+        base_graph=_base_graph(),
+        projection_config=_projection_config(),
+        regional_graph_catalog=_l3_graph_catalog(),
+    )
+
+    edge = projected.edge("ESP::CT::METRO_A", "FRA")
+    assert edge.edge_kind == "MULTISCALE_EXTERNAL"
+    assert edge.channel(
+        "ESP::CT::METRO_A",
+        "FRA",
+        "geographic_proximity",
+    ) == pytest.approx(0.44)
+    assert edge.channel(
+        "ESP::CT::METRO_A",
+        "FRA",
+        "migration_link",
+    ) == pytest.approx(0.21)
+    assert edge.channel(
+        "FRA",
+        "ESP::CT::METRO_A",
+        "migration_link",
+    ) == pytest.approx(0.08)
+    assert edge.channel(
+        "ESP::CT::METRO_A",
+        "FRA",
+        "alliance_link",
+    ) is None
+    assert edge.channel_status(
+        "ESP::CT::METRO_A",
+        "FRA",
+        "alliance_link",
+    ) == "PARENT_RETAINED_NOT_PROJECTED"
+
+
+def test_v034c_missing_l3_edges_remain_unresolved_not_zero() -> None:
+    logger.info(
+        "test_v034c_missing_l3_edges_remain_unresolved_not_zero"
+    )
+    projected = build_fractal_projected_graph(
+        runtime_plan=_l3_refined_plan(),
+        base_graph=_base_graph(),
+        projection_config=_projection_config(),
+        regional_graph_catalog=_l3_graph_catalog(),
+    )
+
+    edge = projected.edge("ESP::CT::LOGISTICS_B", "FRA")
+    assert edge.channel(
+        "ESP::CT::LOGISTICS_B",
+        "FRA",
+        "geographic_proximity",
+    ) is None
+    assert edge.channel_status(
+        "ESP::CT::LOGISTICS_B",
+        "FRA",
+        "geographic_proximity",
+    ) == "UNRESOLVED_REGIONAL_PROJECTION"

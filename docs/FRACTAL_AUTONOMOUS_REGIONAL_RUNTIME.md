@@ -482,9 +482,15 @@ Implemented by [FRACTAL_RECURSIVE_RUNTIME_V0.34B.md](FRACTAL_RECURSIVE_RUNTIME_V
 
 When an L2 node has active L3 children, the L2 node remains materialized as parent/context state but delegated regionalizable execution moves to the deepest active L3 leaves. Recursive child-state initialization now derives L3 state from the live L2 parent and preserves additive conservation. Autonomous child execution processes only authority leaves and retains parent-context states unchanged.
 
-### v0.34c+ — recursive graph/regimes/reaggregation and deeper levels
+### v0.34c1 — L3 projected graph — IMPLEMENTED
 
-Next, graph projection, regional categorical regimes, event/spillover execution, parent-child coupling and conservative reaggregation must be generalized through L3. A canonical L2 -> L3 -> L2 end-to-end lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
+Implemented by [FRACTAL_L3_GRAPH_PROJECTION_V0.34C1.md](FRACTAL_L3_GRAPH_PROJECTION_V0.34C1.md).
+
+The projected strategic graph now follows deepest-active authority through L3. Refined L2 parent/context nodes are excluded from graph execution, L3 runtime ancestry must resolve to a valid L1 country, existing L2 edge semantics remain compatible, and all non-L1 strategic channels continue to require explicit stable-catalog evidence or remain unresolved/null.
+
+### v0.34c2+ — recursive regimes, coupling, reaggregation
+
+Next, regional categorical regimes, event/spillover execution, parent-child coupling and conservative reaggregation must be generalized through L3. A canonical L2 -> L3 -> L2 end-to-end lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

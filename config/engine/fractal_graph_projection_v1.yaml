@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.29"
-purpose: "Deterministic projection of the L1 strategic graph onto the active multiscale regional runtime."
+status: "implementation-v0.34c"
+purpose: "Deterministic projection of the strategic graph onto deepest-active L1/L2/L3 runtime leaves."
 
 mode:
   projection_allowed: true
@@ -16,52 +16,52 @@ policy_id: "FRACTAL_GRAPH_PROJECTION_V1"
 channel_policies:
   geographic_proximity:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_GEO_EXPLICIT_V1"
 
   land_border:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_BORDER_EXPLICIT_V1"
 
   alliance_link:
     l1_to_l1: "base_exact"
-    any_l2: "parent_retained_not_projected"
+    any_subnational: "parent_retained_not_projected"
     projection_policy_id: "FRACTAL_GRAPH_ALLIANCE_PARENT_RETAINED_V1"
 
   trade_dependency:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_TRADE_EXPLICIT_V1"
 
   energy_dependency:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_ENERGY_EXPLICIT_V1"
 
   migration_link:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_MIGRATION_EXPLICIT_V1"
 
   diaspora_link:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_DIASPORA_EXPLICIT_V1"
 
   information_link:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_INFORMATION_EXPLICIT_V1"
 
   criminal_network_link:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_CRIMINAL_EXPLICIT_V1"
 
   extremist_network_link:
     l1_to_l1: "base_exact"
-    any_l2: "explicit_catalog_required"
+    any_subnational: "explicit_catalog_required"
     projection_policy_id: "FRACTAL_GRAPH_EXTREMIST_EXPLICIT_V1"
 
 statuses:

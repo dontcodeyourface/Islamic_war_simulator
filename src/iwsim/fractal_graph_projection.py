@@ -413,7 +413,9 @@ def _validate_projection_config(
                 f"Projection policy for {channel} must be a mapping"
             )
         l1_mode = str(item.get("l1_to_l1", ""))
-        l2_mode = str(item.get("any_l2", ""))
+        subnational_mode = str(
+            item.get("any_subnational", item.get("any_l2", ""))
+        )
         channel_policy_id = str(
             item.get("projection_policy_id", "")
         )
@@ -421,27 +423,29 @@ def _validate_projection_config(
             raise ValueError(
                 f"v0.29 L1-to-L1 channel {channel} must remain base_exact"
             )
-        allowed_l2 = {
+        allowed_subnational = {
             "explicit_catalog_required",
             "parent_retained_not_projected",
         }
-        if l2_mode not in allowed_l2:
+        if subnational_mode not in allowed_subnational:
             raise ValueError(
-                f"Unsupported L2 projection mode {l2_mode} for {channel}"
+                "Unsupported subnational projection mode "
+                f"{subnational_mode} for {channel}"
             )
         if (
             channel == "alliance_link"
-            and l2_mode != "parent_retained_not_projected"
+            and subnational_mode != "parent_retained_not_projected"
         ):
             raise ValueError(
-                "v0.29 alliance_link must remain parent-retained"
+                "Fractal alliance_link must remain parent-retained"
             )
         if (
             channel != "alliance_link"
-            and l2_mode != "explicit_catalog_required"
+            and subnational_mode != "explicit_catalog_required"
         ):
             raise ValueError(
-                f"v0.29 regional channel {channel} requires explicit catalog"
+                f"Fractal subnational channel {channel} requires "
+                "explicit catalog"
             )
         if not channel_policy_id:
             raise ValueError(
@@ -449,7 +453,7 @@ def _validate_projection_config(
             )
         policies[channel] = {
             "l1_mode": l1_mode,
-            "l2_mode": l2_mode,
+            "subnational_mode": subnational_mode,
             "projection_policy_id": channel_policy_id,
         }
 
@@ -655,6 +659,40 @@ def _catalog_optional_value(
     return numeric
 
 
+def _root_country_id(
+    *,
+    authority: Any,
+    authority_by_id: dict[str, Any],
+    base_ids: set[str],
+) -> str:
+    logger.info(
+        "_root_country_id node=%s level=%s",
+        authority.runtime_node_id,
+        authority.level,
+    )
+    current = authority
+    visited: set[str] = set()
+    while current.level != "L1_COUNTRY":
+        if current.runtime_node_id in visited:
+            raise ValueError(
+                f"Projected graph authority cycle at {current.runtime_node_id}"
+            )
+        visited.add(current.runtime_node_id)
+        parent_id = current.parent_node_id
+        if parent_id is None or parent_id not in authority_by_id:
+            raise ValueError(
+                f"Projected graph node {current.runtime_node_id} lacks "
+                "runtime ancestry to L1"
+            )
+        current = authority_by_id[parent_id]
+    if current.runtime_node_id not in base_ids:
+        raise ValueError(
+            "Projected graph L1 ancestor missing from base graph: "
+            f"{current.runtime_node_id}"
+        )
+    return current.runtime_node_id
+
+
 def _runtime_nodes(
     *,
     runtime_plan: FractalRuntimePlan,
@@ -666,29 +704,31 @@ def _runtime_nodes(
         len(runtime_plan.nodes),
     )
     base_ids = {node.iso3 for node in base_graph.nodes}
+    authority_by_id = {
+        item.runtime_node_id: item
+        for item in runtime_plan.nodes
+    }
     nodes: list[FractalProjectedGraphNode] = []
+    supported = {
+        "L1_COUNTRY",
+        "L2_REGION",
+        "L3_METRO_OR_LOGISTICS_AREA",
+    }
     for authority in sorted(
         runtime_plan.nodes,
         key=lambda item: item.runtime_node_id,
     ):
         if not authority.owns_regionalizable_state:
             continue
-        if authority.level == "L1_COUNTRY":
-            if authority.runtime_node_id not in base_ids:
-                raise ValueError(
-                    "Projected graph L1 node missing from base graph: "
-                    f"{authority.runtime_node_id}"
-                )
-        elif authority.level == "L2_REGION":
-            if authority.parent_node_id not in base_ids:
-                raise ValueError(
-                    "Projected graph L2 parent missing from base graph: "
-                    f"{authority.parent_node_id}"
-                )
-        else:
+        if authority.level not in supported:
             raise ValueError(
-                f"v0.29 unsupported runtime graph level {authority.level}"
+                f"Unsupported runtime graph level {authority.level}"
             )
+        _root_country_id(
+            authority=authority,
+            authority_by_id=authority_by_id,
+            base_ids=base_ids,
+        )
         nodes.append(
             FractalProjectedGraphNode(
                 runtime_node_id=authority.runtime_node_id,
@@ -713,10 +753,19 @@ def _edge_kind(
     )
     if a.level == "L1_COUNTRY" and b.level == "L1_COUNTRY":
         return "BASE_L1"
-    if a.level == "L2_REGION" and b.level == "L2_REGION":
+    if a.level == b.level:
+        suffix = (
+            "L2"
+            if a.level == "L2_REGION"
+            else "L3"
+            if a.level == "L3_METRO_OR_LOGISTICS_AREA"
+            else "SUBNATIONAL"
+        )
         if a.parent_node_id == b.parent_node_id:
-            return "INTERNAL_L2"
-        return "CROSS_PARENT_L2"
+            return f"INTERNAL_{suffix}"
+        return f"CROSS_PARENT_{suffix}"
+    if "L3_METRO_OR_LOGISTICS_AREA" in {a.level, b.level}:
+        return "MULTISCALE_EXTERNAL"
     return "L2_EXTERNAL"
 
 
@@ -1035,7 +1084,7 @@ def build_fractal_projected_graph(
                         statuses=policy["statuses"],
                     )
                 elif (
-                    channel_policy["l2_mode"]
+                    channel_policy["subnational_mode"]
                     == "parent_retained_not_projected"
                 ):
                     channel = _parent_retained_channel(
