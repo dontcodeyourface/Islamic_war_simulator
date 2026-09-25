@@ -116,3 +116,19 @@ def test_l3_partition_policy_preserves_strategic_safety_boundary() -> None:
     assert safety["facility_targeting"] is False
     assert safety["weapon_selection"] is False
     assert safety["operational_execution"] is False
+
+
+
+def test_l3_partition_policy_source_ids_exist_in_provenance_registry() -> None:
+    logger.info(
+        "test_l3_partition_policy_source_ids_exist_in_provenance_registry"
+    )
+    provenance = load_yaml(
+        ROOT / "data/provenance/snapshot_v1_sources.yaml"
+    )
+    sources = provenance["sources"]
+
+    for iso3, item in sorted(_policy()["countries"].items()):
+        logger.info("validate provenance country=%s", iso3)
+        assert item["topology_source_id"] in sources
+        assert item["population_source_id"] in sources
