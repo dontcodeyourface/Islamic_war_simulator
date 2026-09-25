@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.24"
+status: "implementation-v0.25"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -51,6 +51,9 @@ mode:
   fractal_reaggregation_allowed: true
   fractal_reaggregation_requires_explicit_enable_flag: true
   fractal_reaggregation_contract: "config/engine/fractal_reaggregation_v1.yaml"
+  fractal_runtime_plan_allowed: true
+  fractal_runtime_plan_requires_explicit_enable_flag: true
+  fractal_runtime_contract: "config/engine/fractal_runtime_v1.yaml"
   fractal_child_engine_state_activation_allowed: false
   fractal_child_random_variation_allowed: true
   recovery_allowed: true
@@ -117,6 +120,15 @@ transaction_rules:
   fractal_uncertainty_only_new_children: true
   fractal_uncertainty_preserve_parent_weighted_latent_mean: true
   fractal_uncertainty_preserve_physical_stocks_and_regimes: true
+  fractal_runtime_plan_uses_beginning_topology_for_current_day: true
+  fractal_runtime_plan_committed_topology_applies_next_day: true
+  fractal_runtime_plan_exact_registry_authority_coverage_required: true
+  fractal_runtime_refined_parent_relinquishes_regionalizable_authority: true
+  fractal_runtime_refined_parent_retains_national_only_authority: true
+  fractal_runtime_active_children_own_regionalizable_authority: true
+  fractal_runtime_inactive_lineage_execution_forbidden: true
+  fractal_runtime_duplicate_l1_l2_regional_execution_forbidden: true
+  fractal_runtime_v0_25_refined_beginning_of_day_fails_closed: true
   fractal_child_dynamics_allowed: false
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
@@ -147,6 +159,7 @@ trace:
   include_fractal_uncertainty_audit_ids: true
   include_fractal_collapse_commit_ids: true
   include_fractal_reaggregation_audit_ids: true
+  include_fractal_runtime_plan_hashes: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -161,11 +174,13 @@ ordering:
   security_regime_recovery_commit: "after_security_regime_recovery_evaluation_before_phase_evaluation"
   phase_evaluation: "after_security_regime_recovery_commit"
   phase_arbitration: "highest_target_phase_order_then_proposal_id_ascending"
+  fractal_runtime_plan_before: "beginning_of_day_before_dynamic_execution"
   fractal_refinement_evaluation: "after_phase_commit"
   fractal_materialization: "after_fractal_refinement"
   fractal_child_state_initialization: "after_fractal_materialization"
   fractal_uncertainty: "after_fractal_child_state_initialization"
   fractal_reaggregation: "after_fractal_uncertainty_before_checkpoint"
+  fractal_runtime_plan_after: "after_fractal_reaggregation_before_checkpoint_for_next_day"
 
 safety_abstraction:
   tactical_target_selection: false
