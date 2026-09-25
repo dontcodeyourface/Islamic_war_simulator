@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Syntax location <=125
+      - name: Syntax location <=63
         run: |
           python - <<'PY'
           import ast
@@ -29,6 +29,6 @@ jobs:
           try:
               ast.parse(source)
           except SyntaxError as exc:
-              raise SystemExit(1 if (exc.lineno or 0) <= 125 else 0)
+              raise SystemExit(1 if (exc.lineno or 0) <= 63 else 0)
           raise SystemExit(2)
           PY
