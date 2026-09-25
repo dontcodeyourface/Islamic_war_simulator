@@ -500,9 +500,15 @@ Implemented by [FRACTAL_RECURSIVE_LIFECYCLE_V0.34C3.md](FRACTAL_RECURSIVE_LIFECY
 
 The refinement evaluator now supports L1<->L2 and L2<->L3 adjacent decisions, refinement persistence is maintained for active L2 bases, refined-parent decisions are evaluated after coupling, conservative L3->L2 collapse restores L2 authority, and actual L3 generation-2 re-refinement preserves immutable generation-1 lineage. Same-day topology changes reconcile regional persistence to the final deepest-active execution set.
 
-### v0.34d+ — canonical L3 data and production validation
+### v0.34d — canonical L3 partition policy and coverage gating — IMPLEMENTED
 
-The recursive engine is now capable of the full L2 -> L3 -> L2 -> L3(g2) lifecycle. Production L3 activation remains blocked until explicit L3 child catalogs and corresponding graph-channel provenance are defined. Only after configured L3 lifecycle validation should runtime activation continue to L4 actor networks and L5 event clusters.
+Implemented by [FRACTAL_L3_PARTITION_POLICY_V0.34D.md](FRACTAL_L3_PARTITION_POLICY_V0.34D.md).
+
+The recursive engine now distinguishes missing L3 data from invalid configured data. A matured L2 -> L3 expansion with no explicit child catalog is blocked and traced without aborting the day transaction; malformed configured catalogs still fail closed. Country-specific partition bases and provenance requirements are explicit for ESP/FRA/DEU/GBR/MAR, with population-share weights required before activation and no equal-weight fallback.
+
+### v0.34e+ — populate production L3 child data and graph coverage
+
+Next, evidence-backed L3 child sets and exact population weights must be added country by country, followed by L3 graph-channel coverage and configured lifecycle validation. Only after those production data paths pass should runtime activation continue to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

@@ -1,0 +1,74 @@
+schema_version: "1.0"
+status: "canonical-l3-partition-policy-data-pending"
+purpose: "Defines the evidence-backed territorial partition policy used when an L2 runtime node requests L3 refinement. Missing explicit child data blocks refinement without aborting the day transaction."
+
+transition:
+  from_level: "L2_REGION"
+  to_level: "L3_METRO_OR_LOGISTICS_AREA"
+  one_level_per_action: true
+  explicit_child_catalog_required: true
+  missing_catalog_behavior: "block_not_abort"
+  invalid_catalog_behavior: "fail_closed"
+  minimum_children: 2
+  maximum_children: 20
+
+identity:
+  stable_catalog_ids_required: true
+  runtime_generation_suffix_allowed: true
+  catalog_generation_suffix_allowed: false
+  child_ids_parent_namespaced: true
+
+weight_policy:
+  id: "FRACTAL_CHILD_INIT_POPULATION_SHARE_V1"
+  basis: "population_share"
+  weights_required_before_activation: true
+  equal_weight_fallback_allowed: false
+  inferred_weight_fallback_allowed: false
+
+countries:
+  ESP:
+    partition_basis: "province_or_equivalent_nuts3"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_source_id: "ES-INE-ECP-PROVINCES-2026"
+    reference_framework: "NUTS_2024_and_INE_provincial_ECP"
+    small_parent_policy: "no_l3_without_two_explicit_children"
+    notes: "Autonomous communities refine to provinces/NUTS3 where a multi-child partition exists. Autonomous cities remain at L2 unless a separate explicit functional partition is sourced."
+
+  FRA:
+    partition_basis: "department_or_equivalent_nuts3"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_source_id: "FR-INSEE-SUBREGIONAL-POP"
+    reference_framework: "NUTS_2024_and_INSEE"
+    small_parent_policy: "no_l3_without_two_explicit_children"
+    notes: "Regions refine to departments or equivalent NUTS3 statistical units when an explicit population-weighted child set is available."
+
+  DEU:
+    partition_basis: "nuts2_subregion_within_land"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_source_id: "DE-DESTATIS-SUBREGIONAL-POP"
+    reference_framework: "NUTS_2024_and_Destatis"
+    small_parent_policy: "no_l3_without_two_explicit_children"
+    notes: "Länder use the next stable statistical subdivision below the Land. City states or other single-unit parents remain at L2 unless a separate explicit partition is sourced."
+
+  GBR:
+    partition_basis: "first_stable_itl_partition_below_constituent_country"
+    topology_source_id: "UK-ONS-ITL-2025"
+    population_source_id: "UK-ONS-ITL-POP-2025"
+    reference_framework: "ONS_ITL_2025"
+    small_parent_policy: "no_l3_without_two_explicit_children"
+    notes: "England may use ITL1 regions; Scotland, Wales and Northern Ireland use the first lower stable ITL tier that yields a multi-child partition."
+
+  MAR:
+    partition_basis: "province_or_prefecture"
+    topology_source_id: "MA-HCP-RGPH-2024-TERRITORIAL"
+    population_source_id: "MA-HCP-RGPH-2024-TERRITORIAL"
+    reference_framework: "RGPH_2024_region_province_prefecture"
+    small_parent_policy: "no_l3_without_two_explicit_children"
+    notes: "Regions refine to provinces/prefectures using RGPH 2024 legal population for initialization weights."
+
+safety:
+  tactical_routes: false
+  facility_targeting: false
+  weapon_selection: false
+  operational_execution: false
+  partition_is_strategic_aggregate: true
