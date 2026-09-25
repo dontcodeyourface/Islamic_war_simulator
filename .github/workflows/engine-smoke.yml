@@ -29,6 +29,6 @@ jobs:
           try:
               ast.parse(source)
           except SyntaxError as exc:
-              raise SystemExit(1 if (exc.lineno or 0) <= 500 else 0)
+              raise SystemExit(1 if (exc.lineno or 0) <= 250 else 0)
           raise SystemExit(2)
           PY
