@@ -256,7 +256,6 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     mode = config.get("mode", {})
     required_true = (
         "enabled",
-        "evaluate_active_l2_only",
         "reuse_l1_phase_machine",
         "reuse_l1_security_regime_machine",
         "sibling_divergence_allowed",
@@ -267,8 +266,16 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     for key in required_true:
         if mode.get(key) is not True:
             raise ValueError(
-                f"v0.28 regional regime runtime requires {key}=true"
+                f"Regional regime runtime requires {key}=true"
             )
+    evaluate_deepest = mode.get(
+        "evaluate_deepest_active_only",
+        mode.get("evaluate_active_l2_only"),
+    )
+    if evaluate_deepest is not True:
+        raise ValueError(
+            "Regional regime runtime requires deepest-active evaluation"
+        )
 
     categorical = config.get("categorical_aggregation", {})
     policy_id = str(categorical.get("policy_id", "")).strip()
@@ -419,16 +426,60 @@ def bootstrap_or_validate_regional_regime_store(
     phase = supplied_store.phase_map()
     security = supplied_store.security_map()
     recovery = supplied_store.recovery_map()
-    for name, mapping in (
-        ("phase", phase),
-        ("security", security),
-        ("security_recovery", recovery),
-    ):
-        if set(mapping) != expected:
+    coverage_sets = {
+        "phase": set(phase),
+        "security": set(security),
+        "security_recovery": set(recovery),
+    }
+    if len({frozenset(value) for value in coverage_sets.values()}) != 1:
+        raise ValueError(
+            "Regional persistence stores disagree on node coverage"
+        )
+    supplied_ids = set(phase)
+    missing = expected - supplied_ids
+    if missing:
+        raise ValueError(
+            "Regional persistence missing active nodes: "
+            f"{sorted(missing)}"
+        )
+
+    extras = supplied_ids - expected
+    if extras:
+        parent_by_child = {
+            node_id: state.metadata.get("fractal_parent_node_id")
+            for node_id, state in child_map.items()
+        }
+        invalid_extras: list[str] = []
+        for extra in sorted(extras):
+            if extra not in child_map:
+                invalid_extras.append(extra)
+                continue
+            is_active_ancestor = False
+            for active_id in sorted(expected):
+                current = active_id
+                visited: set[str] = set()
+                while current in parent_by_child:
+                    if current in visited:
+                        raise ValueError(
+                            "Regional child ancestry contains a cycle"
+                        )
+                    visited.add(current)
+                    parent = parent_by_child[current]
+                    if parent is None:
+                        break
+                    parent = str(parent)
+                    if parent == extra:
+                        is_active_ancestor = True
+                        break
+                    current = parent
+                if is_active_ancestor:
+                    break
+            if not is_active_ancestor:
+                invalid_extras.append(extra)
+        if invalid_extras:
             raise ValueError(
-                f"Regional {name} persistence coverage mismatch: "
-                f"missing={sorted(expected - set(mapping))} "
-                f"unexpected={sorted(set(mapping) - expected)}"
+                "Regional persistence contains non-active, non-ancestor "
+                f"nodes: {invalid_extras}"
             )
 
     for node_id in sorted(expected):
@@ -793,15 +844,22 @@ def execute_regional_regime_runtime(
     phase_prior = persistence_store.phase_map()
     security_prior = persistence_store.security_map()
     recovery_prior = persistence_store.recovery_map()
-    for name, mapping in (
-        ("phase", phase_prior),
-        ("security", security_prior),
-        ("recovery", recovery_prior),
-    ):
-        if set(mapping) != beginning:
-            raise ValueError(
-                f"Regional {name} prior persistence coverage mismatch"
-            )
+    prior_sets = {
+        "phase": set(phase_prior),
+        "security": set(security_prior),
+        "recovery": set(recovery_prior),
+    }
+    if len({frozenset(value) for value in prior_sets.values()}) != 1:
+        raise ValueError(
+            "Regional prior persistence stores disagree on node coverage"
+        )
+    prior_ids = set(phase_prior)
+    missing_prior = beginning - prior_ids
+    if missing_prior:
+        raise ValueError(
+            "Regional prior persistence missing beginning-active nodes: "
+            f"{sorted(missing_prior)}"
+        )
 
     expected_prior_day = child_store.last_initialized_day - 1
     for node_id in sorted(beginning):
@@ -937,7 +995,7 @@ def execute_regional_regime_runtime(
         if recovery_commit is not None:
             recovery_commits.append(recovery_commit)
 
-    new_node_ids = set(state_map) - beginning
+    new_node_ids = set(state_map) - prior_ids
     for node_id in sorted(new_node_ids):
         state = state_map[node_id]
         phase_out[node_id] = _phase_baseline(state)
@@ -971,8 +1029,13 @@ def execute_regional_regime_runtime(
             for node_id in sorted(next_states)
         ),
     )
+    audit_node_ids = beginning | new_node_ids
+    audit_states = {
+        node_id: next_states[node_id]
+        for node_id in sorted(audit_node_ids)
+    }
     audits = _divergence_audits(
-        states=next_states,
+        states=audit_states,
         policy_id=policy["aggregation_policy_id"],
     )
     for audit in audits:
@@ -986,6 +1049,9 @@ def execute_regional_regime_runtime(
         day=child_store.last_initialized_day,
         evaluated_node_ids=list(sorted(beginning)),
         initialized_node_ids=list(sorted(new_node_ids)),
+        retired_context_node_ids=list(
+            sorted(prior_ids - beginning - new_node_ids)
+        ),
         phase_commit_ids=[
             item.commit_id
             for item in sorted(

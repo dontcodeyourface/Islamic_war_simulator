@@ -1,10 +1,10 @@
 schema_version: "1.0"
-status: "implementation-v0.28"
-purpose: "Persistent L2 regional phase/security execution with explicit categorical divergence semantics."
+status: "implementation-v0.34c2"
+purpose: "Persistent deepest-active L2/L3 phase/security execution with explicit categorical divergence semantics."
 
 mode:
   enabled: true
-  evaluate_active_l2_only: true
+  evaluate_deepest_active_only: true
   reuse_l1_phase_machine: true
   reuse_l1_security_regime_machine: true
   sibling_divergence_allowed: true
@@ -26,13 +26,13 @@ categorical_aggregation:
   divergence_is_not_parent_commit: true
 
 persistence:
-  bootstrap_existing_active_l2_with_empty_streaks: true
+  bootstrap_existing_active_children_with_empty_streaks: true
   exact_active_child_coverage_required_after_bootstrap: true
   last_committed_day_must_match_child_day: true
   phase_and_security_history_are_independent: true
 
 ordering:
-  endogenous_l2_latent_dynamics: 10
+  endogenous_deepest_active_latent_dynamics: 10
   child_clock_advance: 20
   security_regime_escalation: 30
   security_regime_recovery: 40

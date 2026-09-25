@@ -224,6 +224,104 @@ def _aggregate_parent_view(
     )
 
 
+def _runtime_depths(
+    runtime_plan: FractalRuntimePlan,
+) -> dict[str, int]:
+    logger.info("_runtime_depths nodes=%s", len(runtime_plan.nodes))
+    by_id = {
+        item.runtime_node_id: item
+        for item in runtime_plan.nodes
+    }
+    result: dict[str, int] = {}
+    for node_id in sorted(by_id):
+        depth = 0
+        current = by_id[node_id]
+        seen: set[str] = set()
+        while current.parent_node_id is not None:
+            if current.runtime_node_id in seen:
+                raise ValueError(
+                    f"Fractal coupling runtime ancestry cycle at {node_id}"
+                )
+            seen.add(current.runtime_node_id)
+            parent_id = current.parent_node_id
+            if parent_id not in by_id:
+                raise ValueError(
+                    f"Fractal coupling runtime parent missing: {parent_id}"
+                )
+            current = by_id[parent_id]
+            depth += 1
+        result[node_id] = depth
+    return result
+
+
+def _descendant_active_ids(
+    *,
+    root_id: str,
+    child_map: dict[str, EngineState],
+    active_ids: set[str],
+) -> tuple[str, ...]:
+    logger.info(
+        "_descendant_active_ids root=%s active=%s",
+        root_id,
+        len(active_ids),
+    )
+    by_parent: dict[str, list[str]] = {}
+    for node_id, state in child_map.items():
+        parent_id = state.metadata.get("fractal_parent_node_id")
+        if parent_id is not None:
+            by_parent.setdefault(str(parent_id), []).append(node_id)
+
+    found: set[str] = set()
+    stack = [root_id]
+    seen: set[str] = set()
+    while stack:
+        parent_id = stack.pop()
+        if parent_id in seen:
+            raise ValueError(
+                f"Fractal coupling child ancestry cycle at {parent_id}"
+            )
+        seen.add(parent_id)
+        for child_id in sorted(by_parent.get(parent_id, ())):
+            if child_id in active_ids:
+                found.add(child_id)
+            else:
+                stack.append(child_id)
+    return tuple(sorted(found))
+
+
+def _coupling_audit(
+    *,
+    parent: EngineState,
+    children: tuple[EngineState, ...],
+    context_hash: str,
+    view_hash: str,
+    divergent: tuple[str, ...],
+) -> FractalParentChildCouplingAudit:
+    logger.info(
+        "_coupling_audit parent=%s children=%s",
+        parent.node_id,
+        len(children),
+    )
+    payload = {
+        "day": parent.day,
+        "parent_node_id": parent.node_id,
+        "child_node_ids": [child.node_id for child in children],
+        "parent_context_hash": context_hash,
+        "aggregate_view_hash": view_hash,
+        "divergent_regimes": list(divergent),
+        "policy_id": "FRACTAL_PARENT_CHILD_COUPLING_V2",
+    }
+    return FractalParentChildCouplingAudit(
+        audit_id=f"fractal-coupling-{canonical_hash(payload)[:24]}",
+        day=parent.day,
+        parent_node_id=parent.node_id,
+        child_node_ids=tuple(child.node_id for child in children),
+        parent_context_hash=context_hash,
+        aggregate_view_hash=view_hash,
+        divergent_regimes=divergent,
+    )
+
+
 def execute_parent_child_coupling(
     *,
     parent_states: dict[str, EngineState],
@@ -233,7 +331,7 @@ def execute_parent_child_coupling(
     reaggregation_config: dict[str, Any],
     trace: TraceLedger,
 ) -> FractalParentChildCouplingResult:
-    """Publish national parent context and conservative child aggregate views."""
+    """Publish national context and aggregate active descendants bottom-up."""
     logger.info(
         "execute_parent_child_coupling day=%s refined_parents=%s",
         child_store.last_initialized_day,
@@ -243,36 +341,64 @@ def execute_parent_child_coupling(
         raise ValueError(
             "Parent-child coupling expects committed next-day child states"
         )
+
     child_map = child_store.state_map()
     active_ids = set(runtime_plan.active_regional_node_ids)
-    if set(child_map) != active_ids:
-        raise ValueError("Parent-child coupling child coverage mismatch")
+    missing_active = active_ids - set(child_map)
+    if missing_active:
+        raise ValueError(
+            "Parent-child coupling missing active child states: "
+            f"{sorted(missing_active)}"
+        )
+
+    authority_by_id = {
+        item.runtime_node_id: item
+        for item in runtime_plan.nodes
+    }
+    unknown_child_ids = set(child_map) - set(authority_by_id)
+    if unknown_child_ids:
+        raise ValueError(
+            "Parent-child coupling child store contains nodes absent "
+            f"from runtime plan: {sorted(unknown_child_ids)}"
+        )
 
     updated_parents = dict(parent_states)
     updated_children = dict(child_map)
     audits: list[FractalParentChildCouplingAudit] = []
+
+    # National-only context flows directly to every deepest active descendant,
+    # regardless of the number of intermediate spatial levels.
     for parent_id in runtime_plan.refined_parent_ids:
+        if parent_id not in parent_states:
+            raise ValueError(
+                f"Refined parent {parent_id} missing from parent states"
+            )
         parent = parent_states[parent_id]
-        children = tuple(
-            child_map[node_id]
-            for node_id in sorted(active_ids)
-            if child_map[node_id].metadata.get("fractal_parent_node_id")
-            == parent_id
+        context = _parent_context(
+            parent=parent,
+            runtime_plan=runtime_plan,
         )
-        if not children:
-            raise ValueError(f"Refined parent {parent_id} has no active children")
-        weights = _weights(children)
-        context = _parent_context(parent=parent, runtime_plan=runtime_plan)
         context_hash = canonical_hash(context)
-        for child in children:
+        descendants = _descendant_active_ids(
+            root_id=parent_id,
+            child_map=updated_children,
+            active_ids=active_ids,
+        )
+        if not descendants:
+            raise ValueError(
+                f"Refined parent {parent_id} has no active descendants"
+            )
+        for node_id in descendants:
+            child = updated_children[node_id]
             metadata = dict(child.metadata)
             metadata.update(
                 {
                     "fractal_parent_context": context,
                     "fractal_parent_context_hash": context_hash,
+                    "fractal_parent_context_source_node_id": parent_id,
                 }
             )
-            updated_children[child.node_id] = EngineState(
+            updated_children[node_id] = EngineState(
                 node_id=child.node_id,
                 day=child.day,
                 physical_stocks=dict(child.physical_stocks),
@@ -281,6 +407,91 @@ def execute_parent_child_coupling(
                 metadata=metadata,
             )
 
+    # Reconstruct refined intermediate nodes from their direct children before
+    # they participate in the next coarser aggregation level.
+    depths = _runtime_depths(runtime_plan)
+    context_ids = [
+        item.runtime_node_id
+        for item in runtime_plan.nodes
+        if item.authority_scope == "PARENT_CONTEXT"
+    ]
+    for context_id in sorted(
+        context_ids,
+        key=lambda node_id: (-depths[node_id], node_id),
+    ):
+        if context_id not in updated_children:
+            raise ValueError(
+                f"Fractal context node {context_id} missing child state"
+            )
+        parent = updated_children[context_id]
+        children = tuple(
+            updated_children[node_id]
+            for node_id in sorted(updated_children)
+            if (
+                updated_children[node_id].metadata.get(
+                    "fractal_parent_node_id"
+                )
+                == context_id
+            )
+        )
+        if not children:
+            raise ValueError(
+                f"Fractal context parent {context_id} has no direct children"
+            )
+        weights = _weights(children)
+        context_hash = canonical_hash(
+            {
+                "policy_id": "FRACTAL_INTERMEDIATE_CONTEXT_V1",
+                "parent_node_id": context_id,
+                "day": parent.day,
+            }
+        )
+        projected, divergent, view_hash = _aggregate_parent_view(
+            parent=parent,
+            children=children,
+            weights=weights,
+            runtime_plan=runtime_plan,
+            engine_state_registry=engine_state_registry,
+            reaggregation_config=reaggregation_config,
+        )
+        updated_children[context_id] = projected
+        audit = _coupling_audit(
+            parent=parent,
+            children=children,
+            context_hash=context_hash,
+            view_hash=view_hash,
+            divergent=divergent,
+        )
+        audits.append(audit)
+        trace.append(
+            "fractal_parent_child_coupling",
+            **audit.to_dict(),
+        )
+
+    # Reconstruct each refined L1 parent from its direct L2 children. Refined
+    # L2 branches now contain the aggregate produced in the previous pass.
+    for parent_id in runtime_plan.refined_parent_ids:
+        parent = parent_states[parent_id]
+        children = tuple(
+            updated_children[node_id]
+            for node_id in sorted(updated_children)
+            if (
+                updated_children[node_id].metadata.get(
+                    "fractal_parent_node_id"
+                )
+                == parent_id
+            )
+        )
+        if not children:
+            raise ValueError(
+                f"Refined parent {parent_id} has no direct child states"
+            )
+        weights = _weights(children)
+        context = _parent_context(
+            parent=parent,
+            runtime_plan=runtime_plan,
+        )
+        context_hash = canonical_hash(context)
         projected, divergent, view_hash = _aggregate_parent_view(
             parent=parent,
             children=children,
@@ -290,26 +501,18 @@ def execute_parent_child_coupling(
             reaggregation_config=reaggregation_config,
         )
         updated_parents[parent_id] = projected
-        payload = {
-            "day": parent.day,
-            "parent_node_id": parent_id,
-            "child_node_ids": [child.node_id for child in children],
-            "parent_context_hash": context_hash,
-            "aggregate_view_hash": view_hash,
-            "divergent_regimes": list(divergent),
-            "policy_id": "FRACTAL_PARENT_CHILD_COUPLING_V1",
-        }
-        audit = FractalParentChildCouplingAudit(
-            audit_id=f"fractal-coupling-{canonical_hash(payload)[:24]}",
-            day=parent.day,
-            parent_node_id=parent_id,
-            child_node_ids=tuple(child.node_id for child in children),
-            parent_context_hash=context_hash,
-            aggregate_view_hash=view_hash,
-            divergent_regimes=divergent,
+        audit = _coupling_audit(
+            parent=parent,
+            children=children,
+            context_hash=context_hash,
+            view_hash=view_hash,
+            divergent=divergent,
         )
         audits.append(audit)
-        trace.append("fractal_parent_child_coupling", **audit.to_dict())
+        trace.append(
+            "fractal_parent_child_coupling",
+            **audit.to_dict(),
+        )
 
     return FractalParentChildCouplingResult(
         parent_states=updated_parents,
@@ -322,3 +525,4 @@ def execute_parent_child_coupling(
         ),
         audits=tuple(sorted(audits, key=lambda item: item.audit_id)),
     )
+

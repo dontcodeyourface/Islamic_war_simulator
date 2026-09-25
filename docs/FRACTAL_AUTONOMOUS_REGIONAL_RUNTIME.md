@@ -488,9 +488,15 @@ Implemented by [FRACTAL_L3_GRAPH_PROJECTION_V0.34C1.md](FRACTAL_L3_GRAPH_PROJECT
 
 The projected strategic graph now follows deepest-active authority through L3. Refined L2 parent/context nodes are excluded from graph execution, L3 runtime ancestry must resolve to a valid L1 country, existing L2 edge semantics remain compatible, and all non-L1 strategic channels continue to require explicit stable-catalog evidence or remain unresolved/null.
 
-### v0.34c2+ — recursive regimes, coupling, reaggregation
+### v0.34c2 — deepest-active regimes and recursive coupling — IMPLEMENTED
 
-Next, regional categorical regimes, event/spillover execution, parent-child coupling and conservative reaggregation must be generalized through L3. A canonical L2 -> L3 -> L2 end-to-end lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
+Implemented by [FRACTAL_L3_REGIMES_COUPLING_V0.34C2.md](FRACTAL_L3_REGIMES_COUPLING_V0.34C2.md).
+
+Regional phase/security persistence now follows authority handoff from refined L2 parents to active L3 leaves. Transitional ancestor persistence is permitted only while structurally justified, then pruned. Parent-child coupling now aggregates bottom-up from L3 -> L2 -> L1, and day-transaction event/spillover state coverage excludes non-executing parent-context nodes.
+
+### v0.34c3+ — recursive reaggregation and lifecycle closure
+
+Next, conservative L3 -> L2 collapse/reaggregation, authority restoration and actual generation-2 L3 re-refinement must be implemented. A canonical L2 -> L3 -> L2 -> L3(g2) lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

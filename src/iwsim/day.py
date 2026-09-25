@@ -2657,8 +2657,23 @@ def run_day_transaction(
 
     regional_execution_states = dict(l1_regional_execution_states)
     if normalized_fractal_child_store is not None and refined_parent_ids:
+        child_state_map = normalized_fractal_child_store.state_map()
+        active_child_ids = (
+            set(fractal_runtime_plan_before.active_regional_node_ids)
+            if fractal_runtime_plan_before is not None
+            else set()
+        )
+        missing_active_children = active_child_ids - set(child_state_map)
+        if missing_active_children:
+            raise ValueError(
+                "Regional execution missing active fractal child states: "
+                f"{sorted(missing_active_children)}"
+            )
         regional_execution_states.update(
-            normalized_fractal_child_store.state_map()
+            {
+                node_id: child_state_map[node_id]
+                for node_id in sorted(active_child_ids)
+            }
         )
     regional_execution_graph = (
         fractal_projected_graph_before
