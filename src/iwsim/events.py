@@ -162,7 +162,9 @@ def _probability_config(
 def interstate_incident_features(
     state_a: EngineState,
     state_b: EngineState,
-    edge: GraphEdge,
+    edge: Any,
+    *,
+    alliance_deterrence_override: float | None = None,
 ) -> dict[str, float]:
     logger.info(
         "interstate_incident_features a=%s b=%s edge=%s",
@@ -180,13 +182,23 @@ def interstate_incident_features(
         state_b.node_id,
         "land_border",
     )
-    alliance = edge.channel(
-        state_a.node_id,
-        state_b.node_id,
-        "alliance_link",
+    alliance = (
+        float(alliance_deterrence_override)
+        if alliance_deterrence_override is not None
+        else edge.channel(
+            state_a.node_id,
+            state_b.node_id,
+            "alliance_link",
+        )
     )
-    if geographic is None or land_border is None or alliance is None:
-        raise ValueError("Interstate incident requires resolved structural graph channels")
+    if not 0.0 <= alliance <= 1.0:
+        raise ValueError(
+            "Interstate incident alliance deterrence must be within [0,1]"
+        )
+    if geographic is None or land_border is None:
+        raise ValueError(
+            "Interstate incident requires resolved geographic/border channels"
+        )
     return {
         "external_conflict_pressure_mean": (
             state_a.latents["external_conflict_pressure"]
@@ -417,12 +429,13 @@ def evaluate_interstate_incident(
     day: int,
     state_a: EngineState,
     state_b: EngineState,
-    edge: GraphEdge,
+    edge: Any,
     parameter_registry: dict[str, Any],
     profile: str,
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    alliance_deterrence_override: float | None = None,
 ) -> EventCandidateResult:
     logger.info(
         "evaluate_interstate_incident day=%s a=%s b=%s",
@@ -437,7 +450,12 @@ def evaluate_interstate_incident(
         actors=actors,
         source_nodes=actors,
         target_nodes=actors,
-        features=interstate_incident_features(state_a, state_b, edge),
+        features=interstate_incident_features(
+            state_a,
+            state_b,
+            edge,
+            alliance_deterrence_override=alliance_deterrence_override,
+        ),
         parameter_registry=parameter_registry,
         profile=profile,
         rng=rng,
