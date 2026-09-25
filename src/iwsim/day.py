@@ -43,6 +43,12 @@ from .fractal_reaggregation import (
     FractalReaggregationAuditRecord,
     commit_fractal_collapses,
 )
+from .fractal_runtime import (
+    FractalRuntimePlan,
+    assert_beginning_of_day_runtime_supported,
+    build_fractal_runtime_plan,
+    trace_fractal_runtime_plan,
+)
 from .graph import CountryGraph
 from .manifest import RunManifest
 from .phases import PhaseEvaluationResult, PhasePersistenceState, evaluate_national_phase
@@ -181,6 +187,8 @@ class DayTransactionResult:
     fractal_reaggregation_audits: tuple[
         FractalReaggregationAuditRecord, ...
     ]
+    fractal_runtime_plan_before: FractalRuntimePlan | None
+    fractal_runtime_plan_after: FractalRuntimePlan | None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -313,6 +321,16 @@ class DayTransactionResult:
             "fractal_reaggregation_audits": [
                 item.to_dict() for item in self.fractal_reaggregation_audits
             ],
+            "fractal_runtime_plan_before": (
+                self.fractal_runtime_plan_before.to_dict()
+                if self.fractal_runtime_plan_before is not None
+                else None
+            ),
+            "fractal_runtime_plan_after": (
+                self.fractal_runtime_plan_after.to_dict()
+                if self.fractal_runtime_plan_after is not None
+                else None
+            ),
         }
 
 
@@ -855,6 +873,7 @@ def _transaction_id(
     fractal_child_state_inputs: dict[str, Any] | None = None,
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
+    fractal_runtime_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -885,6 +904,7 @@ def _transaction_id(
             "fractal_child_state_inputs": fractal_child_state_inputs,
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
             "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
+            "fractal_runtime_inputs": fractal_runtime_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1671,6 +1691,8 @@ def run_day_transaction(
     fractal_uncertainty_config: dict[str, Any] | None = None,
     enable_fractal_reaggregation: bool = False,
     fractal_reaggregation_config: dict[str, Any] | None = None,
+    enable_fractal_runtime_plan: bool = False,
+    fractal_runtime_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1704,6 +1726,8 @@ def run_day_transaction(
     fractal_child_state_inputs: dict[str, Any] | None = None
     fractal_uncertainty_inputs: dict[str, Any] | None = None
     fractal_reaggregation_inputs: dict[str, Any] | None = None
+    fractal_runtime_inputs: dict[str, Any] | None = None
+    fractal_runtime_plan_before: FractalRuntimePlan | None = None
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -1879,6 +1903,49 @@ def run_day_transaction(
                     region_catalog=fractal_region_catalog,
                 )
             )
+
+    if enable_fractal_runtime_plan:
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Fractal runtime planning requires fractal materialization"
+            )
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Fractal runtime planning requires child-state initialization"
+            )
+        if fractal_runtime_config is None:
+            raise ValueError(
+                "Fractal runtime planning requires fractal_runtime_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_runtime_plan_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal runtime planning is disabled by the day transaction contract"
+            )
+        assert normalized_fractal_topology is not None
+        assert normalized_fractal_child_store is not None
+        fractal_runtime_plan_before = build_fractal_runtime_plan(
+            day=day_from,
+            parent_states=states,
+            topology=normalized_fractal_topology,
+            child_store=normalized_fractal_child_store,
+            runtime_config=fractal_runtime_config,
+            engine_state_registry=engine_state_registry,
+        )
+        assert_beginning_of_day_runtime_supported(
+            plan=fractal_runtime_plan_before,
+            runtime_config=fractal_runtime_config,
+        )
+        fractal_runtime_inputs = {
+            "runtime_config_hash": canonical_hash(fractal_runtime_config),
+            "runtime_plan_before_hash": (
+                fractal_runtime_plan_before.plan_hash()
+            ),
+        }
 
     if enable_security_regime_recovery_commits:
         if not enable_security_regime_recovery_evaluator:
@@ -2137,6 +2204,7 @@ def run_day_transaction(
         fractal_child_state_inputs=fractal_child_state_inputs,
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
         fractal_reaggregation_inputs=fractal_reaggregation_inputs,
+        fractal_runtime_inputs=fractal_runtime_inputs,
     )
 
     working_rng = rng.clone()
@@ -2152,7 +2220,18 @@ def run_day_transaction(
             node_id: state.state_hash()
             for node_id, state in sorted(states.items())
         },
+        fractal_runtime_plan_before_hash=(
+            fractal_runtime_plan_before.plan_hash()
+            if fractal_runtime_plan_before is not None
+            else None
+        ),
     )
+    if fractal_runtime_plan_before is not None:
+        trace_fractal_runtime_plan(
+            plan=fractal_runtime_plan_before,
+            phase="BEGINNING_OF_DAY",
+            trace=staged_trace,
+        )
 
     spillover_candidates: tuple[GraphSpilloverRecord, ...] = ()
     matured_spillovers: tuple[GraphSpilloverRecord, ...] = ()
@@ -2553,6 +2632,25 @@ def run_day_transaction(
         fractal_collapse_commits = collapse_result.commits
         fractal_reaggregation_audits = collapse_result.audits
 
+    fractal_runtime_plan_after: FractalRuntimePlan | None = None
+    if enable_fractal_runtime_plan:
+        assert fractal_topology_out is not None
+        assert fractal_child_state_store_out is not None
+        assert fractal_runtime_config is not None
+        fractal_runtime_plan_after = build_fractal_runtime_plan(
+            day=day_to,
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            runtime_config=fractal_runtime_config,
+            engine_state_registry=engine_state_registry,
+        )
+        trace_fractal_runtime_plan(
+            plan=fractal_runtime_plan_after,
+            phase="COMMITTED_NEXT_DAY",
+            trace=staged_trace,
+        )
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -2615,6 +2713,16 @@ def run_day_transaction(
         fractal_reaggregation_audit_ids=[
             item.audit_id for item in fractal_reaggregation_audits
         ],
+        fractal_runtime_plan_before_hash=(
+            fractal_runtime_plan_before.plan_hash()
+            if fractal_runtime_plan_before is not None
+            else None
+        ),
+        fractal_runtime_plan_after_hash=(
+            fractal_runtime_plan_after.plan_hash()
+            if fractal_runtime_plan_after is not None
+            else None
+        ),
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
             if fractal_child_state_store_out is not None
@@ -2750,4 +2858,6 @@ def run_day_transaction(
         fractal_uncertainty_audits=fractal_uncertainty_audits,
         fractal_collapse_commits=fractal_collapse_commits,
         fractal_reaggregation_audits=fractal_reaggregation_audits,
+        fractal_runtime_plan_before=fractal_runtime_plan_before,
+        fractal_runtime_plan_after=fractal_runtime_plan_after,
     )
