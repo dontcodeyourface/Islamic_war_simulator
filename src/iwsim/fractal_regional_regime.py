@@ -256,7 +256,6 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     mode = config.get("mode", {})
     required_true = (
         "enabled",
-        "evaluate_active_l2_only",
         "reuse_l1_phase_machine",
         "reuse_l1_security_regime_machine",
         "sibling_divergence_allowed",
@@ -267,8 +266,16 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     for key in required_true:
         if mode.get(key) is not True:
             raise ValueError(
-                f"v0.28 regional regime runtime requires {key}=true"
+                f"Regional regime runtime requires {key}=true"
             )
+    evaluate_deepest = mode.get(
+        "evaluate_deepest_active_only",
+        mode.get("evaluate_active_l2_only"),
+    )
+    if evaluate_deepest is not True:
+        raise ValueError(
+            "Regional regime runtime requires deepest-active evaluation"
+        )
 
     categorical = config.get("categorical_aggregation", {})
     policy_id = str(categorical.get("policy_id", "")).strip()
