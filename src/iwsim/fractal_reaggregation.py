@@ -152,7 +152,7 @@ def _validate_config(
     required_true = (
         "enabled",
         "collapse_commit_allowed",
-        "l2_to_l1_only",
+        "adjacent_recursive_collapse_allowed",
         "complete_active_sibling_set_required",
         "remove_collapsed_children_from_store",
         "mark_topology_children_inactive",
@@ -161,7 +161,13 @@ def _validate_config(
     )
     for key in required_true:
         if mode.get(key) is not True:
-            raise ValueError(f"v0.23 requires {key}=true")
+            raise ValueError(
+                f"Fractal reaggregation requires {key}=true"
+            )
+    if mode.get("l2_to_l1_only") not in (False, None):
+        raise ValueError(
+            "Recursive reaggregation requires l2_to_l1_only=false"
+        )
     child_dynamics_allowed = mode.get("child_dynamics_allowed")
     if child_dynamics_allowed not in (False, True):
         raise ValueError(
