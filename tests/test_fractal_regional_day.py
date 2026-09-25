@@ -365,7 +365,6 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
     )
     assert first_regional_store.last_committed_day == 1
 
-    child_map = first.fractal_child_state_store.state_map()
     stressed_id = "ESP::CT"
     calm_id = "ESP::AN"
     second_child_store = FractalChildStateStore(
@@ -379,7 +378,6 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
     )
 
     phase_map = first_regional_store.phase_map()
-    phase_stressed = phase_map[stressed_id]
     regional_store = FractalRegionalRegimeStore(
         last_committed_day=1,
         phase_persistence=tuple(
