@@ -1,0 +1,93 @@
+schema_version: "1.0"
+status: "implementation-v0.29"
+purpose: "Deterministic projection of the typed L1 country graph onto the active multiscale L1/L2 runtime set."
+
+policy_id: "FRACTAL_GRAPH_PROJECTION_V1"
+
+mode:
+  enabled: true
+  projection_is_read_only: true
+  graph_execution_allowed: false
+  complete_runtime_pair_coverage_required: true
+  refined_l1_parent_excluded_from_regional_graph: true
+  coarse_l1_edges_copy_exact: true
+  stable_catalog_ids_in_data: true
+  output_uses_runtime_lineage_ids: true
+  unresolved_channel_is_null_not_zero: true
+  explicit_regional_evidence_required: true
+  country_edge_clone_to_children_forbidden: true
+  cross_parent_l2_requires_explicit_edge_data: true
+
+coarse_l1:
+  copy_policy_id: "FRACTAL_GRAPH_COARSE_L1_COPY_V1"
+  preserve_country_edge_channels: true
+  preserve_country_edge_distance: true
+  preserve_country_edge_metadata: true
+
+channel_modes:
+  geographic_proximity:
+    - "explicit"
+    - "unresolved"
+  land_border:
+    - "explicit"
+    - "unresolved"
+  alliance_link:
+    - "explicit"
+    - "unresolved"
+  trade_dependency:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  energy_dependency:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  migration_link:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  diaspora_link:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  information_link:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  criminal_network_link:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+  extremist_network_link:
+    - "explicit"
+    - "parent_scaled"
+    - "unresolved"
+
+projection_rules:
+  omitted_l2_channel_mode: "unresolved"
+  explicit_value_bounds: [0.0, 1.0]
+  parent_scaled_factor_bounds: [0.0, 1.0]
+  parent_scaled_requires_distinct_parent_country_edge: true
+  unresolved_parent_channel_remains_null_after_scaling: true
+  pair_distance_requires_explicit_regional_data: true
+  pair_land_border_requires_explicit_regional_data: true
+
+trace:
+  graph_record: "fractal_projected_graph"
+  edge_record: "fractal_graph_projection_edge"
+  required_hashes:
+    - "country_graph_hash"
+    - "runtime_plan_hash"
+    - "projection_config_hash"
+    - "regional_graph_data_hash"
+
+safety:
+  regional_graph_is_aggregate_connectivity_not_operational_route: true
+  population_identity_must_not_create_extremist_edge: true
+  religious_similarity_must_not_create_extremist_edge: true
+  ethnicity_must_not_create_criminal_edge: true
+  political_identity_must_not_create_graph_edge: true
+  tactical_target_selection: false
+  weapon_selection: false
+  route_planning: false
+  operational_execution: false
