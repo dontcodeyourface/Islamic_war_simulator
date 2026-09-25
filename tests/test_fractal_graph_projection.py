@@ -409,3 +409,23 @@ def test_runtime_generation_ids_are_forbidden_in_catalog() -> None:
             projection_config=_projection_config(),
             regional_graph_catalog=catalog,
         )
+
+
+def test_regional_catalog_cannot_project_parent_retained_alliance() -> None:
+    logger.info(
+        "test_regional_catalog_cannot_project_parent_retained_alliance"
+    )
+    catalog = _regional_catalog()
+    catalog["edges"][1]["channels"]["alliance_link"] = {
+        "value": 1.0,
+    }
+    with pytest.raises(
+        ValueError,
+        match="may not project alliance_link",
+    ):
+        build_fractal_projected_graph(
+            runtime_plan=_refined_plan(),
+            base_graph=_base_graph(),
+            projection_config=_projection_config(),
+            regional_graph_catalog=catalog,
+        )
