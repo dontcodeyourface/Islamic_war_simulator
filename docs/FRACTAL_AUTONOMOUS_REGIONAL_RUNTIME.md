@@ -361,14 +361,17 @@ Generation identity from v0.24 remains mandatory.
 
 The next implementation sequence is canonical unless superseded by a later architecture decision.
 
-### v0.25 — active multiscale runtime set
+### v0.25 — active multiscale runtime set — IMPLEMENTED
 
-Implement:
+Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 
 - deterministic active execution set;
-- explicit state-authority policy;
-- prevention of L1/L2 double execution;
-- runtime-set trace and replay identity.
+- explicit state-authority policy with exact EngineState registry coverage;
+- beginning-of-day versus committed-next-day runtime plans;
+- prevention of silent legacy L1 execution once a day begins refined;
+- runtime-plan trace and replay identity.
+
+Because autonomous L2 execution is intentionally still disabled in v0.25, an already-refined beginning-of-day plan fails closed instead of applying regionalizable dynamics at L1.
 
 ### v0.26 — autonomous L2 day transaction
 
