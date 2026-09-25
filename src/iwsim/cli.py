@@ -305,6 +305,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_reaggregation_config = load_yaml(
         root / args.fractal_reaggregation_config
     )
+    fractal_runtime_config = load_yaml(
+        root / args.fractal_runtime_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -389,6 +392,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_child_state_initialization",
             "fractal_uncertainty_widening",
             "fractal_collapse_reaggregation",
+            "fractal_active_runtime_plan",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
