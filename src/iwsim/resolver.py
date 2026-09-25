@@ -184,15 +184,15 @@ def _resolution_id(
         variable,
         len(proposal_ids),
     )
-    digest = canonical_hash(
-        {
-            "target_node": target_node,
-            "variable": variable,
-            "proposal_ids": list(proposal_ids),
-            "equation_id": equation_id,
-            "runtime_context": runtime_context,
-        }
-    )
+    payload: dict[str, Any] = {
+        "target_node": target_node,
+        "variable": variable,
+        "proposal_ids": list(proposal_ids),
+        "equation_id": equation_id,
+    }
+    if runtime_context.get("runtime_plan_hash") is not None:
+        payload["runtime_context"] = runtime_context
+    digest = canonical_hash(payload)
     return f"resolve-{digest[:24]}"
 
 
