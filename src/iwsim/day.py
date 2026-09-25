@@ -3179,6 +3179,7 @@ def run_day_transaction(
         fractal_reaggregation_audits = collapse_result.audits
 
     fractal_runtime_plan_after: FractalRuntimePlan | None = None
+    fractal_projected_graph_after: FractalProjectedGraph | None = None
     if enable_fractal_runtime_plan:
         assert fractal_topology_out is not None
         assert fractal_child_state_store_out is not None
@@ -3193,6 +3194,24 @@ def run_day_transaction(
         )
         trace_fractal_runtime_plan(
             plan=fractal_runtime_plan_after,
+            phase="COMMITTED_NEXT_DAY",
+            trace=staged_trace,
+        )
+
+    if enable_fractal_graph_projection:
+        assert fractal_runtime_plan_after is not None
+        assert fractal_graph_projection_config is not None
+        assert fractal_region_graph_catalog is not None
+        fractal_projected_graph_after = (
+            build_fractal_projected_graph(
+                runtime_plan=fractal_runtime_plan_after,
+                base_graph=graph,
+                projection_config=fractal_graph_projection_config,
+                regional_graph_catalog=fractal_region_graph_catalog,
+            )
+        )
+        trace_fractal_projected_graph(
+            graph=fractal_projected_graph_after,
             phase="COMMITTED_NEXT_DAY",
             trace=staged_trace,
         )
@@ -3267,6 +3286,16 @@ def run_day_transaction(
         fractal_runtime_plan_after_hash=(
             fractal_runtime_plan_after.plan_hash()
             if fractal_runtime_plan_after is not None
+            else None
+        ),
+        fractal_projected_graph_before_hash=(
+            fractal_projected_graph_before.graph_hash()
+            if fractal_projected_graph_before is not None
+            else None
+        ),
+        fractal_projected_graph_after_hash=(
+            fractal_projected_graph_after.graph_hash()
+            if fractal_projected_graph_after is not None
             else None
         ),
         fractal_regional_regime_store_hash=(
