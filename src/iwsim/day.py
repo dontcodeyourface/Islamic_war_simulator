@@ -890,6 +890,7 @@ def _transaction_id(
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
     fractal_runtime_inputs: dict[str, Any] | None = None,
+    fractal_child_dynamics_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -921,6 +922,7 @@ def _transaction_id(
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
             "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
             "fractal_runtime_inputs": fractal_runtime_inputs,
+            "fractal_child_dynamics_inputs": fractal_child_dynamics_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1754,6 +1756,8 @@ def run_day_transaction(
     fractal_reaggregation_config: dict[str, Any] | None = None,
     enable_fractal_runtime_plan: bool = False,
     fractal_runtime_config: dict[str, Any] | None = None,
+    enable_fractal_child_dynamics: bool = False,
+    fractal_child_dynamics_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1788,6 +1792,7 @@ def run_day_transaction(
     fractal_uncertainty_inputs: dict[str, Any] | None = None
     fractal_reaggregation_inputs: dict[str, Any] | None = None
     fractal_runtime_inputs: dict[str, Any] | None = None
+    fractal_child_dynamics_inputs: dict[str, Any] | None = None
     fractal_runtime_plan_before: FractalRuntimePlan | None = None
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
@@ -2000,12 +2005,45 @@ def run_day_transaction(
         assert_beginning_of_day_runtime_supported(
             plan=fractal_runtime_plan_before,
             runtime_config=fractal_runtime_config,
+            autonomous_execution_enabled=enable_fractal_child_dynamics,
         )
         fractal_runtime_inputs = {
             "runtime_config_hash": canonical_hash(fractal_runtime_config),
             "runtime_plan_before_hash": (
                 fractal_runtime_plan_before.plan_hash()
             ),
+        }
+
+    if enable_fractal_child_dynamics:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Fractal child dynamics require fractal runtime planning"
+            )
+        if fractal_child_dynamics_config is None:
+            raise ValueError(
+                "Fractal child dynamics require fractal_child_dynamics_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_child_dynamics_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal child dynamics are disabled by the day transaction contract"
+            )
+        fractal_child_dynamics_inputs = {
+            "child_dynamics_config_hash": canonical_hash(
+                fractal_child_dynamics_config
+            ),
+            "enable_recovery": enable_recovery,
+            "enable_extremist_network_dynamics": (
+                enable_extremist_network_dynamics
+            ),
+            "enable_reciprocal_radicalization": (
+                enable_reciprocal_radicalization
+            ),
+            "enable_security_chain_dynamics": enable_security_chain_dynamics,
         }
 
     if enable_security_regime_recovery_commits:
@@ -2266,6 +2304,7 @@ def run_day_transaction(
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
         fractal_reaggregation_inputs=fractal_reaggregation_inputs,
         fractal_runtime_inputs=fractal_runtime_inputs,
+        fractal_child_dynamics_inputs=fractal_child_dynamics_inputs,
     )
 
     working_rng = rng.clone()
