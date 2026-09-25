@@ -591,6 +591,8 @@ def materialize_l1_to_l2(
         action.node_id,
         action.day,
     )
+    if action.action != "EXPAND":
+        raise ValueError("Fractal materializer supports EXPAND only")
     if action.from_level != "L1_COUNTRY" or action.to_level != "L2_REGION":
         raise ValueError("L1/L2 wrapper supports only L1_COUNTRY -> L2_REGION")
     return materialize_next_level(
