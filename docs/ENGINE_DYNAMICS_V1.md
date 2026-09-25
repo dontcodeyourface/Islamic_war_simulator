@@ -879,6 +879,30 @@ Every generated lower-level node must record:
 - aggregation rule;
 - de-refinement day if collapsed.
 
+## 32A. Dynamic authority across scales
+
+Refinement changes the active execution domain, not only the topology.
+
+When a parent remains at L1, it owns its regionalizable dynamics. When the parent is refined to L2, its active L2 children become authoritative for regionalizable state and participate autonomously in generic dynamic modules. The L1 parent remains authoritative only for explicitly national-only state and for aggregation/cross-scale coordination.
+
+The engine must prevent duplicate application of the same causal mechanism at L1 and L2.
+
+Active L2 nodes must ultimately support, where scale semantics are valid:
+
+- recovery;
+- strategic event hazards and effects;
+- owner resolution;
+- extremist-network dynamics;
+- reciprocal radicalization;
+- security-chain dynamics;
+- security/phase regime evaluation;
+- graph spillover;
+- causal trace and deterministic RNG.
+
+Sibling regions may diverge. Reaggregation after autonomous evolution must preserve additive stocks, explicitly aggregate intensive variables and use an explicit policy for categorical state; unresolved categorical disagreement fails closed.
+
+The canonical implementation sequence is defined in [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md).
+
 # PART VII — EVENT ENGINE
 
 ## 33. Event contract
@@ -1380,8 +1404,9 @@ Phase 1 implements:
 7. security-chain cohesion;
 8. alliance response;
 9. escalation state machine;
-10. Monte Carlo;
-11. complete causal trace.
+10. autonomous L2 fractal runtime with multiscale authority/coupling/reaggregation;
+11. Monte Carlo;
+12. complete causal trace.
 
 ## 62. Phase-1 definition of done
 
@@ -1395,6 +1420,8 @@ Phase 1 is incomplete unless:
 - removing extremist propagation reduces reciprocal contagion;
 - France and Portugal affect Spain through explicit graph edges;
 - Sahel deterioration can increase European stress without guaranteeing European collapse;
+- refined L1 nodes delegate regionalizable runtime authority to active L2 children without duplicate L1 execution;
+- active sibling L2 regions can diverge and later reaggregate under explicit conservative semantics;
 - every phase transition has a causal trace;
 - every stochastic event records hazard and random draw;
 - every run is exactly reproducible;
