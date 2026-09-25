@@ -5,30 +5,19 @@ on:
   pull_request:
     paths:
       - "src/**"
-      - "tests/**"
-      - "config/engine/**"
-      - "pyproject.toml"
       - ".github/workflows/engine-smoke.yml"
 
 jobs:
-  pytest:
+  infra:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Syntax location <=63
-        run: |
-          python - <<'PY'
-          import ast
-          source = open("src/iwsim/fractal_regional_regime.py", encoding="utf-8").read()
-          try:
-              ast.parse(source)
-          except SyntaxError as exc:
-              raise SystemExit(1 if (exc.lineno or 0) <= 63 else 0)
-          raise SystemExit(2)
-          PY
+      - name: Verify source exists
+        run: test -f src/iwsim/fractal_regional_regime.py
+
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile v0.28 module
+        run: python3 -m py_compile src/iwsim/fractal_regional_regime.py
