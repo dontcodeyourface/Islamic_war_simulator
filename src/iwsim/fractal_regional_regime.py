@@ -793,15 +793,22 @@ def execute_regional_regime_runtime(
     phase_prior = persistence_store.phase_map()
     security_prior = persistence_store.security_map()
     recovery_prior = persistence_store.recovery_map()
-    for name, mapping in (
-        ("phase", phase_prior),
-        ("security", security_prior),
-        ("recovery", recovery_prior),
-    ):
-        if set(mapping) != beginning:
-            raise ValueError(
-                f"Regional {name} prior persistence coverage mismatch"
-            )
+    prior_sets = {
+        "phase": set(phase_prior),
+        "security": set(security_prior),
+        "recovery": set(recovery_prior),
+    }
+    if len({frozenset(value) for value in prior_sets.values()}) != 1:
+        raise ValueError(
+            "Regional prior persistence stores disagree on node coverage"
+        )
+    prior_ids = set(phase_prior)
+    missing_prior = beginning - prior_ids
+    if missing_prior:
+        raise ValueError(
+            "Regional prior persistence missing beginning-active nodes: "
+            f"{sorted(missing_prior)}"
+        )
 
     expected_prior_day = child_store.last_initialized_day - 1
     for node_id in sorted(beginning):
@@ -937,7 +944,7 @@ def execute_regional_regime_runtime(
         if recovery_commit is not None:
             recovery_commits.append(recovery_commit)
 
-    new_node_ids = set(state_map) - beginning
+    new_node_ids = set(state_map) - prior_ids
     for node_id in sorted(new_node_ids):
         state = state_map[node_id]
         phase_out[node_id] = _phase_baseline(state)
@@ -971,8 +978,13 @@ def execute_regional_regime_runtime(
             for node_id in sorted(next_states)
         ),
     )
+    audit_node_ids = beginning | new_node_ids
+    audit_states = {
+        node_id: next_states[node_id]
+        for node_id in sorted(audit_node_ids)
+    }
     audits = _divergence_audits(
-        states=next_states,
+        states=audit_states,
         policy_id=policy["aggregation_policy_id"],
     )
     for audit in audits:
@@ -986,6 +998,9 @@ def execute_regional_regime_runtime(
         day=child_store.last_initialized_day,
         evaluated_node_ids=list(sorted(beginning)),
         initialized_node_ids=list(sorted(new_node_ids)),
+        retired_context_node_ids=list(
+            sorted(prior_ids - beginning - new_node_ids)
+        ),
         phase_commit_ids=[
             item.commit_id
             for item in sorted(
