@@ -114,6 +114,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_reaggregation_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-runtime-config",
+        default="config/engine/fractal_runtime_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
