@@ -1576,7 +1576,11 @@ def _evaluate_fractal_refinements(
     tuple[FractalRefinementActionProposal, ...],
 ]:
     logger.info("_evaluate_fractal_refinements states=%s", len(states))
-    persistence_out: dict[str, FractalRefinementPersistenceState] = {}
+    persistence_out: dict[str, FractalRefinementPersistenceState] = {
+        node_id: item
+        for node_id, item in persistence.items()
+        if node_id not in states and item is not None
+    }
     evaluations: list[FractalRefinementEvaluationResult] = []
     actions: list[FractalRefinementActionProposal] = []
     excluded = excluded_node_ids or set()
@@ -2138,6 +2142,7 @@ def run_day_transaction(
                 states=states,
                 day_from=day_from,
                 persistence=fractal_refinement_persistence,
+                topology=normalized_fractal_topology,
             )
         )
         fractal_refinement_inputs = (
