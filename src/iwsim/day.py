@@ -33,6 +33,12 @@ from .fractal_child_state import (
     empty_fractal_child_state_store,
     initialize_fractal_child_states,
 )
+from .fractal_child_dynamics import (
+    FractalChildDynamicsResult,
+    assert_l1_proposals_respect_runtime_authority,
+    coarse_l1_regional_state_view,
+    run_fractal_child_dynamics,
+)
 from .fractal_uncertainty import (
     FractalUncertaintyAuditRecord,
     FractalUncertaintyRecord,
@@ -189,6 +195,8 @@ class DayTransactionResult:
     ]
     fractal_runtime_plan_before: FractalRuntimePlan | None
     fractal_runtime_plan_after: FractalRuntimePlan | None
+    fractal_child_dynamics_proposals: tuple[DeltaProposal, ...]
+    fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -331,6 +339,14 @@ class DayTransactionResult:
                 if self.fractal_runtime_plan_after is not None
                 else None
             ),
+            "fractal_child_dynamics_proposals": [
+                item.to_dict()
+                for item in self.fractal_child_dynamics_proposals
+            ],
+            "fractal_child_dynamics_resolutions": [
+                item.to_dict()
+                for item in self.fractal_child_dynamics_resolutions
+            ],
         }
 
 
@@ -1399,17 +1415,62 @@ def _evaluate_fractal_refinements(
     profile: str,
     manifest: RunManifest,
     trace: TraceLedger,
+    deferred_node_ids: set[str] | None = None,
 ) -> tuple[
     dict[str, FractalRefinementPersistenceState],
     tuple[FractalRefinementEvaluationResult, ...],
     tuple[FractalRefinementActionProposal, ...],
 ]:
-    logger.info("_evaluate_fractal_refinements states=%s", len(states))
+    deferred = set(deferred_node_ids or ())
+    logger.info(
+        "_evaluate_fractal_refinements states=%s deferred=%s",
+        len(states),
+        sorted(deferred),
+    )
+    unknown_deferred = deferred - set(states)
+    if unknown_deferred:
+        raise ValueError(
+            "Unknown deferred fractal refinement nodes: "
+            f"{sorted(unknown_deferred)}"
+        )
+
     persistence_out: dict[str, FractalRefinementPersistenceState] = {}
     evaluations: list[FractalRefinementEvaluationResult] = []
     actions: list[FractalRefinementActionProposal] = []
 
     for node_id in sorted(states):
+        if node_id in deferred:
+            prior = persistence[node_id]
+            if prior is None:
+                raise ValueError(
+                    f"Deferred fractal refinement requires persistence for {node_id}"
+                )
+            if prior.current_level != "L2_REGION":
+                raise ValueError(
+                    f"Deferred fractal refinement requires L2_REGION for {node_id}"
+                )
+            retained = FractalRefinementPersistenceState(
+                node_id=prior.node_id,
+                current_level=prior.current_level,
+                last_evaluated_day=states[node_id].day,
+                expand_streak=prior.expand_streak,
+                collapse_streak=prior.collapse_streak,
+            )
+            persistence_out[node_id] = retained
+            trace.append(
+                "fractal_refinement_evaluation_deferred",
+                node_id=node_id,
+                day=states[node_id].day,
+                reason=(
+                    "active_l2_requires_child_to_parent_aggregation_before_"
+                    "collapse_evaluation"
+                ),
+                policy_id="FRACTAL_L2_COLLAPSE_DEFER_V0_26",
+                persistence_before=prior.to_dict(),
+                persistence_after=retained.to_dict(),
+            )
+            continue
+
         result = evaluate_fractal_refinement(
             state=states[node_id],
             persistence=persistence[node_id],
