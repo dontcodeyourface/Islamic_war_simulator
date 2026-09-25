@@ -414,17 +414,31 @@ Implement:
 
 Implementation detail: [FRACTAL_GRAPH_PROJECTION_V0.29.md](FRACTAL_GRAPH_PROJECTION_V0.29.md).
 
-### v0.30 — regional event and spillover execution
+### v0.30 — regional event and spillover execution — IMPLEMENTED
 
 Allow event generation and graph propagation between active runtime nodes at different scales.
 
-### v0.31 — parent-child coupling
+### v0.31 — parent-child coupling — IMPLEMENTED
 
 Implement explicit child-to-parent aggregation and parent-to-child national context propagation without double counting.
 
-### v0.32 — dynamic L2 -> L1 reaggregation
+### v0.32 — dynamic L2 -> L1 reaggregation — IMPLEMENTED
 
 Upgrade v0.23 collapse for independently evolved child states and divergent categorical state.
+
+### v0.32 implementation note
+
+The collapse path now accepts autonomous L2 child states carrying
+`fractal_child_dynamics_active=true` and reconstructs L1 from the live child
+state rather than from the initialization snapshot. Existing conservation
+semantics remain authoritative: additive stocks are summed exactly, intensive
+and latent values use their declared weighted aggregation policy, parent-only
+state remains at L1, and categorical disagreement still fails closed.
+
+The implementation deliberately does not weaken the categorical-consensus
+guard. A refined country whose active regions still disagree on a categorical
+regime is not collapse-ready; the regional divergence must first resolve under
+the regional-regime contract.
 
 ### v0.33 — canonical end-to-end lifecycle validation
 
