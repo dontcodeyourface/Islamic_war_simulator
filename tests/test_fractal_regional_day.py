@@ -858,3 +858,130 @@ def test_v034c3_day_transaction_l2_l3_collapse_rerefine_generation_two() -> None
         "ESP::CT::METRO_A::g2",
         "ESP::CT::LOGISTICS_B::g2",
     }.issubset(active_ids)
+
+
+
+def test_v034d_missing_l3_catalog_blocks_refinement_without_aborting_day() -> None:
+    logger.info(
+        "test_v034d_missing_l3_catalog_blocks_refinement_without_aborting_day"
+    )
+    (
+        states,
+        graph,
+        day_config,
+        registry,
+        parameters,
+        rng,
+        manifest,
+    ) = _runtime(seed=3435)
+    parameters = _disable_events(parameters)
+    configs = _configs()
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _force_refinement_state(states["ESP"])
+    _set_parent_stocks(states["ESP"])
+
+    initial_persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    common = {
+        "enable_fractal_refinement_evaluator": True,
+        "fractal_refinement_config": configs["refinement"],
+        "enable_fractal_materialization": True,
+        "fractal_materialization_config": configs["materialization"],
+        "fractal_region_catalog": _catalog(),
+        "enable_fractal_child_state_initialization": True,
+        "fractal_child_state_config": configs["child"],
+        "enable_fractal_runtime_plan": True,
+        "fractal_runtime_config": configs["runtime"],
+        "enable_fractal_reaggregation": True,
+        "fractal_reaggregation_config": configs["reaggregation"],
+    }
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        fractal_refinement_persistence=initial_persistence,
+        fractal_topology=None,
+        fractal_child_state_store=None,
+        **common,
+    )
+
+    target = "ESP::CT"
+    assert first.fractal_child_state_store is not None
+    assert first.fractal_topology is not None
+
+    persistence = dict(first.fractal_refinement_persistence)
+    persistence[target] = FractalRefinementPersistenceState(
+        node_id=target,
+        current_level="L2_REGION",
+        last_evaluated_day=1,
+        expand_streak=7,
+        collapse_streak=0,
+    )
+    child_store = _replace_child_pressure(
+        first.fractal_child_state_store,
+        node_ids={target},
+        high=True,
+    )
+
+    trace = TraceLedger()
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        fractal_refinement_persistence=persistence,
+        fractal_topology=first.fractal_topology,
+        fractal_child_state_store=child_store,
+        **common,
+    )
+
+    assert second.fractal_topology is not None
+    assert second.fractal_runtime_plan_after is not None
+    assert second.fractal_topology.active_children(target) == ()
+    assert target in second.fractal_runtime_plan_after.active_regional_node_ids
+    assert (
+        second.fractal_refinement_persistence[target].current_level
+        == "L2_REGION"
+    )
+    assert second.fractal_refinement_persistence[target].expand_streak >= 8
+    assert not any(
+        item.parent_node_id == target
+        for item in second.fractal_materialization_commits
+    )
+
+    blocked = [
+        item
+        for item in trace.records
+        if item["record_type"]
+        == "fractal_refinement_blocked_missing_catalog"
+    ]
+    assert len(blocked) == 1
+    assert blocked[0]["node_id"] == target
+    assert blocked[0]["catalog_parent_id"] == target
+    assert blocked[0]["from_level"] == "L2_REGION"
+    assert blocked[0]["to_level"] == "L3_METRO_OR_LOGISTICS_AREA"
+    assert blocked[0]["apply_status"] == "BLOCKED_NOT_APPLIED"
