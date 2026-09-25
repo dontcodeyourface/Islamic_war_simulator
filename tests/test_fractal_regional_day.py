@@ -507,3 +507,354 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
         and item["collapse_consensus_ready"] is False
         for item in trace.records
     )
+
+
+
+def _recursive_test_catalog() -> dict:
+    logger.info("_recursive_test_catalog")
+    catalog = copy.deepcopy(_catalog())
+    catalog["parents"]["ESP::CT"] = {
+        "source_id": "SYNTHETIC_L3_E2E",
+        "children": [
+            {
+                "child_id": "ESP::CT::METRO_A",
+                "label": "Metro A",
+                "initialization_weight": 0.6,
+            },
+            {
+                "child_id": "ESP::CT::LOGISTICS_B",
+                "label": "Logistics B",
+                "initialization_weight": 0.4,
+            },
+        ],
+    }
+    return catalog
+
+
+def _with_refinement_pressure(
+    state: EngineState,
+    *,
+    high: bool,
+) -> EngineState:
+    logger.info(
+        "_with_refinement_pressure node=%s high=%s",
+        state.node_id,
+        high,
+    )
+    latents = dict(state.latents)
+    positive = (
+        "public_order_stress",
+        "terrorism_threat_pressure",
+        "organized_armed_actor_capacity",
+        "regional_fragmentation_pressure",
+        "criminal_network_power",
+        "violent_islamist_pressure",
+        "violent_ultranationalist_pressure",
+        "revolutionary_extremist_pressure",
+        "displacement_pressure",
+    )
+    inverse = (
+        "government_legitimacy",
+        "state_cohesion",
+        "security_chain_cohesion",
+        "electricity_functionality",
+        "fuel_distribution_functionality",
+        "transport_logistics_functionality",
+        "telecom_internet_functionality",
+        "water_resilience",
+    )
+    for variable in positive:
+        latents[variable] = 1.0 if high else 0.0
+    for variable in inverse:
+        latents[variable] = 0.0 if high else 1.0
+    return EngineState(
+        node_id=state.node_id,
+        day=state.day,
+        physical_stocks=dict(state.physical_stocks),
+        latents=latents,
+        regimes=dict(state.regimes),
+        metadata=dict(state.metadata),
+    )
+
+
+def _replace_child_pressure(
+    store: FractalChildStateStore,
+    *,
+    node_ids: set[str],
+    high: bool,
+) -> FractalChildStateStore:
+    logger.info(
+        "_replace_child_pressure nodes=%s high=%s",
+        len(node_ids),
+        high,
+    )
+    return FractalChildStateStore(
+        last_initialized_day=store.last_initialized_day,
+        states=tuple(
+            _with_refinement_pressure(state, high=high)
+            if state.node_id in node_ids
+            else state
+            for state in store.states
+        ),
+    )
+
+
+def _recursive_core_kwargs(configs: dict[str, dict]) -> dict:
+    logger.info("_recursive_core_kwargs")
+    return {
+        "enable_fractal_refinement_evaluator": True,
+        "fractal_refinement_config": configs["refinement"],
+        "enable_fractal_materialization": True,
+        "fractal_materialization_config": configs["materialization"],
+        "fractal_region_catalog": _recursive_test_catalog(),
+        "enable_fractal_child_state_initialization": True,
+        "fractal_child_state_config": configs["child"],
+        "enable_fractal_runtime_plan": True,
+        "fractal_runtime_config": configs["runtime"],
+        "enable_fractal_reaggregation": True,
+        "fractal_reaggregation_config": configs["reaggregation"],
+    }
+
+
+def test_v034c3_day_transaction_l2_l3_collapse_rerefine_generation_two() -> None:
+    logger.info(
+        "test_v034c3_day_transaction_l2_l3_collapse_rerefine_generation_two"
+    )
+    (
+        states,
+        graph,
+        day_config,
+        registry,
+        parameters,
+        rng,
+        manifest,
+    ) = _runtime(seed=3433)
+    parameters = _disable_events(parameters)
+    configs = _configs()
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _force_refinement_state(states["ESP"])
+    _set_parent_stocks(states["ESP"])
+
+    initial_persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        fractal_refinement_persistence=initial_persistence,
+        fractal_topology=None,
+        fractal_child_state_store=None,
+        **_recursive_core_kwargs(configs),
+    )
+
+    assert first.fractal_topology is not None
+    assert first.fractal_child_state_store is not None
+    assert first.fractal_runtime_plan_after is not None
+    target = "ESP::CT"
+    assert target in first.fractal_child_state_store.state_map()
+    assert target in first.fractal_refinement_persistence
+    assert (
+        first.fractal_refinement_persistence[target].current_level
+        == "L2_REGION"
+    )
+
+    second_persistence = dict(first.fractal_refinement_persistence)
+    second_persistence[target] = FractalRefinementPersistenceState(
+        node_id=target,
+        current_level="L2_REGION",
+        last_evaluated_day=1,
+        expand_streak=7,
+        collapse_streak=0,
+    )
+    second_store = _replace_child_pressure(
+        first.fractal_child_state_store,
+        node_ids={target},
+        high=True,
+    )
+
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        fractal_refinement_persistence=second_persistence,
+        fractal_topology=first.fractal_topology,
+        fractal_child_state_store=second_store,
+        **_recursive_core_kwargs(configs),
+    )
+
+    assert second.fractal_topology is not None
+    assert second.fractal_child_state_store is not None
+    assert second.fractal_runtime_plan_after is not None
+    l3_gen1 = second.fractal_topology.active_children(target)
+    assert {item.node_id for item in l3_gen1} == {
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+    }
+    assert {item.lineage_generation for item in l3_gen1} == {1}
+    assert (
+        second.fractal_refinement_persistence[target].current_level
+        == "L3_METRO_OR_LOGISTICS_AREA"
+    )
+    assert target not in second.fractal_runtime_plan_after.active_regional_node_ids
+    assert {
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+    }.issubset(
+        set(second.fractal_runtime_plan_after.active_regional_node_ids)
+    )
+    assert any(
+        item.parent_node_id == target
+        and item.to_level == "L3_METRO_OR_LOGISTICS_AREA"
+        for item in second.fractal_materialization_commits
+    )
+
+    third_persistence = dict(second.fractal_refinement_persistence)
+    third_persistence[target] = FractalRefinementPersistenceState(
+        node_id=target,
+        current_level="L3_METRO_OR_LOGISTICS_AREA",
+        last_evaluated_day=2,
+        expand_streak=0,
+        collapse_streak=33,
+    )
+    third_store = _replace_child_pressure(
+        second.fractal_child_state_store,
+        node_ids={
+            target,
+            "ESP::CT::METRO_A",
+            "ESP::CT::LOGISTICS_B",
+        },
+        high=False,
+    )
+
+    third = run_day_transaction(
+        states=second.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        fractal_refinement_persistence=third_persistence,
+        fractal_topology=second.fractal_topology,
+        fractal_child_state_store=third_store,
+        **_recursive_core_kwargs(configs),
+    )
+
+    assert third.fractal_topology is not None
+    assert third.fractal_child_state_store is not None
+    assert third.fractal_runtime_plan_after is not None
+    assert third.fractal_topology.active_children(target) == ()
+    assert (
+        third.fractal_refinement_persistence[target].current_level
+        == "L2_REGION"
+    )
+    assert target in third.fractal_runtime_plan_after.active_regional_node_ids
+    assert all(
+        item.from_level == "L3_METRO_OR_LOGISTICS_AREA"
+        and item.to_level == "L2_REGION"
+        for item in third.fractal_collapse_commits
+        if item.parent_node_id == target
+    )
+    historical_gen1 = {
+        item.node_id: item.to_dict()
+        for item in third.fractal_topology.nodes
+        if item.parent_node_id == target
+    }
+    assert set(historical_gen1) == {
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+    }
+    assert all(
+        item["active"] is False and item["de_refinement_day"] == 3
+        for item in historical_gen1.values()
+    )
+
+    fourth_persistence = dict(third.fractal_refinement_persistence)
+    fourth_persistence[target] = FractalRefinementPersistenceState(
+        node_id=target,
+        current_level="L2_REGION",
+        last_evaluated_day=3,
+        expand_streak=7,
+        collapse_streak=0,
+    )
+    fourth_store = _replace_child_pressure(
+        third.fractal_child_state_store,
+        node_ids={target},
+        high=True,
+    )
+
+    fourth = run_day_transaction(
+        states=third.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        fractal_refinement_persistence=fourth_persistence,
+        fractal_topology=third.fractal_topology,
+        fractal_child_state_store=fourth_store,
+        **_recursive_core_kwargs(configs),
+    )
+
+    assert fourth.fractal_topology is not None
+    assert fourth.fractal_child_state_store is not None
+    assert fourth.fractal_runtime_plan_after is not None
+    l3_gen2 = fourth.fractal_topology.active_children(target)
+    assert {item.node_id for item in l3_gen2} == {
+        "ESP::CT::METRO_A::g2",
+        "ESP::CT::LOGISTICS_B::g2",
+    }
+    assert {item.catalog_child_id for item in l3_gen2} == {
+        "ESP::CT::METRO_A",
+        "ESP::CT::LOGISTICS_B",
+    }
+    assert {item.lineage_generation for item in l3_gen2} == {2}
+    assert set(historical_gen1).isdisjoint(
+        {item.node_id for item in l3_gen2}
+    )
+
+    for node_id, before in historical_gen1.items():
+        after = next(
+            item
+            for item in fourth.fractal_topology.nodes
+            if item.node_id == node_id
+        )
+        assert after.to_dict() == before
+
+    active_ids = set(
+        fourth.fractal_runtime_plan_after.active_regional_node_ids
+    )
+    assert target not in active_ids
+    assert {
+        "ESP::CT::METRO_A::g2",
+        "ESP::CT::LOGISTICS_B::g2",
+    }.issubset(active_ids)
