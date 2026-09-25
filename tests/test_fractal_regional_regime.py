@@ -492,3 +492,161 @@ def test_regional_persistence_rejects_duplicate_node_ids() -> None:
         ),
     ):
         duplicate_recovery.recovery_map()
+
+
+
+def _persistence_for_nodes(
+    node_ids: tuple[str, ...],
+    *,
+    day: int,
+) -> FractalRegionalRegimeStore:
+    logger.info("_persistence_for_nodes day=%s nodes=%s", day, len(node_ids))
+    return FractalRegionalRegimeStore(
+        last_committed_day=day,
+        phase_persistence=tuple(
+            PhasePersistenceState(
+                node_id=node_id,
+                current_phase="STABLE",
+                last_evaluated_day=day,
+                streaks=(),
+            )
+            for node_id in node_ids
+        ),
+        security_persistence=tuple(
+            SecurityRegimePersistenceState(
+                node_id=node_id,
+                current_regime="COHESIVE",
+                last_evaluated_day=day,
+                streaks=(),
+            )
+            for node_id in node_ids
+        ),
+        security_recovery_persistence=tuple(
+            SecurityRegimeRecoveryPersistenceState(
+                node_id=node_id,
+                current_regime="COHESIVE",
+                last_evaluated_day=day,
+                streaks=(),
+            )
+            for node_id in node_ids
+        ),
+    )
+
+
+def _recursive_state(
+    node_id: str,
+    *,
+    parent_id: str,
+    level: str,
+    day: int,
+) -> EngineState:
+    logger.info(
+        "_recursive_state node=%s parent=%s level=%s day=%s",
+        node_id,
+        parent_id,
+        level,
+        day,
+    )
+    base = _state(node_id, day=day, stressed=False)
+    return EngineState(
+        node_id=base.node_id,
+        day=base.day,
+        physical_stocks=dict(base.physical_stocks),
+        latents=dict(base.latents),
+        regimes=dict(base.regimes),
+        metadata={
+            **base.metadata,
+            "fractal_parent_node_id": parent_id,
+            "fractal_level": level,
+            "fractal_runtime_node_id": node_id,
+            "fractal_catalog_child_id": node_id,
+        },
+    )
+
+
+def test_v034c2_regime_persistence_prunes_refined_l2_context() -> None:
+    logger.info(
+        "test_v034c2_regime_persistence_prunes_refined_l2_context"
+    )
+    context_id = "TST::R1"
+    l2_leaf = "TST::R2"
+    l3_a = "TST::R1::A"
+    l3_b = "TST::R1::B"
+    prior_ids = (context_id, l2_leaf, l3_a, l3_b)
+    beginning = (l2_leaf, l3_a, l3_b)
+
+    child_store = FractalChildStateStore(
+        last_initialized_day=3,
+        states=(
+            _recursive_state(
+                context_id,
+                parent_id="TST",
+                level="L2_REGION",
+                day=3,
+            ),
+            _recursive_state(
+                l2_leaf,
+                parent_id="TST",
+                level="L2_REGION",
+                day=3,
+            ),
+            _recursive_state(
+                l3_a,
+                parent_id=context_id,
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                day=3,
+            ),
+            _recursive_state(
+                l3_b,
+                parent_id=context_id,
+                level="L3_METRO_OR_LOGISTICS_AREA",
+                day=3,
+            ),
+        ),
+    )
+    trace = TraceLedger()
+    result = execute_regional_regime_runtime(
+        child_store=child_store,
+        beginning_active_node_ids=beginning,
+        persistence_store=_persistence_for_nodes(prior_ids, day=2),
+        context_flags=None,
+        regional_config=load_yaml(
+            ROOT / "config/engine/fractal_regional_regime_v1.yaml"
+        ),
+        phase_config=load_yaml(
+            ROOT / "config/engine/phase_evaluator_v1.yaml"
+        ),
+        phase_transition_config=load_yaml(
+            ROOT / "config/engine/phase_transition_v1.yaml"
+        ),
+        security_regime_config=load_yaml(
+            ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+        ),
+        security_transition_config=load_yaml(
+            ROOT / "config/engine/security_regime_transition_v1.yaml"
+        ),
+        security_recovery_config=load_yaml(
+            ROOT / "config/engine/security_regime_recovery_v1.yaml"
+        ),
+        security_recovery_transition_config=load_yaml(
+            ROOT
+            / "config/engine/security_regime_recovery_transition_v1.yaml"
+        ),
+        engine_state_registry=_registry(),
+        parameter_registry=_parameters(),
+        profile="synthetic_smoke_v1",
+        manifest=_manifest(),
+        trace=trace,
+    )
+
+    assert set(result.persistence_store.phase_map()) == set(beginning)
+    assert set(result.persistence_store.security_map()) == set(beginning)
+    assert set(result.persistence_store.recovery_map()) == set(beginning)
+    assert context_id in result.child_store.state_map()
+    committed = [
+        item
+        for item in trace.records
+        if item["record_type"]
+        == "fractal_regional_regime_runtime_committed"
+    ]
+    assert committed[-1]["retired_context_node_ids"] == [context_id]
