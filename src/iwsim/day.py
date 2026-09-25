@@ -24,7 +24,7 @@ from .fractal_materialization import (
     FractalTopologyState,
     advance_fractal_topology_without_materialization,
     empty_fractal_topology,
-    materialize_l1_to_l2,
+    materialize_next_level,
 )
 from .fractal_child_state import (
     FractalChildStateInitializationRecord,
@@ -53,6 +53,7 @@ from .fractal_regional_regime import (
     FractalRegionalRegimeStore,
     bootstrap_or_validate_regional_regime_store,
     execute_regional_regime_runtime,
+    reconcile_regional_regime_store_after_topology_change,
 )
 from .fractal_graph_projection import (
     FractalProjectedGraph,
@@ -528,7 +529,8 @@ def _validate_fractal_topology_consistency(
         len(states),
         len(topology.nodes),
     )
-    known_parents = set(states)
+    topology_ids = {item.node_id for item in topology.nodes}
+    known_parents = set(states) | topology_ids
     topology_parents = {item.parent_node_id for item in topology.nodes}
     unknown = topology_parents - known_parents
     if unknown:
@@ -536,8 +538,21 @@ def _validate_fractal_topology_consistency(
             f"Fractal topology contains unknown parents: {sorted(unknown)}"
         )
 
+    active_l2 = {
+        item.node_id: item
+        for item in topology.nodes
+        if item.active and item.level == "L2_REGION"
+    }
+    expected_persistence = set(states) | set(active_l2)
+    unexpected = set(persistence) - expected_persistence
+    if unexpected:
+        raise ValueError(
+            "Fractal refinement persistence contains inactive/unsupported "
+            f"nodes: {sorted(unexpected)}"
+        )
+
     for node_id in sorted(states):
-        item = persistence[node_id]
+        item = persistence.get(node_id)
         children = topology.active_children(node_id)
         if item is None:
             if children:
@@ -552,7 +567,37 @@ def _validate_fractal_topology_consistency(
             )
         if item.current_level == "L2_REGION" and not children:
             raise ValueError(
-                f"Fractal L2 parent {node_id} requires active L2 children"
+                f"Fractal L1 parent {node_id} at L2 resolution requires "
+                "active L2 children"
+            )
+
+    for node_id, topology_node in sorted(active_l2.items()):
+        item = persistence.get(node_id)
+        children = topology.active_children(node_id)
+        if item is None:
+            if children:
+                raise ValueError(
+                    f"Fractal L2 parent {node_id} has active L3 children "
+                    "without refinement persistence"
+                )
+            if topology_node.created_day != topology.last_committed_day:
+                raise ValueError(
+                    f"Established L2 node {node_id} lacks refinement "
+                    "persistence"
+                )
+            continue
+        if item.current_level == "L2_REGION" and children:
+            raise ValueError(
+                f"Fractal L2 parent {node_id} at L2 resolution cannot "
+                "have active L3 children"
+            )
+        if (
+            item.current_level == "L3_METRO_OR_LOGISTICS_AREA"
+            and not children
+        ):
+            raise ValueError(
+                f"Fractal L2 parent {node_id} at L3 resolution requires "
+                "active L3 children"
             )
 
 
@@ -581,6 +626,7 @@ def _normalize_fractal_refinement_persistence_inputs(
     persistence: (
         dict[str, FractalRefinementPersistenceState | None] | None
     ),
+    topology: FractalTopologyState | None = None,
 ) -> dict[str, FractalRefinementPersistenceState | None]:
     logger.info(
         "_normalize_fractal_refinement_persistence_inputs "
@@ -588,28 +634,52 @@ def _normalize_fractal_refinement_persistence_inputs(
         day_from,
         persistence is not None,
     )
+    active_l2 = {
+        item.node_id: item
+        for item in (topology.nodes if topology is not None else ())
+        if item.active and item.level == "L2_REGION"
+    }
+    expected = set(states) | set(active_l2)
+
     if persistence is None:
         if day_from != 0:
             raise ValueError(
                 "Fractal refinement persistence is required after day zero "
                 "when fractal evaluation is enabled"
             )
-        return {node_id: None for node_id in sorted(states)}
+        return {node_id: None for node_id in sorted(expected)}
 
-    if set(persistence) != set(states):
+    unexpected = set(persistence) - expected
+    if unexpected:
         raise ValueError(
-            "Fractal refinement persistence nodes must equal state nodes"
+            "Fractal refinement persistence contains inactive/unsupported "
+            f"nodes: {sorted(unexpected)}"
+        )
+
+    missing_l1 = set(states) - set(persistence)
+    if missing_l1:
+        raise ValueError(
+            "Fractal refinement persistence missing L1 state nodes: "
+            f"{sorted(missing_l1)}"
         )
 
     normalized: dict[str, FractalRefinementPersistenceState | None] = {}
-    for node_id in sorted(states):
-        item = persistence[node_id]
+    for node_id in sorted(expected):
+        item = persistence.get(node_id)
         if item is None:
-            if day_from != 0:
-                raise ValueError(
-                    f"Missing fractal refinement persistence for "
-                    f"{node_id} after day zero"
-                )
+            if node_id in states:
+                if day_from != 0:
+                    raise ValueError(
+                        f"Missing fractal refinement persistence for "
+                        f"{node_id} after day zero"
+                    )
+            else:
+                topology_node = active_l2[node_id]
+                if topology_node.created_day != day_from:
+                    raise ValueError(
+                        f"Missing established L2 refinement persistence for "
+                        f"{node_id}"
+                    )
             normalized[node_id] = None
             continue
         if item.node_id != node_id:
@@ -1506,7 +1576,11 @@ def _evaluate_fractal_refinements(
     tuple[FractalRefinementActionProposal, ...],
 ]:
     logger.info("_evaluate_fractal_refinements states=%s", len(states))
-    persistence_out: dict[str, FractalRefinementPersistenceState] = {}
+    persistence_out: dict[str, FractalRefinementPersistenceState] = {
+        node_id: item
+        for node_id, item in persistence.items()
+        if node_id not in states and item is not None
+    }
     evaluations: list[FractalRefinementEvaluationResult] = []
     actions: list[FractalRefinementActionProposal] = []
     excluded = excluded_node_ids or set()
@@ -1533,21 +1607,20 @@ def _evaluate_fractal_refinements(
             carried = FractalRefinementPersistenceState(
                 node_id=node_id,
                 current_level=prior.current_level,
-                last_evaluated_day=states[node_id].day,
-                expand_streak=0,
-                collapse_streak=0,
+                last_evaluated_day=prior.last_evaluated_day,
+                expand_streak=prior.expand_streak,
+                collapse_streak=prior.collapse_streak,
             )
             persistence_out[node_id] = carried
             trace.append(
-                "fractal_refinement_evaluation_suppressed",
+                "fractal_refinement_evaluation_deferred",
                 node_id=node_id,
                 day=states[node_id].day,
                 current_level=prior.current_level,
                 reason="awaiting_parent_child_coupling",
-                expand_streak_before=prior.expand_streak,
-                collapse_streak_before=prior.collapse_streak,
-                expand_streak_after=0,
-                collapse_streak_after=0,
+                expand_streak=prior.expand_streak,
+                collapse_streak=prior.collapse_streak,
+                last_evaluated_day=prior.last_evaluated_day,
             )
             continue
 
@@ -1596,6 +1669,8 @@ def _commit_fractal_materializations(
     commits: list[FractalMaterializationCommitRecord] = []
 
     if not actions:
+        if topology.last_committed_day == day:
+            return topology, persistence_out, ()
         topology_out = advance_fractal_topology_without_materialization(
             topology=topology,
             day=day,
@@ -1618,16 +1693,39 @@ def _commit_fractal_materializations(
             topology_out,
             persistence_after,
             commit_record,
-        ) = materialize_l1_to_l2(
+        ) = materialize_next_level(
             action=action,
             persistence=persistence_out[action.node_id],
             topology=topology_out,
-            region_catalog=region_catalog,
+            child_catalog=region_catalog,
             materialization_config=materialization_config,
             manifest=manifest,
             trace=trace,
         )
         persistence_out[action.node_id] = persistence_after
+        if action.to_level == "L2_REGION":
+            for child_node_id in commit_record.child_node_ids:
+                if child_node_id in persistence_out:
+                    raise ValueError(
+                        f"New L2 child persistence already exists: "
+                        f"{child_node_id}"
+                    )
+                persistence_out[child_node_id] = (
+                    FractalRefinementPersistenceState(
+                        node_id=child_node_id,
+                        current_level="L2_REGION",
+                        last_evaluated_day=day,
+                        expand_streak=0,
+                        collapse_streak=0,
+                    )
+                )
+                trace.append(
+                    "fractal_refinement_persistence_initialized",
+                    node_id=child_node_id,
+                    day=day,
+                    current_level="L2_REGION",
+                    source_action_id=action.action_id,
+                )
         commits.append(commit_record)
 
     if topology_out.last_committed_day != day:
@@ -2043,6 +2141,7 @@ def run_day_transaction(
                 states=states,
                 day_from=day_from,
                 persistence=fractal_refinement_persistence,
+                topology=normalized_fractal_topology,
             )
         )
         fractal_refinement_inputs = (
@@ -3317,6 +3416,225 @@ def run_day_transaction(
             fractal_parent_child_coupling_result.child_store
         )
 
+    late_fractal_actions: tuple[
+        FractalRefinementActionProposal, ...
+    ] = ()
+    if (
+        enable_fractal_refinement_evaluator
+        and fractal_topology_out is not None
+        and fractal_child_state_store_out is not None
+    ):
+        assert fractal_refinement_config is not None
+        child_state_map = fractal_child_state_store_out.state_map()
+        active_l2_nodes = {
+            item.node_id: item
+            for item in fractal_topology_out.nodes
+            if item.active and item.level == "L2_REGION"
+        }
+        late_refinement_states: dict[str, EngineState] = {}
+
+        if fractal_runtime_plan_before is not None:
+            for parent_id in sorted(
+                fractal_runtime_plan_before.refined_parent_ids
+            ):
+                late_refinement_states[parent_id] = final_states[parent_id]
+
+        for node_id, topology_node in sorted(active_l2_nodes.items()):
+            if topology_node.created_day == day_to:
+                continue
+            if node_id not in child_state_map:
+                raise ValueError(
+                    f"Late fractal refinement missing L2 state {node_id}"
+                )
+            late_refinement_states[node_id] = child_state_map[node_id]
+
+        if late_refinement_states:
+            (
+                fractal_refinement_persistence_out,
+                late_evaluations,
+                late_fractal_actions,
+            ) = _evaluate_fractal_refinements(
+                states=late_refinement_states,
+                persistence=fractal_refinement_persistence_out,
+                refinement_config=fractal_refinement_config,
+                parameter_registry=parameter_registry,
+                profile=profile,
+                manifest=manifest,
+                trace=staged_trace,
+            )
+            fractal_refinement_evaluations = tuple(
+                sorted(
+                    (
+                        *fractal_refinement_evaluations,
+                        *late_evaluations,
+                    ),
+                    key=lambda item: item.persistence.node_id,
+                )
+            )
+            fractal_refinement_actions = tuple(
+                sorted(
+                    (
+                        *fractal_refinement_actions,
+                        *late_fractal_actions,
+                    ),
+                    key=lambda item: item.action_id,
+                )
+            )
+
+    effective_late_actions: list[FractalRefinementActionProposal] = []
+    late_action_nodes = {item.node_id for item in late_fractal_actions}
+    for action in late_fractal_actions:
+        if (
+            action.action == "COLLAPSE"
+            and action.from_level == "L2_REGION"
+            and action.to_level == "L1_COUNTRY"
+            and fractal_topology_out is not None
+        ):
+            direct_children = {
+                item.node_id
+                for item in fractal_topology_out.active_children(
+                    action.node_id
+                )
+            }
+            conflicting_descendants = direct_children & late_action_nodes
+            if conflicting_descendants:
+                staged_trace.append(
+                    "fractal_collapse_deferred",
+                    action_id=action.action_id,
+                    node_id=action.node_id,
+                    day=action.day,
+                    reason="descendant_resolution_action_same_day",
+                    conflicting_descendant_node_ids=sorted(
+                        conflicting_descendants
+                    ),
+                )
+                continue
+        effective_late_actions.append(action)
+
+    recursive_expansion_actions = tuple(
+        item
+        for item in effective_late_actions
+        if item.action == "EXPAND"
+    )
+    recursive_collapse_actions = tuple(
+        item
+        for item in effective_late_actions
+        if item.action == "COLLAPSE"
+    )
+    fractal_collapse_actions = tuple(
+        sorted(
+            (*fractal_collapse_actions, *recursive_collapse_actions),
+            key=lambda item: item.action_id,
+        )
+    )
+
+    if recursive_expansion_actions:
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Recursive fractal expansion requires materialization"
+            )
+        assert fractal_topology_out is not None
+        assert fractal_materialization_config is not None
+        assert fractal_region_catalog is not None
+        (
+            fractal_topology_out,
+            fractal_refinement_persistence_out,
+            recursive_materialization_commits,
+        ) = _commit_fractal_materializations(
+            day=day_to,
+            actions=recursive_expansion_actions,
+            persistence=fractal_refinement_persistence_out,
+            topology=fractal_topology_out,
+            region_catalog=fractal_region_catalog,
+            materialization_config=fractal_materialization_config,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        fractal_materialization_commits = tuple(
+            sorted(
+                (
+                    *fractal_materialization_commits,
+                    *recursive_materialization_commits,
+                ),
+                key=lambda item: item.commit_id,
+            )
+        )
+
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Recursive fractal expansion requires child-state "
+                "initialization"
+            )
+        assert fractal_child_state_store_out is not None
+        assert fractal_child_state_config is not None
+        recursive_child_result = initialize_fractal_child_states(
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            initialization_config=fractal_child_state_config,
+            engine_state_registry=engine_state_registry,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = recursive_child_result.store
+        recursive_initializations = (
+            recursive_child_result.initialization_records
+        )
+        fractal_child_initialization_records = tuple(
+            sorted(
+                (
+                    *fractal_child_initialization_records,
+                    *recursive_initializations,
+                ),
+                key=lambda item: item.initialization_id,
+            )
+        )
+        fractal_conservation_audits = tuple(
+            sorted(
+                (
+                    *fractal_conservation_audits,
+                    *recursive_child_result.conservation_audits,
+                ),
+                key=lambda item: item.audit_id,
+            )
+        )
+
+        if enable_fractal_uncertainty and recursive_initializations:
+            assert fractal_uncertainty_config is not None
+            recursive_uncertainty = apply_fractal_uncertainty(
+                parent_states=final_states,
+                topology=fractal_topology_out,
+                child_store=fractal_child_state_store_out,
+                new_child_ids=tuple(
+                    item.child_node_id
+                    for item in recursive_initializations
+                ),
+                uncertainty_config=fractal_uncertainty_config,
+                engine_state_registry=engine_state_registry,
+                parameter_registry=parameter_registry,
+                profile=profile,
+                rng=working_rng,
+                trace=staged_trace,
+            )
+            fractal_child_state_store_out = recursive_uncertainty.store
+            fractal_uncertainty_records = tuple(
+                sorted(
+                    (
+                        *fractal_uncertainty_records,
+                        *recursive_uncertainty.records,
+                    ),
+                    key=lambda item: item.variation_id,
+                )
+            )
+            fractal_uncertainty_audits = tuple(
+                sorted(
+                    (
+                        *fractal_uncertainty_audits,
+                        *recursive_uncertainty.audits,
+                    ),
+                    key=lambda item: item.audit_id,
+                )
+            )
+
     fractal_collapse_commits: tuple[
         FractalCollapseCommitRecord, ...
     ] = ()
@@ -3346,6 +3664,42 @@ def run_day_transaction(
         fractal_collapse_commits = collapse_result.commits
         fractal_reaggregation_audits = collapse_result.audits
 
+    if fractal_topology_out is not None:
+        active_l2_persistence_ids = {
+            item.node_id
+            for item in fractal_topology_out.nodes
+            if item.active and item.level == "L2_REGION"
+        }
+        allowed_refinement_ids = (
+            set(final_states) | active_l2_persistence_ids
+        )
+        retired_refinement_ids = (
+            set(fractal_refinement_persistence_out)
+            - allowed_refinement_ids
+        )
+        if retired_refinement_ids:
+            staged_trace.append(
+                "fractal_refinement_persistence_retired",
+                day=day_to,
+                node_ids=sorted(retired_refinement_ids),
+            )
+        fractal_refinement_persistence_out = {
+            node_id: item
+            for node_id, item in sorted(
+                fractal_refinement_persistence_out.items()
+            )
+            if node_id in allowed_refinement_ids
+        }
+        missing_refinement_ids = (
+            allowed_refinement_ids
+            - set(fractal_refinement_persistence_out)
+        )
+        if missing_refinement_ids:
+            raise RuntimeError(
+                "Fractal refinement persistence missing active base nodes: "
+                f"{sorted(missing_refinement_ids)}"
+            )
+
     fractal_runtime_plan_after: FractalRuntimePlan | None = None
     fractal_projected_graph_after: FractalProjectedGraph | None = None
     if enable_fractal_runtime_plan:
@@ -3364,6 +3718,48 @@ def run_day_transaction(
             plan=fractal_runtime_plan_after,
             phase="COMMITTED_NEXT_DAY",
             trace=staged_trace,
+        )
+
+    if fractal_regional_regime_result is not None:
+        assert fractal_runtime_plan_after is not None
+        assert fractal_child_state_store_out is not None
+        reconciled_regional_store = (
+            reconcile_regional_regime_store_after_topology_change(
+                child_store=fractal_child_state_store_out,
+                active_node_ids=(
+                    fractal_runtime_plan_after.active_regional_node_ids
+                ),
+                supplied_store=(
+                    fractal_regional_regime_result.persistence_store
+                ),
+                trace=staged_trace,
+            )
+        )
+        fractal_regional_regime_result = FractalRegionalRegimeResult(
+            child_store=fractal_child_state_store_out,
+            persistence_store=reconciled_regional_store,
+            phase_evaluations=(
+                fractal_regional_regime_result.phase_evaluations
+            ),
+            phase_arbitrations=(
+                fractal_regional_regime_result.phase_arbitrations
+            ),
+            phase_commits=fractal_regional_regime_result.phase_commits,
+            security_evaluations=(
+                fractal_regional_regime_result.security_evaluations
+            ),
+            security_commits=(
+                fractal_regional_regime_result.security_commits
+            ),
+            recovery_evaluations=(
+                fractal_regional_regime_result.recovery_evaluations
+            ),
+            recovery_commits=(
+                fractal_regional_regime_result.recovery_commits
+            ),
+            divergence_audits=(
+                fractal_regional_regime_result.divergence_audits
+            ),
         )
 
     if enable_fractal_graph_projection:

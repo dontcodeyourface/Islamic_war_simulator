@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.19"
-purpose: "Read-only adaptive fractal refinement/de-refinement evaluator."
+status: "implementation-v0.34c3"
+purpose: "Read-only adjacent adaptive fractal refinement/de-refinement evaluator for L1<->L2 and L2<->L3."
 
 equation_id: "REFINEMENT_TRIGGER_V1"
 

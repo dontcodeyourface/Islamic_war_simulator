@@ -494,9 +494,15 @@ Implemented by [FRACTAL_L3_REGIMES_COUPLING_V0.34C2.md](FRACTAL_L3_REGIMES_COUPL
 
 Regional phase/security persistence now follows authority handoff from refined L2 parents to active L3 leaves. Transitional ancestor persistence is permitted only while structurally justified, then pruned. Parent-child coupling now aggregates bottom-up from L3 -> L2 -> L1, and day-transaction event/spillover state coverage excludes non-executing parent-context nodes.
 
-### v0.34c3+ — recursive reaggregation and lifecycle closure
+### v0.34c3 — recursive reaggregation and lifecycle closure — IMPLEMENTED
 
-Next, conservative L3 -> L2 collapse/reaggregation, authority restoration and actual generation-2 L3 re-refinement must be implemented. A canonical L2 -> L3 -> L2 -> L3(g2) lifecycle test is required before materialization/runtime activation continues to L4 actor networks and L5 event clusters.
+Implemented by [FRACTAL_RECURSIVE_LIFECYCLE_V0.34C3.md](FRACTAL_RECURSIVE_LIFECYCLE_V0.34C3.md).
+
+The refinement evaluator now supports L1<->L2 and L2<->L3 adjacent decisions, refinement persistence is maintained for active L2 bases, refined-parent decisions are evaluated after coupling, conservative L3->L2 collapse restores L2 authority, and actual L3 generation-2 re-refinement preserves immutable generation-1 lineage. Same-day topology changes reconcile regional persistence to the final deepest-active execution set.
+
+### v0.34d+ — canonical L3 data and production validation
+
+The recursive engine is now capable of the full L2 -> L3 -> L2 -> L3(g2) lifecycle. Production L3 activation remains blocked until explicit L3 child catalogs and corresponding graph-channel provenance are defined. Only after configured L3 lifecycle validation should runtime activation continue to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

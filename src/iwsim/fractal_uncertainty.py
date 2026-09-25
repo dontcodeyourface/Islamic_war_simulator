@@ -432,7 +432,7 @@ def apply_fractal_uncertainty(
     rng: RNGManager,
     trace: TraceLedger,
 ) -> FractalUncertaintyResult:
-    """Apply one-time bounded L2 latent heterogeneity to newly created children."""
+    """Apply one-time bounded latent heterogeneity to newly created spatial children."""
     logger.info(
         "apply_fractal_uncertainty day=%s new_children=%s profile=%s",
         child_store.last_initialized_day,
@@ -483,9 +483,13 @@ def apply_fractal_uncertainty(
     for child_id in requested_ids:
         topology_node = topology_by_id[child_id]
         child_state = states[child_id]
-        if topology_node.level != "L2_REGION":
+        if topology_node.level not in {
+            "L2_REGION",
+            "L3_METRO_OR_LOGISTICS_AREA",
+        }:
             raise ValueError(
-                f"Fractal uncertainty child {child_id} must be L2_REGION"
+                f"Fractal uncertainty child {child_id} has unsupported "
+                f"level {topology_node.level}"
             )
         if topology_node.created_day != child_store.last_initialized_day:
             raise ValueError(
@@ -519,11 +523,14 @@ def apply_fractal_uncertainty(
     audits: list[FractalUncertaintyAuditRecord] = []
 
     for parent_node_id, raw_children in sorted(by_parent.items()):
-        if parent_node_id not in parent_states:
+        if parent_node_id in parent_states:
+            parent_state = parent_states[parent_node_id]
+        elif parent_node_id in working:
+            parent_state = working[parent_node_id]
+        else:
             raise ValueError(
                 f"Unknown fractal uncertainty parent {parent_node_id}"
             )
-        parent_state = parent_states[parent_node_id]
         if parent_state.day != child_store.last_initialized_day:
             raise ValueError(
                 f"Fractal uncertainty parent {parent_node_id} day mismatch"
@@ -640,7 +647,7 @@ def apply_fractal_uncertainty(
                 "policy_id": policy["policy_id"],
                 "parameter_id": policy["parameter_id"],
                 "config_hash": policy["config_hash"],
-                "contract": "FRACTAL_L2_LOCAL_VARIATION_V1",
+                "contract": "FRACTAL_SPATIAL_LOCAL_VARIATION_V2",
             }
             record = FractalUncertaintyRecord(
                 variation_id=(

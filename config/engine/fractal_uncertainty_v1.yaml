@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.22"
-purpose: "One-time bounded synthetic local variation for newly created L2 child latents."
+status: "implementation-v0.34c3"
+purpose: "One-time bounded synthetic local variation for newly created L2/L3 spatial child latents."
 
 mode:
   enabled: true
@@ -11,7 +11,7 @@ mode:
   preserve_parent_weighted_mean: true
   calibrated_fallback_allowed: false
 
-policy_id: "FRACTAL_L2_LOCAL_VARIATION_V1"
+policy_id: "FRACTAL_SPATIAL_LOCAL_VARIATION_V2"
 topology_uncertainty_policy_id: "FRACTAL_UNCERTAINTY_WIDENING_V1"
 
 parameter_id_by_profile:

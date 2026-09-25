@@ -619,9 +619,16 @@ def initialize_fractal_child_states(
         topology.last_committed_day,
     )
     target_day = topology.last_committed_day
-    if child_store.last_initialized_day != target_day - 1:
+    same_day_augmentation = (
+        child_store.last_initialized_day == target_day
+    )
+    if child_store.last_initialized_day not in {
+        target_day - 1,
+        target_day,
+    }:
         raise ValueError(
-            "Fractal child-state store must be initialized through prior day"
+            "Fractal child-state store must be initialized through prior "
+            "day or current day for same-day recursive augmentation"
         )
 
     policy = _validate_config(
@@ -647,14 +654,23 @@ def initialize_fractal_child_states(
     audits: list[FractalConservationAuditRecord] = []
 
     for child_id, state in sorted(existing.items()):
-        next_states[child_id] = _advance_existing_child_state(
-            state=state,
-            target_day=target_day,
-        )
+        if same_day_augmentation:
+            if state.day != target_day:
+                raise ValueError(
+                    f"Same-day child state {child_id} day mismatch: "
+                    f"expected {target_day}, got {state.day}"
+                )
+            next_states[child_id] = state
+        else:
+            next_states[child_id] = _advance_existing_child_state(
+                state=state,
+                target_day=target_day,
+            )
         trace.append(
             "fractal_child_state_retained",
             child_node_id=child_id,
             day=target_day,
+            same_day_augmentation=same_day_augmentation,
             state_hash=next_states[child_id].state_hash(),
         )
 

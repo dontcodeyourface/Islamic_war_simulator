@@ -351,3 +351,117 @@ def test_calibrated_fractal_profile_fails_closed() -> None:
             manifest=manifest,
             trace=TraceLedger(),
         )
+
+
+
+def _as_l2_state(state: EngineState) -> EngineState:
+    logger.info("_as_l2_state")
+    return EngineState(
+        node_id="TST::R1",
+        day=state.day,
+        physical_stocks=dict(state.physical_stocks),
+        latents=dict(state.latents),
+        regimes=dict(state.regimes),
+        metadata={
+            **state.metadata,
+            "fractal_level": "L2_REGION",
+            "fractal_parent_node_id": "TST",
+            "fractal_runtime_node_id": "TST::R1",
+        },
+    )
+
+
+def test_l2_base_expansion_requires_high_pressure_and_targets_l3() -> None:
+    logger.info(
+        "test_l2_base_expansion_requires_high_pressure_and_targets_l3"
+    )
+    state, parameters, config, manifest = _fixture()
+    state = _as_l2_state(state)
+    _set_high_refinement_pressure(state)
+    persistence: FractalRefinementPersistenceState | None = None
+
+    for day in range(1, 9):
+        state.day = day
+        result = evaluate_fractal_refinement(
+            state=state,
+            persistence=persistence,
+            refinement_config=config,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
+        persistence = result.persistence
+        assert persistence.current_level == "L2_REGION"
+        if day < 8:
+            assert result.proposals == ()
+        else:
+            assert len(result.proposals) == 1
+            proposal = result.proposals[0]
+            assert proposal.action == "EXPAND"
+            assert proposal.from_level == "L2_REGION"
+            assert proposal.to_level == "L3_METRO_OR_LOGISTICS_AREA"
+
+
+def test_l2_base_refined_resolution_collapses_l3_back_to_l2() -> None:
+    logger.info(
+        "test_l2_base_refined_resolution_collapses_l3_back_to_l2"
+    )
+    state, parameters, config, manifest = _fixture()
+    state = _as_l2_state(state)
+    _set_low_refinement_pressure(state)
+    persistence = FractalRefinementPersistenceState(
+        node_id="TST::R1",
+        current_level="L3_METRO_OR_LOGISTICS_AREA",
+        last_evaluated_day=0,
+        expand_streak=0,
+        collapse_streak=0,
+    )
+
+    for day in range(1, 35):
+        state.day = day
+        result = evaluate_fractal_refinement(
+            state=state,
+            persistence=persistence,
+            refinement_config=config,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
+        persistence = result.persistence
+        assert persistence.current_level == "L3_METRO_OR_LOGISTICS_AREA"
+        if day < 34:
+            assert result.proposals == ()
+        else:
+            assert len(result.proposals) == 1
+            proposal = result.proposals[0]
+            assert proposal.action == "COLLAPSE"
+            assert proposal.from_level == "L3_METRO_OR_LOGISTICS_AREA"
+            assert proposal.to_level == "L2_REGION"
+
+
+def test_l2_base_rejects_non_adjacent_persistence_level() -> None:
+    logger.info(
+        "test_l2_base_rejects_non_adjacent_persistence_level"
+    )
+    state, parameters, config, manifest = _fixture(day=2)
+    state = _as_l2_state(state)
+    persistence = FractalRefinementPersistenceState(
+        node_id="TST::R1",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=1,
+        expand_streak=0,
+        collapse_streak=0,
+    )
+
+    with pytest.raises(ValueError, match="not adjacent"):
+        evaluate_fractal_refinement(
+            state=state,
+            persistence=persistence,
+            refinement_config=config,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            manifest=manifest,
+            trace=TraceLedger(),
+        )
