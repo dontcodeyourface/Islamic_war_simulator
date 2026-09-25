@@ -440,3 +440,15 @@ def test_debug_regional_run_only() -> None:
     logger.info("test_debug_regional_run_only")
     result = _run()
     assert result is not None
+
+
+def test_debug_regional_config_only() -> None:
+    logger.info("test_debug_regional_config_only")
+    from iwsim.fractal_regional_regime import _validate_config
+
+    policy = _validate_config(
+        load_yaml(ROOT / "config/engine/fractal_regional_regime_v1.yaml")
+    )
+    assert policy["aggregation_policy_id"] == (
+        "FRACTAL_CATEGORICAL_AGGREGATION_V1"
+    )
