@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -312,3 +313,45 @@ def test_v026_rejects_national_only_child_mutation() -> None:
             proposals=(proposal,),
             runtime_plan=plan,
         )
+
+
+def test_v027_child_runtime_failure_is_trace_and_state_atomic() -> None:
+    logger.info(
+        "test_v027_child_runtime_failure_is_trace_and_state_atomic"
+    )
+    registry, store, plan = _runtime()
+    before = store.to_dict()
+    trace = TraceLedger()
+    broken = replace(
+        plan,
+        regionalizable_latents=tuple(
+            item
+            for item in plan.regionalizable_latents
+            if item != "communal_fear"
+        ),
+        national_only_latents=tuple(
+            sorted((*plan.national_only_latents, "communal_fear"))
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="national-only latent communal_fear",
+    ):
+        execute_autonomous_l2_dynamics(
+            child_store=store,
+            runtime_plan=broken,
+            engine_state_registry=registry,
+            parameter_registry=load_yaml(
+                ROOT / "config/engine/parameter_registry_v1.yaml"
+            ),
+            profile="synthetic_smoke_v1",
+            trace=trace,
+            enable_recovery=True,
+            recovery_config=load_yaml(
+                ROOT / "config/engine/recovery_v1.yaml"
+            ),
+        )
+
+    assert store.to_dict() == before
+    assert trace.records == []
