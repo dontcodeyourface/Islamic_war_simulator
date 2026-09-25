@@ -351,11 +351,30 @@ def _candidate_status(
     return "SCHEDULED"
 
 
+def _graph_node_ids(graph: Any) -> set[str]:
+    """Return execution node IDs for either L1 or projected multiscale graphs."""
+    logger.info("_graph_node_ids nodes=%s", len(graph.nodes))
+    node_ids: set[str] = set()
+    for node in graph.nodes:
+        node_id = getattr(node, "iso3", None)
+        if node_id is None:
+            node_id = getattr(node, "runtime_node_id", None)
+        if node_id is None:
+            raise TypeError(
+                "Graph nodes must expose iso3 or runtime_node_id"
+            )
+        node_id = str(node_id)
+        if node_id in node_ids:
+            raise ValueError(f"Duplicate graph execution node {node_id}")
+        node_ids.add(node_id)
+    return node_ids
+
+
 def evaluate_graph_spillovers(
     *,
     day: int,
     states: dict[str, EngineState],
-    graph: CountryGraph,
+    graph: Any,
     spillover_config: dict[str, Any],
     parameter_registry: dict[str, Any],
     profile: str,
@@ -376,7 +395,7 @@ def evaluate_graph_spillovers(
     rules = _validate_config(spillover_config)
 
     graph.validate()
-    graph_nodes = {node.iso3 for node in graph.nodes}
+    graph_nodes = _graph_node_ids(graph)
     if set(states) != graph_nodes:
         raise ValueError("Spillover state nodes must equal graph nodes")
 

@@ -1019,6 +1019,27 @@ def _evaluate_candidates(
                     continue
                 state_a = states[edge.a]
                 state_b = states[edge.b]
+                if hasattr(edge, "edge_kind") and any(
+                    edge.channel(edge.a, edge.b, channel) is None
+                    for channel in (
+                        "geographic_proximity",
+                        "land_border",
+                        "alliance_link",
+                    )
+                ):
+                    logger.info(
+                        "_evaluate_candidates skip unresolved multiscale edge=%s",
+                        edge.edge_id(),
+                    )
+                    trace.append(
+                        "regional_event_candidate_skipped",
+                        day=day,
+                        event_type=event_type,
+                        edge_id=edge.edge_id(),
+                        actors=list(sorted((edge.a, edge.b))),
+                        reason="unresolved_required_structural_channel",
+                    )
+                    continue
                 result = evaluate_interstate_incident(
                     day=day,
                     state_a=state_a,
@@ -2073,10 +2094,10 @@ def run_day_transaction(
         }
 
         if fractal_runtime_plan_before.refined_parent_ids:
-            if enable_graph_spillover:
+            if enable_graph_spillover and not enable_fractal_graph_projection:
                 raise RuntimeError(
-                    "v0.29 graph projection does not yet execute multiscale "
-                    "spillover; disable graph spillover until v0.30"
+                    "Active L2 spillover execution requires "
+                    "enable_fractal_graph_projection"
                 )
             if enable_phase_transitions and not enable_fractal_regional_regimes:
                 raise RuntimeError(
@@ -2596,6 +2617,32 @@ def run_day_transaction(
         fractal_child_dynamics_proposals = child_dynamics.proposals
         fractal_child_dynamics_resolutions = child_dynamics.resolutions
 
+    regional_execution_states = dict(l1_regional_execution_states)
+    if normalized_fractal_child_store is not None and refined_parent_ids:
+        regional_execution_states.update(
+            normalized_fractal_child_store.state_map()
+        )
+    regional_execution_graph = (
+        fractal_projected_graph_before
+        if fractal_projected_graph_before is not None
+        else graph
+    )
+    event_execution_states = (
+        regional_execution_states
+        if fractal_projected_graph_before is not None
+        else states
+    )
+    event_excluded_node_ids = (
+        set()
+        if fractal_projected_graph_before is not None
+        else refined_parent_ids
+    )
+    logger.info(
+        "run_day_transaction regional execution nodes=%s graph=%s",
+        len(regional_execution_states),
+        type(regional_execution_graph).__name__,
+    )
+
     spillover_candidates: tuple[GraphSpilloverRecord, ...] = ()
     matured_spillovers: tuple[GraphSpilloverRecord, ...] = ()
     spillover_queue_out: SpilloverQueueState | None = None
@@ -2604,8 +2651,8 @@ def run_day_transaction(
         assert normalized_spillover_queue is not None
         spillover_result = evaluate_graph_spillovers(
             day=day_to,
-            states=states,
-            graph=graph,
+            states=regional_execution_states,
+            graph=regional_execution_graph,
             spillover_config=spillover_config,
             parameter_registry=parameter_registry,
             profile=profile,
@@ -2618,20 +2665,20 @@ def run_day_transaction(
 
     candidates = _evaluate_candidates(
         day=day_to,
-        states=states,
-        graph=graph,
+        states=event_execution_states,
+        graph=regional_execution_graph,
         day_config=day_config,
         parameter_registry=parameter_registry,
         profile=profile,
         rng=working_rng,
         manifest=manifest,
         trace=staged_trace,
-        excluded_node_ids=refined_parent_ids,
+        excluded_node_ids=event_excluded_node_ids,
     )
     events = _occurred_events(candidates)
     event_proposals = _propose_all_effects(
         events=events,
-        states=states,
+        states=regional_execution_states,
         engine_state_registry=engine_state_registry,
         parameter_registry=parameter_registry,
         profile=profile,
@@ -2641,7 +2688,7 @@ def run_day_transaction(
     if enable_graph_spillover and matured_spillovers:
         spillover_proposals = propose_matured_spillover_effects(
             matured=matured_spillovers,
-            states=states,
+            states=regional_execution_states,
             engine_state_registry=engine_state_registry,
             trace=staged_trace,
         )
@@ -2717,14 +2764,57 @@ def run_day_transaction(
         if fractal_runtime_plan_before is not None
         else None
     )
+    active_l2_ids = (
+        set(fractal_runtime_plan_before.active_regional_node_ids)
+        if fractal_runtime_plan_before is not None
+        else set()
+    )
+    l1_proposals = tuple(
+        item for item in proposals if item.target_node not in active_l2_ids
+    )
+    l2_interaction_proposals = tuple(
+        item for item in proposals if item.target_node in active_l2_ids
+    )
     resolution = resolve_delta_proposals(
         states=states,
-        proposals=proposals,
+        proposals=l1_proposals,
         engine_state_registry=engine_state_registry,
         parameter_registry=parameter_registry,
         profile=profile,
         trace=staged_trace,
         runtime_context_by_node=l1_runtime_context,
+    )
+    interaction_resolution_records: tuple[ResolutionRecord, ...] = ()
+    if l2_interaction_proposals:
+        assert normalized_fractal_child_store is not None
+        assert fractal_runtime_plan_before is not None
+        child_states = normalized_fractal_child_store.state_map()
+        child_runtime_context = build_runtime_resolver_context(
+            plan=fractal_runtime_plan_before,
+            node_ids=set(child_states),
+        )
+        child_interaction_resolution = resolve_delta_proposals(
+            states=child_states,
+            proposals=l2_interaction_proposals,
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            trace=staged_trace,
+            runtime_context_by_node=child_runtime_context,
+        )
+        normalized_fractal_child_store = FractalChildStateStore(
+            last_initialized_day=normalized_fractal_child_store.last_initialized_day,
+            states=tuple(
+                child_interaction_resolution.states[node_id]
+                for node_id in sorted(child_interaction_resolution.states)
+            ),
+        )
+        interaction_resolution_records = child_interaction_resolution.records
+    all_resolution_records = tuple(
+        sorted(
+            (*resolution.records, *interaction_resolution_records),
+            key=lambda item: item.resolution_id,
+        )
     )
     advanced_states = _advance_resolved_states(
         resolved_states=resolution.states,
@@ -3222,7 +3312,7 @@ def run_day_transaction(
             state_before=states[node_id],
             state_after=final_states[node_id],
             events=events,
-            resolutions=resolution.records,
+            resolutions=all_resolution_records,
             spillover_proposals=spillover_proposals,
             security_regime_commits=security_regime_commits,
             security_regime_recovery_commits=(
@@ -3248,7 +3338,7 @@ def run_day_transaction(
         event_ids=[event.event_id for event in events],
         proposal_ids=[proposal.proposal_id for proposal in proposals],
         resolution_ids=[
-            record.resolution_id for record in resolution.records
+            record.resolution_id for record in all_resolution_records
         ],
         phase_commit_ids=[
             record.commit_id for record in phase_commits
@@ -3422,7 +3512,7 @@ def run_day_transaction(
         candidates=candidates,
         events=events,
         proposals=proposals,
-        resolutions=resolution.records,
+        resolutions=all_resolution_records,
         spillover_queue=spillover_queue_out,
         spillover_candidates=spillover_candidates,
         matured_spillovers=matured_spillovers,

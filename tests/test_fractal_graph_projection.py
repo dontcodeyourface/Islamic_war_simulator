@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,14 @@ from iwsim.fractal_runtime import (
     FractalRuntimePlan,
 )
 from iwsim.graph import CANONICAL_CHANNELS, build_country_graph
+from iwsim.initializer import initialize_hybrid_state
+from iwsim.rng import RNGManager
+from iwsim.spillover import (
+    empty_spillover_queue,
+    evaluate_graph_spillovers,
+    propose_matured_spillover_effects,
+)
+from iwsim.trace import TraceLedger
 
 logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[1]
@@ -428,4 +437,148 @@ def test_regional_catalog_cannot_project_parent_retained_alliance() -> None:
             base_graph=_base_graph(),
             projection_config=_projection_config(),
             regional_graph_catalog=catalog,
+        )
+
+
+def _projected_runtime_states(projected):
+    logger.info("_projected_runtime_states nodes=%s", len(projected.nodes))
+    graph_config = load_yaml(
+        ROOT / "config/graph/country_graph_v1.yaml"
+    )
+    registry = load_yaml(ROOT / "config/engine/engine_state_v1.yaml")
+    normalization = load_yaml(
+        ROOT / "config/engine/normalization_parameters_v1.yaml"
+    )
+    parameters = load_yaml(
+        ROOT / "config/engine/parameter_registry_v1.yaml"
+    )
+    feature_map = load_yaml(
+        ROOT / "config/engine/snapshot_feature_map_v1.yaml"
+    )
+    snapshots = {
+        iso3: load_yaml(ROOT / node["snapshot_path"])
+        for iso3, node in graph_config["nodes"].items()
+    }
+    rng = RNGManager(9917)
+    parents = {
+        iso3: initialize_hybrid_state(
+            snapshot=snapshots[iso3],
+            engine_state_registry=registry,
+            normalization_registry=normalization,
+            parameter_registry=parameters,
+            feature_map=feature_map,
+            rng=rng,
+            trace=TraceLedger(),
+            profile="synthetic_smoke_v1",
+        )
+        for iso3 in sorted(snapshots)
+    }
+    states = {}
+    for node in projected.nodes:
+        parent_id = node.parent_node_id or node.runtime_node_id
+        parent = parents[parent_id]
+        states[node.runtime_node_id] = replace(
+            parent,
+            node_id=node.runtime_node_id,
+            metadata={
+                **parent.metadata,
+                "fractal_parent_node_id": node.parent_node_id,
+                "fractal_level": node.level,
+                "fractal_runtime_node_id": node.runtime_node_id,
+                "fractal_catalog_child_id": node.catalog_node_id,
+                "fractal_lineage_generation": node.lineage_generation,
+            },
+        )
+    return states, registry, parameters
+
+
+def test_v030_projected_graph_executes_cross_scale_spillovers() -> None:
+    logger.info(
+        "test_v030_projected_graph_executes_cross_scale_spillovers"
+    )
+    projected = build_fractal_projected_graph(
+        runtime_plan=_refined_plan(),
+        base_graph=_base_graph(),
+        projection_config=_projection_config(),
+        regional_graph_catalog=_regional_catalog(),
+    )
+    states, registry, parameters = _projected_runtime_states(projected)
+    patched = copy.deepcopy(parameters)
+    latencies = patched["parameter_sets"]["synthetic_smoke_v1"][
+        "parameters"
+    ]["GRAPH_LATENCIES_SYN_V1"]["value"]
+    latencies["geographic_proximity"] = [0, 0]
+    latencies["land_border"] = [0, 0]
+
+    result = evaluate_graph_spillovers(
+        day=1,
+        states=states,
+        graph=projected,
+        spillover_config=load_yaml(
+            ROOT / "config/engine/graph_spillover_v1.yaml"
+        ),
+        parameter_registry=patched,
+        profile="synthetic_smoke_v1",
+        queue=empty_spillover_queue(0),
+        trace=TraceLedger(),
+    )
+
+    cross_scale = [
+        item
+        for item in result.candidates
+        if item.source_node == "ESP::R1::g2"
+        and item.target_node == "FRA"
+        and item.channel == "geographic_proximity"
+    ]
+    assert len(cross_scale) == 1
+    assert cross_scale[0].status == "SCHEDULED"
+    assert cross_scale[0].edge_weight == pytest.approx(0.55)
+    assert cross_scale[0].edge_data_version == projected.graph_hash()
+
+    proposals = propose_matured_spillover_effects(
+        matured=result.matured,
+        states=states,
+        engine_state_registry=registry,
+        trace=TraceLedger(),
+    )
+    assert any(
+        item.target_node == "FRA"
+        and item.event_type == "GRAPH_SPILLOVER_V1"
+        for item in proposals
+    )
+    assert any(
+        item.target_node == "ESP::R1::g2"
+        and item.event_type == "GRAPH_SPILLOVER_V1"
+        for item in proposals
+    )
+
+
+def test_v030_projected_spillover_rejects_state_coverage_drift() -> None:
+    logger.info(
+        "test_v030_projected_spillover_rejects_state_coverage_drift"
+    )
+    projected = build_fractal_projected_graph(
+        runtime_plan=_refined_plan(),
+        base_graph=_base_graph(),
+        projection_config=_projection_config(),
+        regional_graph_catalog=_regional_catalog(),
+    )
+    states, _, parameters = _projected_runtime_states(projected)
+    states.pop("ESP::R2::g2")
+
+    with pytest.raises(
+        ValueError,
+        match="Spillover state nodes must equal graph nodes",
+    ):
+        evaluate_graph_spillovers(
+            day=1,
+            states=states,
+            graph=projected,
+            spillover_config=load_yaml(
+                ROOT / "config/engine/graph_spillover_v1.yaml"
+            ),
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            queue=empty_spillover_queue(0),
+            trace=TraceLedger(),
         )
