@@ -289,13 +289,13 @@ def test_new_child_is_initialized_but_not_evaluated_same_day() -> None:
     logger.info(
         "test_new_child_is_initialized_but_not_evaluated_same_day"
     )
-    base = _run()
-    states = tuple(base.child_store.states) + (
-        _state("TST::R3", day=2, stressed=True),
-    )
     child_store = FractalChildStateStore(
         last_initialized_day=2,
-        states=states,
+        states=(
+            _state("TST::R1", day=2, stressed=True),
+            _state("TST::R2", day=2, stressed=False),
+            _state("TST::R3", day=2, stressed=True),
+        ),
     )
     trace = TraceLedger()
     result = execute_regional_regime_runtime(
