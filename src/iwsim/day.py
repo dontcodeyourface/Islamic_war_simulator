@@ -3022,6 +3022,52 @@ def run_day_transaction(
         fractal_uncertainty_records = uncertainty_result.records
         fractal_uncertainty_audits = uncertainty_result.audits
 
+    fractal_regional_regime_result: (
+        FractalRegionalRegimeResult | None
+    ) = None
+    if enable_fractal_regional_regimes:
+        assert fractal_child_state_store_out is not None
+        assert normalized_fractal_regional_regime_store is not None
+        assert fractal_runtime_plan_before is not None
+        assert fractal_regional_regime_config is not None
+        assert phase_config is not None
+        assert phase_transition_config is not None
+        assert security_regime_config is not None
+        assert security_regime_transition_config is not None
+        assert security_regime_recovery_config is not None
+        assert security_regime_recovery_transition_config is not None
+        fractal_regional_regime_result = execute_regional_regime_runtime(
+            child_store=fractal_child_state_store_out,
+            beginning_active_node_ids=(
+                fractal_runtime_plan_before.active_regional_node_ids
+            ),
+            persistence_store=(
+                normalized_fractal_regional_regime_store
+            ),
+            context_flags=normalized_fractal_regional_context_flags,
+            regional_config=fractal_regional_regime_config,
+            phase_config=phase_config,
+            phase_transition_config=phase_transition_config,
+            security_regime_config=security_regime_config,
+            security_transition_config=(
+                security_regime_transition_config
+            ),
+            security_recovery_config=(
+                security_regime_recovery_config
+            ),
+            security_recovery_transition_config=(
+                security_regime_recovery_transition_config
+            ),
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = (
+            fractal_regional_regime_result.child_store
+        )
+
     fractal_collapse_commits: tuple[
         FractalCollapseCommitRecord, ...
     ] = ()
