@@ -361,16 +361,19 @@ Generation identity from v0.24 remains mandatory.
 
 The next implementation sequence is canonical unless superseded by a later architecture decision.
 
-### v0.25 — active multiscale runtime set
+### v0.25 — active multiscale runtime set — IMPLEMENTED — IMPLEMENTED
 
-Implement:
+Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 
 - deterministic active execution set;
-- explicit state-authority policy;
-- prevention of L1/L2 double execution;
-- runtime-set trace and replay identity.
+- explicit state-authority policy with exact EngineState registry coverage;
+- beginning-of-day versus committed-next-day runtime plans;
+- prevention of silent legacy L1 execution once a day begins refined;
+- runtime-plan trace and replay identity.
 
-### v0.26 — autonomous L2 day transaction
+Because autonomous L2 execution is intentionally still disabled in v0.25, an already-refined beginning-of-day plan fails closed instead of applying regionalizable dynamics at L1.
+
+### v0.26 — autonomous L2 day transaction — IMPLEMENTED
 
 Enable generic lower-level execution for safe modules first:
 
@@ -383,9 +386,13 @@ Enable generic lower-level execution for safe modules first:
 
 Keep unsupported modules fail-closed.
 
-### v0.27 — multiscale Owner Resolver and transaction atomicity
+Implementation detail: [FRACTAL_CHILD_DYNAMICS_V0.26.md](FRACTAL_CHILD_DYNAMICS_V0.26.md).
+
+### v0.27 — multiscale Owner Resolver and transaction atomicity — IMPLEMENTED
 
 Extend proposal and resolution identity to L2 and validate full transaction rollback across mixed L1/L2 state.
+
+Implementation detail: [FRACTAL_MULTISCALE_RESOLVER_V0.27.md](FRACTAL_MULTISCALE_RESOLVER_V0.27.md).
 
 ### v0.28 — L2 security/phase divergence
 

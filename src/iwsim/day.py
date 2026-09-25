@@ -33,6 +33,7 @@ from .fractal_child_state import (
     empty_fractal_child_state_store,
     initialize_fractal_child_states,
 )
+from .fractal_child_runtime import execute_autonomous_l2_dynamics
 from .fractal_uncertainty import (
     FractalUncertaintyAuditRecord,
     FractalUncertaintyRecord,
@@ -42,6 +43,13 @@ from .fractal_reaggregation import (
     FractalCollapseCommitRecord,
     FractalReaggregationAuditRecord,
     commit_fractal_collapses,
+)
+from .fractal_runtime import (
+    FractalRuntimePlan,
+    assert_beginning_of_day_runtime_supported,
+    build_fractal_runtime_plan,
+    build_runtime_resolver_context,
+    trace_fractal_runtime_plan,
 )
 from .graph import CountryGraph
 from .manifest import RunManifest
@@ -181,6 +189,10 @@ class DayTransactionResult:
     fractal_reaggregation_audits: tuple[
         FractalReaggregationAuditRecord, ...
     ]
+    fractal_runtime_plan_before: FractalRuntimePlan | None
+    fractal_runtime_plan_after: FractalRuntimePlan | None
+    fractal_child_dynamics_proposals: tuple[DeltaProposal, ...]
+    fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...]
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -312,6 +324,24 @@ class DayTransactionResult:
             ],
             "fractal_reaggregation_audits": [
                 item.to_dict() for item in self.fractal_reaggregation_audits
+            ],
+            "fractal_runtime_plan_before": (
+                self.fractal_runtime_plan_before.to_dict()
+                if self.fractal_runtime_plan_before is not None
+                else None
+            ),
+            "fractal_runtime_plan_after": (
+                self.fractal_runtime_plan_after.to_dict()
+                if self.fractal_runtime_plan_after is not None
+                else None
+            ),
+            "fractal_child_dynamics_proposals": [
+                item.to_dict()
+                for item in self.fractal_child_dynamics_proposals
+            ],
+            "fractal_child_dynamics_resolutions": [
+                item.to_dict()
+                for item in self.fractal_child_dynamics_resolutions
             ],
         }
 
@@ -855,6 +885,7 @@ def _transaction_id(
     fractal_child_state_inputs: dict[str, Any] | None = None,
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
+    fractal_runtime_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -885,6 +916,7 @@ def _transaction_id(
             "fractal_child_state_inputs": fractal_child_state_inputs,
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
             "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
+            "fractal_runtime_inputs": fractal_runtime_inputs,
         }
     )
     return f"daytx-{digest[:24]}"
@@ -923,6 +955,7 @@ def _evaluate_candidates(
     rng: RNGManager,
     manifest: RunManifest,
     trace: TraceLedger,
+    excluded_node_ids: set[str] | None = None,
 ) -> tuple[DailyCandidate, ...]:
     logger.info(
         "_evaluate_candidates day=%s passes=%s",
@@ -930,6 +963,7 @@ def _evaluate_candidates(
         len(day_config["candidate_passes"]),
     )
     candidates: list[DailyCandidate] = []
+    excluded = excluded_node_ids or set()
 
     for pass_config in day_config["candidate_passes"]:
         event_type = str(pass_config["event_type"])
@@ -940,6 +974,12 @@ def _evaluate_candidates(
             "all_graph_edges",
         ):
             for edge in sorted(graph.edges, key=lambda item: item.edge_id()):
+                if edge.a in excluded or edge.b in excluded:
+                    logger.info(
+                        "_evaluate_candidates skip refined L1 edge=%s",
+                        edge.edge_id(),
+                    )
+                    continue
                 state_a = states[edge.a]
                 state_b = states[edge.b]
                 result = evaluate_interstate_incident(
@@ -970,6 +1010,12 @@ def _evaluate_candidates(
             "all_country_nodes",
         ):
             for node_id in sorted(states):
+                if node_id in excluded:
+                    logger.info(
+                        "_evaluate_candidates skip refined L1 node=%s",
+                        node_id,
+                    )
+                    continue
                 result = evaluate_mass_protest(
                     day=day,
                     state=states[node_id],
@@ -1379,6 +1425,7 @@ def _evaluate_fractal_refinements(
     profile: str,
     manifest: RunManifest,
     trace: TraceLedger,
+    excluded_node_ids: set[str] | None = None,
 ) -> tuple[
     dict[str, FractalRefinementPersistenceState],
     tuple[FractalRefinementEvaluationResult, ...],
@@ -1388,8 +1435,48 @@ def _evaluate_fractal_refinements(
     persistence_out: dict[str, FractalRefinementPersistenceState] = {}
     evaluations: list[FractalRefinementEvaluationResult] = []
     actions: list[FractalRefinementActionProposal] = []
+    excluded = excluded_node_ids or set()
+
+    unknown_excluded = excluded - set(states)
+    if unknown_excluded:
+        raise ValueError(
+            "Fractal refinement exclusion contains unknown nodes: "
+            f"{sorted(unknown_excluded)}"
+        )
 
     for node_id in sorted(states):
+        if node_id in excluded:
+            prior = persistence[node_id]
+            if prior is None:
+                raise ValueError(
+                    f"Cannot suppress fractal refinement for {node_id} "
+                    "without persistence"
+                )
+            if prior.current_level != "L2_REGION":
+                raise ValueError(
+                    f"Suppressed fractal parent {node_id} must be L2_REGION"
+                )
+            carried = FractalRefinementPersistenceState(
+                node_id=node_id,
+                current_level=prior.current_level,
+                last_evaluated_day=states[node_id].day,
+                expand_streak=0,
+                collapse_streak=0,
+            )
+            persistence_out[node_id] = carried
+            trace.append(
+                "fractal_refinement_evaluation_suppressed",
+                node_id=node_id,
+                day=states[node_id].day,
+                current_level=prior.current_level,
+                reason="awaiting_parent_child_coupling",
+                expand_streak_before=prior.expand_streak,
+                collapse_streak_before=prior.collapse_streak,
+                expand_streak_after=0,
+                collapse_streak_after=0,
+            )
+            continue
+
         result = evaluate_fractal_refinement(
             state=states[node_id],
             persistence=persistence[node_id],
@@ -1671,6 +1758,8 @@ def run_day_transaction(
     fractal_uncertainty_config: dict[str, Any] | None = None,
     enable_fractal_reaggregation: bool = False,
     fractal_reaggregation_config: dict[str, Any] | None = None,
+    enable_fractal_runtime_plan: bool = False,
+    fractal_runtime_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1704,6 +1793,8 @@ def run_day_transaction(
     fractal_child_state_inputs: dict[str, Any] | None = None
     fractal_uncertainty_inputs: dict[str, Any] | None = None
     fractal_reaggregation_inputs: dict[str, Any] | None = None
+    fractal_runtime_inputs: dict[str, Any] | None = None
+    fractal_runtime_plan_before: FractalRuntimePlan | None = None
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -1879,6 +1970,68 @@ def run_day_transaction(
                     region_catalog=fractal_region_catalog,
                 )
             )
+
+    if enable_fractal_runtime_plan:
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Fractal runtime planning requires fractal materialization"
+            )
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Fractal runtime planning requires child-state initialization"
+            )
+        if fractal_runtime_config is None:
+            raise ValueError(
+                "Fractal runtime planning requires fractal_runtime_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_runtime_plan_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal runtime planning is disabled by the day transaction contract"
+            )
+        assert normalized_fractal_topology is not None
+        assert normalized_fractal_child_store is not None
+        fractal_runtime_plan_before = build_fractal_runtime_plan(
+            day=day_from,
+            parent_states=states,
+            topology=normalized_fractal_topology,
+            child_store=normalized_fractal_child_store,
+            runtime_config=fractal_runtime_config,
+            engine_state_registry=engine_state_registry,
+        )
+        assert_beginning_of_day_runtime_supported(
+            plan=fractal_runtime_plan_before,
+            runtime_config=fractal_runtime_config,
+        )
+        fractal_runtime_inputs = {
+            "runtime_config_hash": canonical_hash(fractal_runtime_config),
+            "runtime_plan_before_hash": (
+                fractal_runtime_plan_before.plan_hash()
+            ),
+        }
+
+        if fractal_runtime_plan_before.refined_parent_ids:
+            if enable_graph_spillover:
+                raise RuntimeError(
+                    "v0.26 active L2 does not yet support multiscale graph "
+                    "spillover; disable graph spillover until v0.29/v0.30"
+                )
+            if enable_phase_transitions:
+                raise RuntimeError(
+                    "v0.26 active L2 does not yet support regional phase "
+                    "execution; disable phase transitions until v0.28"
+                )
+            if enable_security_regime_evaluator or (
+                enable_security_regime_recovery_evaluator
+            ):
+                raise RuntimeError(
+                    "v0.26 active L2 does not yet support regional security "
+                    "regime execution; disable regime evaluators until v0.28"
+                )
 
     if enable_security_regime_recovery_commits:
         if not enable_security_regime_recovery_evaluator:
@@ -2137,6 +2290,7 @@ def run_day_transaction(
         fractal_child_state_inputs=fractal_child_state_inputs,
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
         fractal_reaggregation_inputs=fractal_reaggregation_inputs,
+        fractal_runtime_inputs=fractal_runtime_inputs,
     )
 
     working_rng = rng.clone()
@@ -2152,7 +2306,64 @@ def run_day_transaction(
             node_id: state.state_hash()
             for node_id, state in sorted(states.items())
         },
+        fractal_runtime_plan_before_hash=(
+            fractal_runtime_plan_before.plan_hash()
+            if fractal_runtime_plan_before is not None
+            else None
+        ),
     )
+    if fractal_runtime_plan_before is not None:
+        trace_fractal_runtime_plan(
+            plan=fractal_runtime_plan_before,
+            phase="BEGINNING_OF_DAY",
+            trace=staged_trace,
+        )
+
+    fractal_child_dynamics_proposals: tuple[DeltaProposal, ...] = ()
+    fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...] = ()
+    refined_parent_ids: set[str] = set()
+    l1_regional_execution_states = states
+
+    if (
+        fractal_runtime_plan_before is not None
+        and fractal_runtime_plan_before.refined_parent_ids
+    ):
+        assert normalized_fractal_child_store is not None
+        refined_parent_ids = set(
+            fractal_runtime_plan_before.refined_parent_ids
+        )
+        l1_regional_execution_states = {
+            node_id: state
+            for node_id, state in sorted(states.items())
+            if node_id not in refined_parent_ids
+        }
+        child_dynamics = execute_autonomous_l2_dynamics(
+            child_store=normalized_fractal_child_store,
+            runtime_plan=fractal_runtime_plan_before,
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            trace=staged_trace,
+            enable_recovery=enable_recovery,
+            recovery_config=recovery_config,
+            enable_extremist_network_dynamics=(
+                enable_extremist_network_dynamics
+            ),
+            extremist_network_config=extremist_network_config,
+            enable_reciprocal_radicalization=(
+                enable_reciprocal_radicalization
+            ),
+            reciprocal_radicalization_config=(
+                reciprocal_radicalization_config
+            ),
+            enable_security_chain_dynamics=(
+                enable_security_chain_dynamics
+            ),
+            security_chain_config=security_chain_config,
+        )
+        normalized_fractal_child_store = child_dynamics.store
+        fractal_child_dynamics_proposals = child_dynamics.proposals
+        fractal_child_dynamics_resolutions = child_dynamics.resolutions
 
     spillover_candidates: tuple[GraphSpilloverRecord, ...] = ()
     matured_spillovers: tuple[GraphSpilloverRecord, ...] = ()
@@ -2184,6 +2395,7 @@ def run_day_transaction(
         rng=working_rng,
         manifest=manifest,
         trace=staged_trace,
+        excluded_node_ids=refined_parent_ids,
     )
     events = _occurred_events(candidates)
     event_proposals = _propose_all_effects(
@@ -2207,7 +2419,7 @@ def run_day_transaction(
     if enable_extremist_network_dynamics:
         assert extremist_network_config is not None
         network_proposals = propose_extremist_network_dynamics(
-            states=states,
+            states=l1_regional_execution_states,
             network_config=extremist_network_config,
             engine_state_registry=engine_state_registry,
             parameter_registry=parameter_registry,
@@ -2219,7 +2431,7 @@ def run_day_transaction(
     if enable_security_chain_dynamics:
         assert security_chain_config is not None
         security_chain_proposals = propose_security_chain_dynamics(
-            states=states,
+            states=l1_regional_execution_states,
             security_config=security_chain_config,
             engine_state_registry=engine_state_registry,
             parameter_registry=parameter_registry,
@@ -2232,7 +2444,7 @@ def run_day_transaction(
         assert reciprocal_radicalization_config is not None
         reciprocal_radicalization_proposals = (
             propose_reciprocal_radicalization_effects(
-                states=states,
+                states=l1_regional_execution_states,
                 feedback_config=reciprocal_radicalization_config,
                 engine_state_registry=engine_state_registry,
                 parameter_registry=parameter_registry,
@@ -2245,7 +2457,7 @@ def run_day_transaction(
     if enable_recovery:
         assert recovery_config is not None
         recovery_proposals = propose_recovery_effects(
-            states=states,
+            states=l1_regional_execution_states,
             recovery_config=recovery_config,
             engine_state_registry=engine_state_registry,
             parameter_registry=parameter_registry,
@@ -2266,6 +2478,14 @@ def run_day_transaction(
         )
     )
 
+    l1_runtime_context = (
+        build_runtime_resolver_context(
+            plan=fractal_runtime_plan_before,
+            node_ids=set(states),
+        )
+        if fractal_runtime_plan_before is not None
+        else None
+    )
     resolution = resolve_delta_proposals(
         states=states,
         proposals=proposals,
@@ -2273,6 +2493,7 @@ def run_day_transaction(
         parameter_registry=parameter_registry,
         profile=profile,
         trace=staged_trace,
+        runtime_context_by_node=l1_runtime_context,
     )
     advanced_states = _advance_resolved_states(
         resolved_states=resolution.states,
@@ -2423,6 +2644,11 @@ def run_day_transaction(
             profile=profile,
             manifest=manifest,
             trace=staged_trace,
+            excluded_node_ids=(
+                set(fractal_runtime_plan_before.refined_parent_ids)
+                if fractal_runtime_plan_before is not None
+                else None
+            ),
         )
 
     unknown_fractal_actions = {
@@ -2553,6 +2779,25 @@ def run_day_transaction(
         fractal_collapse_commits = collapse_result.commits
         fractal_reaggregation_audits = collapse_result.audits
 
+    fractal_runtime_plan_after: FractalRuntimePlan | None = None
+    if enable_fractal_runtime_plan:
+        assert fractal_topology_out is not None
+        assert fractal_child_state_store_out is not None
+        assert fractal_runtime_config is not None
+        fractal_runtime_plan_after = build_fractal_runtime_plan(
+            day=day_to,
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            runtime_config=fractal_runtime_config,
+            engine_state_registry=engine_state_registry,
+        )
+        trace_fractal_runtime_plan(
+            plan=fractal_runtime_plan_after,
+            phase="COMMITTED_NEXT_DAY",
+            trace=staged_trace,
+        )
+
     for node_id in sorted(states):
         _checkpoint_node(
             node_id=node_id,
@@ -2615,6 +2860,16 @@ def run_day_transaction(
         fractal_reaggregation_audit_ids=[
             item.audit_id for item in fractal_reaggregation_audits
         ],
+        fractal_runtime_plan_before_hash=(
+            fractal_runtime_plan_before.plan_hash()
+            if fractal_runtime_plan_before is not None
+            else None
+        ),
+        fractal_runtime_plan_after_hash=(
+            fractal_runtime_plan_after.plan_hash()
+            if fractal_runtime_plan_after is not None
+            else None
+        ),
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
             if fractal_child_state_store_out is not None
@@ -2750,4 +3005,12 @@ def run_day_transaction(
         fractal_uncertainty_audits=fractal_uncertainty_audits,
         fractal_collapse_commits=fractal_collapse_commits,
         fractal_reaggregation_audits=fractal_reaggregation_audits,
+        fractal_runtime_plan_before=fractal_runtime_plan_before,
+        fractal_runtime_plan_after=fractal_runtime_plan_after,
+        fractal_child_dynamics_proposals=(
+            fractal_child_dynamics_proposals
+        ),
+        fractal_child_dynamics_resolutions=(
+            fractal_child_dynamics_resolutions
+        ),
     )
