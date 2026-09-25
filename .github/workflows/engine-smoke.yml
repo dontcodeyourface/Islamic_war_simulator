@@ -2,9 +2,8 @@
 name: engine-smoke
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  actions: write
+  contents: read
 
 on:
   push:
@@ -29,16 +28,20 @@ jobs:
         python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          set +e
+          {
+            python -m pip install --upgrade pip
+            pip install -e ".[dev]"
+          } > /tmp/install.log 2>&1
+          status=$?
+          cat /tmp/install.log
+          exit "$status"
       - name: Tests
         run: |
           set +e
@@ -54,46 +57,14 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             exit "$status"
           fi
-      - name: Commit pytest debug tail
-        if: failure()
-        run: |
-          if [ -f /tmp/pytest.log ] && [ ! -f ci_debug.txt ]; then
-            {
-              echo "Temporary CI debug for ${GITHUB_SHA}"
-              tail -n 260 /tmp/pytest.log
-            } > ci_debug.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add ci_debug.txt
-            git commit -m "ci(debug): capture pytest failure"
-            git push origin "HEAD:${GITHUB_HEAD_REF}"
-          fi
-      - name: Upload pytest debug artifact
+      - name: Upload CI debug artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-debug-${{ matrix.python-version }}
-          path: /tmp/pytest.log
-          if-no-files-found: warn
-          retention-days: 1
-      - name: Publish pytest debug tail
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          {
-            echo "Temporary CI debug for commit ${GITHUB_SHA}"
-            echo '~~~text'
-            tail -n 180 /tmp/pytest.log
-            echo '~~~'
-          } > /tmp/pytest-comment.md
-          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/pytest-comment.md
-      - name: Upload pytest failure log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-failure-${{ matrix.python-version }}
-          path: /tmp/pytest.log
+          name: ci-debug-${{ matrix.python-version }}
+          path: |
+            /tmp/install.log
+            /tmp/pytest.log
           if-no-files-found: warn
           retention-days: 1
       - name: Spain smoke replay
