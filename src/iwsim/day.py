@@ -1019,6 +1019,27 @@ def _evaluate_candidates(
                     continue
                 state_a = states[edge.a]
                 state_b = states[edge.b]
+                if hasattr(edge, "edge_kind") and any(
+                    edge.channel(edge.a, edge.b, channel) is None
+                    for channel in (
+                        "geographic_proximity",
+                        "land_border",
+                        "alliance_link",
+                    )
+                ):
+                    logger.info(
+                        "_evaluate_candidates skip unresolved multiscale edge=%s",
+                        edge.edge_id(),
+                    )
+                    trace.append(
+                        "regional_event_candidate_skipped",
+                        day=day,
+                        event_type=event_type,
+                        edge_id=edge.edge_id(),
+                        actors=list(sorted((edge.a, edge.b))),
+                        reason="unresolved_required_structural_channel",
+                    )
+                    continue
                 result = evaluate_interstate_incident(
                     day=day,
                     state_a=state_a,
