@@ -1,5 +1,123 @@
 schema_version: "1.0"
-status: "scaffold-no-regional-graph-data"
-purpose: "Explicit evidence-backed L2 graph channel catalog. Missing edges/channels remain unresolved, never zero."
+status: "canonical-l2-topology-v1"
+purpose: "Evidence-backed L2 child topology. Only administrative land adjacency is resolved here; all unsupported strategic channels remain unresolved/null."
 
-edges: []
+provenance_policy:
+  administrative_adjacency_only: true
+  island_or_overseas_separation_is_not_zero_connectivity: true
+  missing_edge_means_unresolved: true
+  missing_channel_means_unresolved: true
+
+edges:
+  # Spain — IGN administrative boundaries.
+  - {a: "ESP::AN", b: "ESP::CM", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AN", b: "ESP::EX", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AN", b: "ESP::MC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::CL", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::CM", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::CT", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::NC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::RI", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AR", b: "ESP::VC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::AS", b: "ESP::CL", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CB", b: "ESP::CL", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CB", b: "ESP::PV", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::CM", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::EX", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::GA", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::MD", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::PV", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CL", b: "ESP::RI", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CM", b: "ESP::EX", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CM", b: "ESP::MD", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CM", b: "ESP::MC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CM", b: "ESP::VC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::CT", b: "ESP::VC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::NC", b: "ESP::PV", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::NC", b: "ESP::RI", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::PV", b: "ESP::RI", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "ESP::MC", b: "ESP::VC", source_id: "ES-IGN-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+
+  # France — current regional administrative adjacency.
+  - {a: "FRA::BRE", b: "FRA::NOR", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::BRE", b: "FRA::PDL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NOR", b: "FRA::HDF", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NOR", b: "FRA::IDF", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NOR", b: "FRA::CVL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NOR", b: "FRA::PDL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::HDF", b: "FRA::IDF", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::HDF", b: "FRA::GES", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::IDF", b: "FRA::GES", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::IDF", b: "FRA::BFC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::IDF", b: "FRA::CVL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::GES", b: "FRA::BFC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::BFC", b: "FRA::CVL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::BFC", b: "FRA::NAQ", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::BFC", b: "FRA::ARA", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::CVL", b: "FRA::PDL", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::CVL", b: "FRA::NAQ", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::PDL", b: "FRA::NAQ", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NAQ", b: "FRA::ARA", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::NAQ", b: "FRA::OCC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::ARA", b: "FRA::OCC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::ARA", b: "FRA::PAC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::ARA", b: "FRA::BFC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "FRA::OCC", b: "FRA::PAC", source_id: "FR-INSEE-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+
+  # Germany — Länder adjacency.
+  - {a: "DEU::BW", b: "DEU::BY", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BW", b: "DEU::HE", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BW", b: "DEU::RP", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BY", b: "DEU::HE", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BY", b: "DEU::TH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BY", b: "DEU::SN", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BE", b: "DEU::BB", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BB", b: "DEU::MV", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BB", b: "DEU::NI", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BB", b: "DEU::ST", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::BB", b: "DEU::SN", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HB", b: "DEU::NI", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HH", b: "DEU::NI", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HH", b: "DEU::SH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HE", b: "DEU::NI", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HE", b: "DEU::NW", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HE", b: "DEU::RP", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::HE", b: "DEU::TH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::MV", b: "DEU::NI", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::MV", b: "DEU::SH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::NI", b: "DEU::NW", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::NI", b: "DEU::ST", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::NI", b: "DEU::SH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::NW", b: "DEU::RP", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::RP", b: "DEU::SL", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::ST", b: "DEU::TH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::ST", b: "DEU::SN", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+  - {a: "DEU::SN", b: "DEU::TH", source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES", channels: {land_border: {value: 1.0}}}
+
+  # United Kingdom — constituent-country land adjacency.
+  - {a: "GBR::ENG", b: "GBR::SCT", source_id: "UK-ONS-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+  - {a: "GBR::ENG", b: "GBR::WLS", source_id: "UK-ONS-ADMIN-GEOGRAPHY", channels: {land_border: {value: 1.0}}}
+
+  # Morocco — regional administrative adjacency.
+  - {a: "MAR::01", b: "MAR::02", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::01", b: "MAR::03", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::01", b: "MAR::04", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::02", b: "MAR::03", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::02", b: "MAR::08", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::03", b: "MAR::04", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::03", b: "MAR::05", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::03", b: "MAR::08", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::04", b: "MAR::05", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::04", b: "MAR::06", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::05", b: "MAR::06", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::05", b: "MAR::07", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::05", b: "MAR::08", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::06", b: "MAR::07", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::07", b: "MAR::08", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::07", b: "MAR::09", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::07", b: "MAR::10", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::08", b: "MAR::09", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::08", b: "MAR::10", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::09", b: "MAR::10", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::10", b: "MAR::11", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}
+  - {a: "MAR::11", b: "MAR::12", source_id: "MA-HCP-12-REGIONS", channels: {land_border: {value: 1.0}}}

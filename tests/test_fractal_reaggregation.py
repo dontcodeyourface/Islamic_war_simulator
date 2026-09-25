@@ -19,6 +19,7 @@ from iwsim.fractal_child_state import (
 from iwsim.fractal_materialization import (
     FractalTopologyNode,
     FractalTopologyState,
+    materialize_l1_to_l2,
 )
 from iwsim.fractal_reaggregation import collapse_l2_to_l1
 from iwsim.fractal_uncertainty import apply_fractal_uncertainty
@@ -660,10 +661,9 @@ def test_dynamic_collapse_then_rerefine_preserves_generation_lineage() -> None:
         config,
         manifest,
     ) = _fixture()
-    states = child_store.state_map()
-    evolved_states = []
-    for item in child_store.states:
-        evolved_states.append(
+    evolved_store = FractalChildStateStore(
+        last_initialized_day=child_store.last_initialized_day,
+        states=tuple(
             EngineState(
                 node_id=item.node_id,
                 day=item.day,
@@ -675,10 +675,8 @@ def test_dynamic_collapse_then_rerefine_preserves_generation_lineage() -> None:
                     "fractal_child_dynamics_active": True,
                 },
             )
-        )
-    evolved_store = FractalChildStateStore(
-        last_initialized_day=child_store.last_initialized_day,
-        states=tuple(evolved_states),
+            for item in child_store.states
+        ),
     )
 
     parent_after, topology_after, store_after, persistence_after, _, audit, _ = (
@@ -703,16 +701,90 @@ def test_dynamic_collapse_then_rerefine_preserves_generation_lineage() -> None:
         action.action_id
     )
 
-    historical_ids = {item.node_id for item in topology_after.nodes}
-    historical_generations = {
-        item.lineage_generation for item in topology_after.nodes
+    historical = tuple(topology_after.nodes)
+    historical_dicts = tuple(item.to_dict() for item in historical)
+    historical_ids = {item.node_id for item in historical}
+    catalog_ids = {
+        item.catalog_child_id or item.node_id for item in historical
     }
-    assert historical_generations == {1}
+    assert {item.lineage_generation for item in historical} == {1}
 
-    # Generation 2 identity is required to be disjoint from immutable history.
-    generation_two_ids = {
-        f"{item.catalog_child_id or item.node_id}::G2"
-        for item in topology_after.nodes
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    region_catalog = {
+        "schema_version": "1.0",
+        "parents": {
+            "TST": {
+                "source_id": "SYNTHETIC_TEST",
+                "children": [
+                    {
+                        "child_id": "TST::R1",
+                        "label": "Region 1",
+                        "initialization_weight": 0.5,
+                    },
+                    {
+                        "child_id": "TST::R2",
+                        "label": "Region 2",
+                        "initialization_weight": 0.3,
+                    },
+                    {
+                        "child_id": "TST::R3",
+                        "label": "Region 3",
+                        "initialization_weight": 0.2,
+                    },
+                ],
+            }
+        },
     }
-    assert historical_ids.isdisjoint(generation_two_ids)
-    assert len(generation_two_ids) == len(historical_ids)
+    expand = FractalRefinementActionProposal(
+        action_id="expand-test-generation-2",
+        node_id="TST",
+        day=2,
+        action="EXPAND",
+        from_level="L1_COUNTRY",
+        to_level="L2_REGION",
+        refinement_pressure=0.9,
+        threshold=0.62,
+        persistence_required=1,
+        persistence_observed=1,
+        refinement_reason="institutional_stress",
+        component_scores=(),
+        source_variables=("state_cohesion",),
+        equation_id="REFINEMENT_TRIGGER_V1",
+        parameter_id="FRACTAL_REFINEMENT_SYN_V1",
+        initialization_weight_policy_id="FRACTAL_CHILD_INIT_WEIGHTS_V1",
+        inherited_uncertainty_policy_id="FRACTAL_UNCERTAINTY_WIDENING_V1",
+        aggregation_rule_id="FRACTAL_PARENT_REAGGREGATION_V1",
+    )
+    rerefine_persistence = FractalRefinementPersistenceState(
+        node_id="TST",
+        current_level="L1_COUNTRY",
+        last_evaluated_day=2,
+        expand_streak=1,
+        collapse_streak=0,
+    )
+    topology_gen2, persistence_gen2, commit_gen2 = materialize_l1_to_l2(
+        action=expand,
+        persistence=rerefine_persistence,
+        topology=topology_after,
+        region_catalog=region_catalog,
+        materialization_config=materialization_config,
+        manifest=manifest,
+        trace=TraceLedger(),
+    )
+
+    active = topology_gen2.active_children("TST")
+    assert persistence_gen2.current_level == "L2_REGION"
+    assert commit_gen2.lineage_generation == 2
+    assert len(active) == len(historical)
+    assert {item.lineage_generation for item in active} == {2}
+    assert {item.catalog_child_id for item in active} == catalog_ids
+    assert {item.node_id for item in active} == {
+        f"{catalog_id}::g2" for catalog_id in catalog_ids
+    }
+    assert historical_ids.isdisjoint({item.node_id for item in active})
+    assert tuple(item.to_dict() for item in topology_gen2.nodes[: len(historical)]) == (
+        historical_dicts
+    )
+    assert all(item.active is False for item in topology_gen2.nodes[: len(historical)])

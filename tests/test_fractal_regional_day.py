@@ -131,58 +131,16 @@ def _disable_events(parameters: dict) -> dict:
 
 def _catalog() -> dict:
     logger.info("_catalog")
-    return {
-        "schema_version": "1.0",
-        "parents": {
-            "ESP": {
-                "source_id": "SYNTHETIC_REGIONAL_DAY_TEST",
-                "children": [
-                    {
-                        "child_id": "ESP::R1",
-                        "label": "Region 1",
-                        "initialization_weight": 0.6,
-                    },
-                    {
-                        "child_id": "ESP::R2",
-                        "label": "Region 2",
-                        "initialization_weight": 0.4,
-                    },
-                ],
-            }
-        },
-    }
+    return load_yaml(
+        ROOT / "config/engine/fractal_region_catalog_v1.yaml"
+    )
 
 
 def _regional_graph_catalog() -> dict:
     logger.info("_regional_graph_catalog")
-    return {
-        "schema_version": "1.0",
-        "status": "synthetic-test",
-        "edges": [
-            {
-                "a": "ESP::R1",
-                "b": "ESP::R2",
-                "source_id": "SYN_R1_R2",
-                "channels": {
-                    "geographic_proximity": {"value": 0.85},
-                    "land_border": {"value": 1.0},
-                    "information_link": {
-                        "a_to_b": 0.20,
-                        "b_to_a": 0.70,
-                    },
-                },
-            },
-            {
-                "a": "ESP::R1",
-                "b": "FRA",
-                "source_id": "SYN_R1_FRA",
-                "channels": {
-                    "geographic_proximity": {"value": 0.55},
-                    "land_border": {"value": 1.0},
-                },
-            },
-        ],
-    }
+    return load_yaml(
+        ROOT / "config/engine/fractal_region_graph_catalog_v1.yaml"
+    )
 
 
 def _force_refinement_state(state: EngineState) -> None:
@@ -407,35 +365,35 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
     )
     assert first_regional_store.last_committed_day == 1
 
-    child_map = first.fractal_child_state_store.state_map()
+    stressed_id = "ESP::CT"
+    calm_id = "ESP::AN"
     second_child_store = FractalChildStateStore(
         last_initialized_day=1,
-        states=(
-            _stressed_child(child_map["ESP::R1"]),
-            _calm_child(child_map["ESP::R2"]),
+        states=tuple(
+            _stressed_child(child)
+            if child.node_id == stressed_id
+            else _calm_child(child)
+            for child in first.fractal_child_state_store.states
         ),
     )
 
     phase_map = first_regional_store.phase_map()
-    phase_r1 = phase_map["ESP::R1"]
     regional_store = FractalRegionalRegimeStore(
         last_committed_day=1,
-        phase_persistence=(
+        phase_persistence=tuple(
             PhasePersistenceState(
-                node_id="ESP::R1",
-                current_phase=phase_r1.current_phase,
+                node_id=item.node_id,
+                current_phase=item.current_phase,
                 last_evaluated_day=1,
                 streaks=(("PHASE_STABLE_TENSION_V1", 2),),
-            ),
-            phase_map["ESP::R2"],
+            )
+            if item.node_id == stressed_id
+            else item
+            for item in first_regional_store.phase_persistence
         ),
-        security_persistence=(
-            first_regional_store.security_map()["ESP::R1"],
-            first_regional_store.security_map()["ESP::R2"],
-        ),
+        security_persistence=first_regional_store.security_persistence,
         security_recovery_persistence=(
-            first_regional_store.recovery_map()["ESP::R1"],
-            first_regional_store.recovery_map()["ESP::R2"],
+            first_regional_store.security_recovery_persistence
         ),
     )
 
@@ -497,13 +455,7 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
     )
     assert second.fractal_projected_graph_before is not None
     assert any(
-        item.source_node == "ESP::R1"
-        and item.target_node == "FRA"
-        and item.status == "SCHEDULED"
-        for item in second.spillover_candidates
-    )
-    assert any(
-        item.target_node == "ESP::R1"
+        item.target_node == stressed_id
         and item.runtime_level == "L2_REGION"
         for item in second.resolutions
     )
@@ -513,22 +465,22 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
         for item in second.resolutions
     )
     children = second.fractal_child_state_store.state_map()
-    assert children["ESP::R1"].regimes["national_phase"] == "TENSION"
-    assert children["ESP::R2"].regimes["national_phase"] == "STABLE"
+    assert children[stressed_id].regimes["national_phase"] == "TENSION"
+    assert children[calm_id].regimes["national_phase"] == "STABLE"
     assert (
-        children["ESP::R1"].regimes["security_force_regime"]
+        children[stressed_id].regimes["security_force_regime"]
         == "STRAINED"
     )
     assert (
-        children["ESP::R2"].regimes["security_force_regime"]
+        children[calm_id].regimes["security_force_regime"]
         == "COHESIVE"
     )
 
     regional = second.fractal_regional_regime_result
     assert len(regional.phase_commits) == 1
-    assert regional.phase_commits[0].node_id == "ESP::R1"
+    assert regional.phase_commits[0].node_id == stressed_id
     assert len(regional.security_commits) == 1
-    assert regional.security_commits[0].node_id == "ESP::R1"
+    assert regional.security_commits[0].node_id == stressed_id
     assert regional.divergence_audits[0].collapse_consensus_ready is False
 
     assert second.states["ESP"].regimes["national_phase"] == (

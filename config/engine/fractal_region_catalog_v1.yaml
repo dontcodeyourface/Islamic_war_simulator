@@ -1,5 +1,119 @@
 schema_version: "1.0"
-status: "scaffold-no-regional-data"
-purpose: "Explicit L2 region catalog. Empty until region data is added through dedicated data PRs."
+status: "evidence-backed-canonical-l2"
+purpose: "Canonical L2 administrative divisions for every country in snapshot v1. Initialization weights are population shares and are provenance-scoped."
 
-parents: {}
+weight_policy:
+  id: "FRACTAL_CHILD_INIT_POPULATION_SHARE_V1"
+  basis: "population_share"
+  normalization: "normalize within each parent to exactly 1.0"
+  note: "Weights initialize spatializable stocks only; variable-specific allocation policies may supersede them later."
+
+parents:
+  ESP:
+    source_id: "ES-INE-ECP-L2-2026"
+    administrative_level: "autonomous_community_or_city"
+    weight_reference_date: "2025-2026"
+    weight_quality: "provisional"
+    topology_source_id: "ES-IGN-ADMIN-BOUNDARIES"
+    children:
+      - {child_id: "ESP::AN", label: "Andalucía", initialization_weight: 0.176295753430}
+      - {child_id: "ESP::AR", label: "Aragón", initialization_weight: 0.027686169130}
+      - {child_id: "ESP::AS", label: "Principado de Asturias", initialization_weight: 0.020764626847}
+      - {child_id: "ESP::IB", label: "Illes Balears", initialization_weight: 0.025243271854}
+      - {child_id: "ESP::CN", label: "Canarias", initialization_weight: 0.046007898701}
+      - {child_id: "ESP::CB", label: "Cantabria", initialization_weight: 0.012092341517}
+      - {child_id: "ESP::CL", label: "Castilla y León", initialization_weight: 0.048857945523}
+      - {child_id: "ESP::CM", label: "Castilla-La Mancha", initialization_weight: 0.043361426652}
+      - {child_id: "ESP::CT", label: "Cataluña", initialization_weight: 0.165099140914}
+      - {child_id: "ESP::VC", label: "Comunitat Valenciana", initialization_weight: 0.111355400839}
+      - {child_id: "ESP::EX", label: "Extremadura", initialization_weight: 0.021375351166}
+      - {child_id: "ESP::GA", label: "Galicia", initialization_weight: 0.055168763487}
+      - {child_id: "ESP::MD", label: "Comunidad de Madrid", initialization_weight: 0.144945238386}
+      - {child_id: "ESP::MC", label: "Región de Murcia", initialization_weight: 0.032164814136}
+      - {child_id: "ESP::NC", label: "Comunidad Foral de Navarra", initialization_weight: 0.013924514474}
+      - {child_id: "ESP::PV", label: "País Vasco", initialization_weight: 0.045600749155}
+      - {child_id: "ESP::RI", label: "La Rioja", initialization_weight: 0.006595822646}
+      - {child_id: "ESP::CE", label: "Ceuta", initialization_weight: 0.001710028093}
+      - {child_id: "ESP::ML", label: "Melilla", initialization_weight: 0.001750743050}
+
+  FRA:
+    source_id: "FR-INSEE-REGIONS-POP-2026"
+    administrative_level: "region"
+    weight_reference_date: "2026-01-01"
+    weight_quality: "official_provisional_estimate"
+    topology_source_id: "FR-INSEE-ADMIN-GEOGRAPHY"
+    children:
+      - {child_id: "FRA::ARA", label: "Auvergne-Rhône-Alpes", initialization_weight: 0.120193270038}
+      - {child_id: "FRA::BFC", label: "Bourgogne-Franche-Comté", initialization_weight: 0.040445313711}
+      - {child_id: "FRA::BRE", label: "Bretagne", initialization_weight: 0.050810025813}
+      - {child_id: "FRA::CVL", label: "Centre-Val de Loire", initialization_weight: 0.037481343185}
+      - {child_id: "FRA::COR", label: "Corse", initialization_weight: 0.005292782797}
+      - {child_id: "FRA::GES", label: "Grand Est", initialization_weight: 0.080256381127}
+      - {child_id: "FRA::HDF", label: "Hauts-de-France", initialization_weight: 0.086357724812}
+      - {child_id: "FRA::IDF", label: "Île-de-France", initialization_weight: 0.182312363991}
+      - {child_id: "FRA::NOR", label: "Normandie", initialization_weight: 0.048547033876}
+      - {child_id: "FRA::NAQ", label: "Nouvelle-Aquitaine", initialization_weight: 0.090353266573}
+      - {child_id: "FRA::OCC", label: "Occitanie", initialization_weight: 0.090428597344}
+      - {child_id: "FRA::PDL", label: "Pays de la Loire", initialization_weight: 0.057398833699}
+      - {child_id: "FRA::PAC", label: "Provence-Alpes-Côte d'Azur", initialization_weight: 0.076986339538}
+      - {child_id: "FRA::GUA", label: "Guadeloupe", initialization_weight: 0.005538143397}
+      - {child_id: "FRA::MTQ", label: "Martinique", initialization_weight: 0.005194088486}
+      - {child_id: "FRA::GUF", label: "Guyane", initialization_weight: 0.004321733842}
+      - {child_id: "FRA::REU", label: "La Réunion", initialization_weight: 0.013187010404}
+      - {child_id: "FRA::MAY", label: "Mayotte", initialization_weight: 0.004895747367}
+
+  DEU:
+    source_id: "DE-DESTATIS-LAENDER-POP-2025"
+    administrative_level: "land"
+    weight_reference_date: "2025-12-31"
+    weight_quality: "official"
+    topology_source_id: "DE-GEOBASIS-BKG-ADMIN-BOUNDARIES"
+    children:
+      - {child_id: "DEU::BW", label: "Baden-Württemberg", initialization_weight: 0.134648966011}
+      - {child_id: "DEU::BY", label: "Bayern", initialization_weight: 0.158691272397}
+      - {child_id: "DEU::BE", label: "Berlin", initialization_weight: 0.044335747214}
+      - {child_id: "DEU::BB", label: "Brandenburg", initialization_weight: 0.030573585044}
+      - {child_id: "DEU::HB", label: "Bremen", initialization_weight: 0.008469383218}
+      - {child_id: "DEU::HH", label: "Hamburg", initialization_weight: 0.022397718613}
+      - {child_id: "DEU::HE", label: "Hessen", initialization_weight: 0.075222365713}
+      - {child_id: "DEU::MV", label: "Mecklenburg-Vorpommern", initialization_weight: 0.018853951790}
+      - {child_id: "DEU::NI", label: "Niedersachsen", initialization_weight: 0.095856024355}
+      - {child_id: "DEU::NW", label: "Nordrhein-Westfalen", initialization_weight: 0.215488621705}
+      - {child_id: "DEU::RP", label: "Rheinland-Pfalz", initialization_weight: 0.049396961920}
+      - {child_id: "DEU::SL", label: "Saarland", initialization_weight: 0.012068728814}
+      - {child_id: "DEU::SN", label: "Sachsen", initialization_weight: 0.048241740517}
+      - {child_id: "DEU::ST", label: "Sachsen-Anhalt", initialization_weight: 0.025402243137}
+      - {child_id: "DEU::SH", label: "Schleswig-Holstein", initialization_weight: 0.035445323935}
+      - {child_id: "DEU::TH", label: "Thüringen", initialization_weight: 0.024907365617}
+
+  GBR:
+    source_id: "UK-ONS-CONSTITUENT-COUNTRIES-POP-2024"
+    administrative_level: "constituent_country"
+    weight_reference_date: "2024-06-30"
+    weight_quality: "official_rounded"
+    topology_source_id: "UK-ONS-ADMIN-GEOGRAPHY"
+    children:
+      - {child_id: "GBR::ENG", label: "England", initialization_weight: 0.846107213995}
+      - {child_id: "GBR::SCT", label: "Scotland", initialization_weight: 0.080064085910}
+      - {child_id: "GBR::WLS", label: "Wales", initialization_weight: 0.046000404145}
+      - {child_id: "GBR::NIR", label: "Northern Ireland", initialization_weight: 0.027828295950}
+
+  MAR:
+    source_id: "MA-HCP-RGPH-2024-REGIONS"
+    administrative_level: "region"
+    weight_reference_date: "2024-09-01"
+    weight_quality: "official_rounded"
+    topology_source_id: "MA-HCP-12-REGIONS"
+    children:
+      - {child_id: "MAR::01", label: "Tanger-Tétouan-Al Hoceima", initialization_weight: 0.109427609428}
+      - {child_id: "MAR::02", label: "Oriental", initialization_weight: 0.062289562290}
+      - {child_id: "MAR::03", label: "Fès-Meknès", initialization_weight: 0.121320734224}
+      - {child_id: "MAR::04", label: "Rabat-Salé-Kénitra", initialization_weight: 0.139377647442}
+      - {child_id: "MAR::05", label: "Béni Mellal-Khénifra", initialization_weight: 0.068589116976}
+      - {child_id: "MAR::06", label: "Casablanca-Settat", initialization_weight: 0.208781362007}
+      - {child_id: "MAR::07", label: "Marrakech-Safi", initialization_weight: 0.132833713479}
+      - {child_id: "MAR::08", label: "Drâa-Tafilalet", initialization_weight: 0.044965786901}
+      - {child_id: "MAR::09", label: "Souss-Massa", initialization_weight: 0.082002823938}
+      - {child_id: "MAR::10", label: "Guelmim-Oued Noun", initialization_weight: 0.012191810579}
+      - {child_id: "MAR::11", label: "Laâyoune-Sakia El Hamra", initialization_weight: 0.012246117085}
+      - {child_id: "MAR::12", label: "Dakhla-Oued Ed-Dahab", initialization_weight: 0.005973715651}
