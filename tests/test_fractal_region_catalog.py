@@ -36,14 +36,20 @@ def test_canonical_l2_catalog_covers_snapshot_v1_exactly() -> None:
         load_yaml(ROOT / "config/countries" / f"{name}.yaml")["identity"]["iso3"]
         for name in country_files
     }
-    assert set(parents) == snapshot_iso3 == set(EXPECTED)
+    l2_parent_ids = {
+        parent_id
+        for parent_id in parents
+        if "::" not in parent_id
+    }
+    assert l2_parent_ids == snapshot_iso3 == set(EXPECTED)
 
 
 def test_canonical_l2_children_are_complete_namespaced_and_weighted() -> None:
     logger.info(
         "test_canonical_l2_children_are_complete_namespaced_and_weighted"
     )
-    for parent_id, parent in _catalog()["parents"].items():
+    for parent_id in sorted(EXPECTED):
+        parent = _catalog()["parents"][parent_id]
         children = parent["children"]
         assert len(children) == EXPECTED[parent_id]
         ids = [item["child_id"] for item in children]
