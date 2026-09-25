@@ -7,7 +7,10 @@ from typing import Any
 from .effects import DeltaProposal
 from .extremism import propose_extremist_network_dynamics
 from .fractal_child_state import FractalChildStateStore
-from .fractal_runtime import FractalRuntimePlan
+from .fractal_runtime import (
+    FractalRuntimePlan,
+    build_runtime_resolver_context,
+)
 from .reciprocal import propose_reciprocal_radicalization_effects
 from .recovery import propose_recovery_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
@@ -288,6 +291,10 @@ def execute_autonomous_l2_dynamics(
         runtime_plan=runtime_plan,
     )
 
+    runtime_context = build_runtime_resolver_context(
+        plan=runtime_plan,
+        node_ids=set(states),
+    )
     resolution = resolve_delta_proposals(
         states=states,
         proposals=proposal_tuple,
@@ -295,6 +302,7 @@ def execute_autonomous_l2_dynamics(
         parameter_registry=parameter_registry,
         profile=profile,
         trace=trace,
+        runtime_context_by_node=runtime_context,
     )
 
     resolved_states = tuple(
