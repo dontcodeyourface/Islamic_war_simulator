@@ -1,0 +1,56 @@
+schema_version: "1.0"
+status: "implementation-v0.28"
+purpose: "Persistent L2 regional phase/security execution with explicit categorical divergence semantics."
+
+mode:
+  enabled: true
+  evaluate_active_l2_only: true
+  reuse_l1_phase_machine: true
+  reuse_l1_security_regime_machine: true
+  sibling_divergence_allowed: true
+  new_children_start_next_day: true
+  regional_persistence_separate_from_l1: true
+  atomic_with_day_transaction: true
+
+categorical_aggregation:
+  policy_id: "FRACTAL_CATEGORICAL_AGGREGATION_V1"
+  dynamic_regimes:
+    - "national_phase"
+    - "security_force_regime"
+  static_regimes:
+    - "prison_regime"
+    - "organized_crime_regime"
+  dynamic_regime_collapse_policy: "unanimous_consensus_required_until_v0_32"
+  fail_closed_on_divergence: true
+  divergence_is_valid_runtime_state: true
+  divergence_is_not_parent_commit: true
+
+persistence:
+  bootstrap_existing_active_l2_with_empty_streaks: true
+  exact_active_child_coverage_required_after_bootstrap: true
+  last_committed_day_must_match_child_day: true
+  phase_and_security_history_are_independent: true
+
+ordering:
+  endogenous_l2_latent_dynamics: 10
+  child_clock_advance: 20
+  security_regime_escalation: 30
+  security_regime_recovery: 40
+  phase_evaluation_and_commit: 50
+  categorical_divergence_audit: 60
+
+trace:
+  regional_runtime_commit: "fractal_regional_regime_runtime_committed"
+  divergence_audit: "fractal_categorical_divergence_audit"
+  new_child_persistence: "fractal_regional_regime_persistence_initialized"
+
+safety:
+  phase_and_regime_are_classifiers_not_operational_instructions: true
+  political_identity_direct_transition_input: false
+  demographic_identity_direct_transition_input: false
+  religious_identity_direct_transition_input: false
+  civilian_identity_direct_transition_input: false
+  tactical_target_selection: false
+  weapon_selection: false
+  route_planning: false
+  operational_execution: false
