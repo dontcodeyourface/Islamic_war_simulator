@@ -118,6 +118,14 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_runtime_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-graph-projection-config",
+        default="config/engine/fractal_graph_projection_v1.yaml",
+    )
+    day_smoke.add_argument(
+        "--fractal-region-graph-catalog",
+        default="config/engine/fractal_region_graph_catalog_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -308,6 +316,12 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_runtime_config = load_yaml(
         root / args.fractal_runtime_config
     )
+    fractal_graph_projection_config = load_yaml(
+        root / args.fractal_graph_projection_config
+    )
+    fractal_region_graph_catalog = load_yaml(
+        root / args.fractal_region_graph_catalog
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -394,6 +408,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_collapse_reaggregation",
             "fractal_active_runtime_plan",
             "fractal_autonomous_l2_dynamics",
+            "fractal_multiscale_graph_projection",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -470,6 +485,11 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         fractal_reaggregation_config=fractal_reaggregation_config,
         enable_fractal_runtime_plan=True,
         fractal_runtime_config=fractal_runtime_config,
+        enable_fractal_graph_projection=True,
+        fractal_graph_projection_config=(
+            fractal_graph_projection_config
+        ),
+        fractal_region_graph_catalog=fractal_region_graph_catalog,
     )
 
     out = Path(args.out)
@@ -598,6 +618,16 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_runtime_plan_after_hash": (
                 result.fractal_runtime_plan_after.plan_hash()
                 if result.fractal_runtime_plan_after is not None
+                else None
+            ),
+            "fractal_projected_graph_before_hash": (
+                result.fractal_projected_graph_before.graph_hash()
+                if result.fractal_projected_graph_before is not None
+                else None
+            ),
+            "fractal_projected_graph_after_hash": (
+                result.fractal_projected_graph_after.graph_hash()
+                if result.fractal_projected_graph_after is not None
                 else None
             ),
             "fractal_child_dynamics_proposal_count": len(
