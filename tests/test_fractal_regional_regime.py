@@ -142,6 +142,8 @@ def _manifest():
         start_date="2026-09-25",
         horizon_days=1,
         enabled_modules=("fractal_regional_regimes",),
+        normalization_version="1.0-hybrid-v0.2",
+        execution_order_version="EXEC_ORDER_V1",
     )
 
 
