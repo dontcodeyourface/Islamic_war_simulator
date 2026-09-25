@@ -2075,8 +2075,8 @@ def run_day_transaction(
         if fractal_runtime_plan_before.refined_parent_ids:
             if enable_graph_spillover:
                 raise RuntimeError(
-                    "v0.28 active L2 does not yet support multiscale graph "
-                    "spillover; disable graph spillover until v0.29/v0.30"
+                    "v0.29 graph projection does not yet execute multiscale "
+                    "spillover; disable graph spillover until v0.30"
                 )
             if enable_phase_transitions and not enable_fractal_regional_regimes:
                 raise RuntimeError(
@@ -2091,6 +2091,52 @@ def run_day_transaction(
                     "Active L2 security-regime execution requires "
                     "enable_fractal_regional_regimes"
                 )
+
+    if enable_fractal_graph_projection:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Fractal graph projection requires runtime planning"
+            )
+        if fractal_graph_projection_config is None:
+            raise ValueError(
+                "Fractal graph projection requires "
+                "fractal_graph_projection_config"
+            )
+        if fractal_region_graph_catalog is None:
+            raise ValueError(
+                "Fractal graph projection requires "
+                "fractal_region_graph_catalog"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_graph_projection_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal graph projection is disabled by the "
+                "day transaction contract"
+            )
+        assert fractal_runtime_plan_before is not None
+        fractal_projected_graph_before = (
+            build_fractal_projected_graph(
+                runtime_plan=fractal_runtime_plan_before,
+                base_graph=graph,
+                projection_config=fractal_graph_projection_config,
+                regional_graph_catalog=fractal_region_graph_catalog,
+            )
+        )
+        fractal_graph_projection_inputs = {
+            "projection_config_hash": canonical_hash(
+                fractal_graph_projection_config
+            ),
+            "regional_graph_catalog_hash": canonical_hash(
+                fractal_region_graph_catalog
+            ),
+            "projected_graph_before_hash": (
+                fractal_projected_graph_before.graph_hash()
+            ),
+        }
 
     if enable_fractal_regional_regimes:
         if not enable_fractal_runtime_plan:
