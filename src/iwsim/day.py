@@ -1425,6 +1425,7 @@ def _evaluate_fractal_refinements(
     profile: str,
     manifest: RunManifest,
     trace: TraceLedger,
+    excluded_node_ids: set[str] | None = None,
 ) -> tuple[
     dict[str, FractalRefinementPersistenceState],
     tuple[FractalRefinementEvaluationResult, ...],
@@ -1434,8 +1435,48 @@ def _evaluate_fractal_refinements(
     persistence_out: dict[str, FractalRefinementPersistenceState] = {}
     evaluations: list[FractalRefinementEvaluationResult] = []
     actions: list[FractalRefinementActionProposal] = []
+    excluded = excluded_node_ids or set()
+
+    unknown_excluded = excluded - set(states)
+    if unknown_excluded:
+        raise ValueError(
+            "Fractal refinement exclusion contains unknown nodes: "
+            f"{sorted(unknown_excluded)}"
+        )
 
     for node_id in sorted(states):
+        if node_id in excluded:
+            prior = persistence[node_id]
+            if prior is None:
+                raise ValueError(
+                    f"Cannot suppress fractal refinement for {node_id} "
+                    "without persistence"
+                )
+            if prior.current_level != "L2_REGION":
+                raise ValueError(
+                    f"Suppressed fractal parent {node_id} must be L2_REGION"
+                )
+            carried = FractalRefinementPersistenceState(
+                node_id=node_id,
+                current_level=prior.current_level,
+                last_evaluated_day=states[node_id].day,
+                expand_streak=0,
+                collapse_streak=0,
+            )
+            persistence_out[node_id] = carried
+            trace.append(
+                "fractal_refinement_evaluation_suppressed",
+                node_id=node_id,
+                day=states[node_id].day,
+                current_level=prior.current_level,
+                reason="awaiting_parent_child_coupling",
+                expand_streak_before=prior.expand_streak,
+                collapse_streak_before=prior.collapse_streak,
+                expand_streak_after=0,
+                collapse_streak_after=0,
+            )
+            continue
+
         result = evaluate_fractal_refinement(
             state=states[node_id],
             persistence=persistence[node_id],
@@ -1990,12 +2031,6 @@ def run_day_transaction(
                 raise RuntimeError(
                     "v0.26 active L2 does not yet support regional security "
                     "regime execution; disable regime evaluators until v0.28"
-                )
-            if enable_fractal_refinement_evaluator:
-                raise RuntimeError(
-                    "v0.26 active L2 collapse/refinement evaluation requires "
-                    "parent-child coupling; disable the evaluator until the "
-                    "multiscale coupling milestone"
                 )
 
     if enable_security_regime_recovery_commits:
@@ -2609,6 +2644,11 @@ def run_day_transaction(
             profile=profile,
             manifest=manifest,
             trace=staged_trace,
+            excluded_node_ids=(
+                set(fractal_runtime_plan_before.refined_parent_ids)
+                if fractal_runtime_plan_before is not None
+                else None
+            ),
         )
 
     unknown_fractal_actions = {
