@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .config import canonical_hash
+from .fractal_levels import level_index
 from .fractal_materialization import FractalTopologyNode, FractalTopologyState
 from .state import EngineState, extract_latent_registry
 from .trace import TraceLedger
@@ -274,7 +275,7 @@ def _validate_topology_children(
     )
     if not children:
         raise ValueError(
-            f"Parent {parent_state.node_id} has no active L2 children"
+            f"Parent {parent_state.node_id} has no active fractal children"
         )
     weights = [float(item.initialization_weight) for item in children]
     if any(
@@ -293,14 +294,19 @@ def _validate_topology_children(
         raise ValueError(
             f"Parent {parent_state.node_id} child weights must sum to 1.0"
         )
+    parent_level = str(
+        parent_state.metadata.get("fractal_level", "L1_COUNTRY")
+    )
+    expected_child_index = level_index(parent_level) + 1
     for child in children:
         if child.parent_node_id != parent_state.node_id:
             raise ValueError(
                 f"Child {child.node_id} parent mismatch"
             )
-        if child.level != "L2_REGION":
+        if level_index(child.level) != expected_child_index:
             raise ValueError(
-                f"Child {child.node_id} must be L2_REGION"
+                f"Child {child.node_id} level {child.level} is not adjacent "
+                f"to parent level {parent_level}"
             )
         if not child.active:
             raise ValueError(
@@ -456,7 +462,7 @@ def _child_metadata(
     metadata = dict(parent_state.metadata)
     metadata.update(
         {
-            "fractal_level": "L2_REGION",
+            "fractal_level": topology_node.level,
             "fractal_parent_node_id": parent_state.node_id,
             "fractal_label": topology_node.label,
             "fractal_created_day": topology_node.created_day,
@@ -661,7 +667,10 @@ def initialize_fractal_child_states(
                 f"Missing child state history for {child_id}: "
                 f"created_day={topology_node.created_day} target_day={target_day}"
             )
-        if topology_node.parent_node_id not in parent_states:
+        if (
+            topology_node.parent_node_id not in parent_states
+            and topology_node.parent_node_id not in next_states
+        ):
             raise ValueError(
                 f"Child {child_id} references unknown parent "
                 f"{topology_node.parent_node_id}"
@@ -672,7 +681,11 @@ def initialize_fractal_child_states(
         ).append(topology_node)
 
     for parent_node_id, raw_children in sorted(new_by_parent.items()):
-        parent_state = parent_states[parent_node_id]
+        parent_state = (
+            parent_states[parent_node_id]
+            if parent_node_id in parent_states
+            else next_states[parent_node_id]
+        )
         if parent_state.day != target_day:
             raise ValueError(
                 f"Parent {parent_node_id} day {parent_state.day} "
