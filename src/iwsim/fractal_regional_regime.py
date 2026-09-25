@@ -359,6 +359,18 @@ def bootstrap_or_validate_regional_regime_store(
         )
 
     if supplied_store is None:
+        already_active = [
+            node_id
+            for node_id in sorted(expected)
+            if child_map[node_id].metadata.get(
+                "fractal_regional_regime_runtime_active"
+            ) is True
+        ]
+        if already_active:
+            raise ValueError(
+                "Regional regime persistence history is required for "
+                f"previously evaluated children: {already_active}"
+            )
         states = [child_map[node_id] for node_id in sorted(expected)]
         return FractalRegionalRegimeStore(
             last_committed_day=child_store.last_initialized_day,
