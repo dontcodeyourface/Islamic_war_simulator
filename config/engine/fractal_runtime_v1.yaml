@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.28"
+status: "implementation-v0.29"
 purpose: "Deterministic multiscale runtime authority plan for L1/L2 adaptive execution."
 
 mode:
@@ -102,7 +102,7 @@ authority:
 execution_status:
   coarse_l1: "L1_FULL_AUTHORITY"
   refined_l1_parent: "L1_NATIONAL_ONLY_AUTHORITY"
-  active_l2: "L2_REGIONAL_AUTHORITY_ACTIVE_V0_28"
+  active_l2: "L2_REGIONAL_AUTHORITY_ACTIVE_V0_29"
   inactive_lineage: "INACTIVE_HISTORY_EXCLUDED"
 
 multiscale_resolver:
@@ -129,8 +129,8 @@ autonomous_l2:
     - "security_regime"
     - "security_regime_recovery"
     - "national_phase"
+    - "graph_projection"
   deferred_modules:
-    multiscale_graph_projection: "v0.29"
     regional_event_and_spillover_execution: "v0.30"
     parent_child_coupling: "v0.31"
     divergent_categorical_reaggregation: "v0.32"

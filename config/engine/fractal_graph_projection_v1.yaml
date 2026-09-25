@@ -1,0 +1,96 @@
+schema_version: "1.0"
+status: "implementation-v0.29"
+purpose: "Deterministic projection of the L1 strategic graph onto the active multiscale regional runtime."
+
+mode:
+  projection_allowed: true
+  active_regional_authority_nodes_only: true
+  complete_runtime_pair_coverage: true
+  unresolved_values_remain_null: true
+  topology_changes_take_effect_next_day: true
+  inactive_lineage_forbidden: true
+  no_implicit_parent_edge_cloning: true
+
+policy_id: "FRACTAL_GRAPH_PROJECTION_V1"
+
+channel_policies:
+  geographic_proximity:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_GEO_EXPLICIT_V1"
+
+  land_border:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_BORDER_EXPLICIT_V1"
+
+  alliance_link:
+    l1_to_l1: "base_exact"
+    any_l2: "parent_retained_not_projected"
+    projection_policy_id: "FRACTAL_GRAPH_ALLIANCE_PARENT_RETAINED_V1"
+
+  trade_dependency:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_TRADE_EXPLICIT_V1"
+
+  energy_dependency:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_ENERGY_EXPLICIT_V1"
+
+  migration_link:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_MIGRATION_EXPLICIT_V1"
+
+  diaspora_link:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_DIASPORA_EXPLICIT_V1"
+
+  information_link:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_INFORMATION_EXPLICIT_V1"
+
+  criminal_network_link:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_CRIMINAL_EXPLICIT_V1"
+
+  extremist_network_link:
+    l1_to_l1: "base_exact"
+    any_l2: "explicit_catalog_required"
+    projection_policy_id: "FRACTAL_GRAPH_EXTREMIST_EXPLICIT_V1"
+
+statuses:
+  base_resolved: "BASE_L1_RESOLVED"
+  base_unresolved: "BASE_L1_UNRESOLVED"
+  explicit_resolved: "EXPLICIT_REGIONAL_RESOLVED"
+  explicit_unresolved: "EXPLICIT_REGIONAL_UNRESOLVED"
+  unresolved_projection: "UNRESOLVED_REGIONAL_PROJECTION"
+  parent_retained: "PARENT_RETAINED_NOT_PROJECTED"
+
+catalog:
+  endpoint_identity: "catalog_node_id"
+  runtime_generation_suffix_forbidden_in_catalog: true
+  missing_edge_means_unresolved: true
+  missing_channel_means_unresolved: true
+  values_must_be_unit_interval_or_null: true
+  directed_values_are_independent: true
+  symmetric_values_must_be_single_value: true
+
+trace:
+  record_type: "fractal_projected_graph"
+  include_graph_hash: true
+  include_runtime_plan_hash: true
+  include_base_graph_hash: true
+  include_catalog_hash: true
+
+safety:
+  demographic_identity_must_not_create_edges: true
+  religious_identity_must_not_create_edges: true
+  political_identity_must_not_create_edges: true
+  tactical_routes_forbidden: true
+  target_selection_forbidden: true

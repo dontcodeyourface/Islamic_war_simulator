@@ -1,0 +1,5 @@
+schema_version: "1.0"
+status: "scaffold-no-regional-graph-data"
+purpose: "Explicit evidence-backed L2 graph channel catalog. Missing edges/channels remain unresolved, never zero."
+
+edges: []

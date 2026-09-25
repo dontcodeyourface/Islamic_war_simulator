@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.28"
+status: "implementation-v0.29"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -57,6 +57,10 @@ mode:
   fractal_regional_regime_runtime_allowed: true
   fractal_regional_regime_runtime_requires_explicit_enable_flag: true
   fractal_regional_regime_contract: "config/engine/fractal_regional_regime_v1.yaml"
+  fractal_graph_projection_allowed: true
+  fractal_graph_projection_requires_explicit_enable_flag: true
+  fractal_graph_projection_contract: "config/engine/fractal_graph_projection_v1.yaml"
+  fractal_region_graph_catalog: "config/engine/fractal_region_graph_catalog_v1.yaml"
   fractal_child_engine_state_activation_allowed: true
   fractal_child_random_variation_allowed: true
   recovery_allowed: true
@@ -135,6 +139,12 @@ transaction_rules:
   fractal_regional_persistence_history_required_after_first_execution: true
   fractal_regional_sibling_divergence_allowed: true
   fractal_regional_categorical_collapse_requires_consensus_until_v0_32: true
+  fractal_projected_graph_uses_active_regional_authority_only: true
+  fractal_projected_graph_complete_pair_coverage_required: true
+  fractal_projected_graph_unresolved_channels_remain_null: true
+  fractal_projected_graph_no_implicit_l1_edge_cloning_to_l2: true
+  fractal_projected_graph_topology_changes_take_effect_next_day: true
+  fractal_projected_graph_not_used_for_spillover_until_v0_30: true
   fractal_refined_parent_phase_and_security_persistence_reset_while_l2_active: true
   fractal_runtime_refined_beginning_of_day_requires_supported_multiscale_modules: true
   fractal_child_dynamics_allowed: true
@@ -176,6 +186,8 @@ trace:
   include_fractal_runtime_plan_hashes: true
   include_fractal_regional_regime_commit_ids: true
   include_fractal_categorical_divergence_audits: true
+  include_fractal_projected_graph_hashes: true
+  include_fractal_projected_graph_trace: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -200,6 +212,8 @@ ordering:
   fractal_regional_security_recovery: "after_regional_security_regime"
   fractal_regional_phase: "after_regional_security_recovery"
   fractal_regional_divergence_audit: "after_regional_phase_before_reaggregation"
+  fractal_projected_graph_beginning_of_day: "after_beginning_runtime_plan_before_dynamic_execution"
+  fractal_projected_graph_committed_next_day: "after_committed_next_day_runtime_plan"
   fractal_reaggregation: "after_fractal_uncertainty_before_checkpoint"
   fractal_runtime_plan_after: "after_fractal_reaggregation_before_checkpoint_for_next_day"
 
