@@ -2627,6 +2627,16 @@ def run_day_transaction(
         if fractal_projected_graph_before is not None
         else graph
     )
+    event_execution_states = (
+        regional_execution_states
+        if fractal_projected_graph_before is not None
+        else states
+    )
+    event_excluded_node_ids = (
+        set()
+        if fractal_projected_graph_before is not None
+        else refined_parent_ids
+    )
     logger.info(
         "run_day_transaction regional execution nodes=%s graph=%s",
         len(regional_execution_states),
@@ -2655,7 +2665,7 @@ def run_day_transaction(
 
     candidates = _evaluate_candidates(
         day=day_to,
-        states=regional_execution_states,
+        states=event_execution_states,
         graph=regional_execution_graph,
         day_config=day_config,
         parameter_registry=parameter_registry,
@@ -2663,6 +2673,7 @@ def run_day_transaction(
         rng=working_rng,
         manifest=manifest,
         trace=staged_trace,
+        excluded_node_ids=event_excluded_node_ids,
     )
     events = _occurred_events(candidates)
     event_proposals = _propose_all_effects(
