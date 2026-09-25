@@ -94,7 +94,6 @@ authority:
   regimes:
     regionalizable:
       - "national_phase"
-    - "graph_projection"
       - "security_force_regime"
       - "prison_regime"
       - "organized_crime_regime"
@@ -130,6 +129,7 @@ autonomous_l2:
     - "security_regime"
     - "security_regime_recovery"
     - "national_phase"
+    - "graph_projection"
   deferred_modules:
     regional_event_and_spillover_execution: "v0.30"
     parent_child_coupling: "v0.31"
