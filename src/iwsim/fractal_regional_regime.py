@@ -792,6 +792,108 @@ def _divergence_audits(
     return tuple(audits)
 
 
+
+def reconcile_regional_regime_store_after_topology_change(
+    *,
+    child_store: FractalChildStateStore,
+    active_node_ids: tuple[str, ...],
+    supplied_store: FractalRegionalRegimeStore,
+    trace: TraceLedger,
+) -> FractalRegionalRegimeStore:
+    """Reconcile same-day persistence after recursive refine/collapse."""
+    logger.info(
+        "reconcile_regional_regime_store_after_topology_change "
+        "day=%s active=%s",
+        child_store.last_initialized_day,
+        len(active_node_ids),
+    )
+    if supplied_store.last_committed_day != child_store.last_initialized_day:
+        raise ValueError(
+            "Regional persistence reconciliation requires same-day store"
+        )
+    state_map = child_store.state_map()
+    expected = set(active_node_ids)
+    missing_states = expected - set(state_map)
+    if missing_states:
+        raise ValueError(
+            "Regional persistence reconciliation missing active states: "
+            f"{sorted(missing_states)}"
+        )
+
+    phase_prior = supplied_store.phase_map()
+    security_prior = supplied_store.security_map()
+    recovery_prior = supplied_store.recovery_map()
+    prior_sets = {
+        frozenset(phase_prior),
+        frozenset(security_prior),
+        frozenset(recovery_prior),
+    }
+    if len(prior_sets) != 1:
+        raise ValueError(
+            "Regional persistence stores disagree before reconciliation"
+        )
+    prior_ids = set(phase_prior)
+
+    phase_out: list[PhasePersistenceState] = []
+    security_out: list[SecurityRegimePersistenceState] = []
+    recovery_out: list[SecurityRegimeRecoveryPersistenceState] = []
+    initialized: list[str] = []
+
+    for node_id in sorted(expected):
+        state = state_map[node_id]
+        if node_id in prior_ids:
+            phase = phase_prior[node_id]
+            security = security_prior[node_id]
+            recovery = recovery_prior[node_id]
+            if (
+                phase.last_evaluated_day != state.day
+                or security.last_evaluated_day != state.day
+                or recovery.last_evaluated_day != state.day
+            ):
+                raise ValueError(
+                    f"Regional persistence day mismatch for {node_id}"
+                )
+            if phase.current_phase != state.regimes["national_phase"]:
+                raise ValueError(
+                    f"Regional phase mismatch after topology change "
+                    f"for {node_id}"
+                )
+            current_security = state.regimes["security_force_regime"]
+            if (
+                security.current_regime != current_security
+                or recovery.current_regime != current_security
+            ):
+                raise ValueError(
+                    f"Regional security mismatch after topology change "
+                    f"for {node_id}"
+                )
+        else:
+            phase = _phase_baseline(state)
+            security = _security_baseline(state)
+            recovery = _recovery_baseline(state)
+            initialized.append(node_id)
+        phase_out.append(phase)
+        security_out.append(security)
+        recovery_out.append(recovery)
+
+    retired = tuple(sorted(prior_ids - expected))
+    result = FractalRegionalRegimeStore(
+        last_committed_day=child_store.last_initialized_day,
+        phase_persistence=tuple(phase_out),
+        security_persistence=tuple(security_out),
+        security_recovery_persistence=tuple(recovery_out),
+    )
+    trace.append(
+        "fractal_regional_regime_persistence_reconciled",
+        day=child_store.last_initialized_day,
+        active_node_ids=list(sorted(expected)),
+        initialized_node_ids=initialized,
+        retired_node_ids=list(retired),
+        persistence_store_hash=result.store_hash(),
+    )
+    return result
+
+
 def execute_regional_regime_runtime(
     *,
     child_store: FractalChildStateStore,
