@@ -65,3 +65,10 @@ v0.22 adds no tactical target selection, route planning, weapon selection or ope
 ## Next step
 
 v0.23 should implement L2 -> L1 collapse/reaggregation with explicit conservative semantics, using the same topology lineage and weighted-mean contracts rather than discarding child state.
+
+
+## Post-v0.24 architectural clarification
+
+The `Child dynamics: disabled` status is specific to this uncertainty milestone. v0.22 establishes initial lower-scale heterogeneity; it does not define children as permanently frozen.
+
+After v0.24, the canonical next step is autonomous L2 execution under [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md). The one-time uncertainty draw becomes the initial condition from which each active child may subsequently diverge through ordinary generic dynamics.
