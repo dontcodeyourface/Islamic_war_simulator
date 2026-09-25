@@ -20,7 +20,16 @@ CANONICAL_COMPONENTS = (
     "displacement",
 )
 
-SUPPORTED_LEVELS = ("L1_COUNTRY", "L2_REGION")
+SUPPORTED_BASE_LEVELS = ("L1_COUNTRY", "L2_REGION")
+SUPPORTED_RESOLUTION_LEVELS = (
+    "L1_COUNTRY",
+    "L2_REGION",
+    "L3_METRO_OR_LOGISTICS_AREA",
+)
+NEXT_RESOLUTION_LEVEL = {
+    "L1_COUNTRY": "L2_REGION",
+    "L2_REGION": "L3_METRO_OR_LOGISTICS_AREA",
+}
 
 
 @dataclass(frozen=True)
@@ -210,9 +219,17 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     if config.get("equation_id") != "REFINEMENT_TRIGGER_V1":
         raise ValueError("Unsupported fractal refinement equation_id")
 
-    levels = tuple(str(item) for item in config.get("supported_levels", []))
-    if levels != SUPPORTED_LEVELS:
-        raise ValueError("v0.19 supported fractal levels must remain canonical")
+    levels = tuple(
+        str(item)
+        for item in config.get(
+            "supported_base_levels",
+            config.get("supported_levels", []),
+        )
+    )
+    if levels != SUPPORTED_BASE_LEVELS:
+        raise ValueError(
+            "Fractal evaluator supported base levels must remain canonical"
+        )
 
     components_raw = config.get("components")
     if not isinstance(components_raw, dict):
@@ -376,19 +393,32 @@ def _validate_parameters(
     )
 
 
+def _node_base_level(state: EngineState) -> str:
+    logger.info("_node_base_level node=%s", state.node_id)
+    raw = state.metadata.get("fractal_level")
+    base_level = "L1_COUNTRY" if raw is None else str(raw)
+    if base_level not in SUPPORTED_BASE_LEVELS:
+        raise ValueError(
+            f"Unsupported fractal base level {base_level} for {state.node_id}"
+        )
+    return base_level
+
+
 def _initial_persistence(
     *,
     state: EngineState,
     persistence: FractalRefinementPersistenceState | None,
+    base_level: str,
 ) -> tuple[str, int, int]:
     logger.info(
-        "_initial_persistence node=%s day=%s supplied=%s",
+        "_initial_persistence node=%s day=%s base=%s supplied=%s",
         state.node_id,
         state.day,
+        base_level,
         persistence is not None,
     )
     if persistence is None:
-        return "L1_COUNTRY", 0, 0
+        return base_level, 0, 0
     if persistence.node_id != state.node_id:
         raise ValueError("Fractal refinement persistence node mismatch")
     if state.day != persistence.last_evaluated_day + 1:
@@ -396,9 +426,19 @@ def _initial_persistence(
             "Fractal refinement persistence requires consecutive days: "
             f"last={persistence.last_evaluated_day} current={state.day}"
         )
-    if persistence.current_level not in SUPPORTED_LEVELS:
+    if persistence.current_level not in SUPPORTED_RESOLUTION_LEVELS:
         raise ValueError(
-            f"Unsupported fractal level {persistence.current_level}"
+            f"Unsupported fractal resolution level "
+            f"{persistence.current_level}"
+        )
+    allowed = {
+        base_level,
+        NEXT_RESOLUTION_LEVEL[base_level],
+    }
+    if persistence.current_level not in allowed:
+        raise ValueError(
+            f"Persistence level {persistence.current_level} is not adjacent "
+            f"to base level {base_level}"
         )
     return (
         persistence.current_level,
@@ -458,7 +498,7 @@ def evaluate_fractal_refinement(
     manifest: RunManifest,
     trace: TraceLedger,
 ) -> FractalRefinementEvaluationResult:
-    """Evaluate one read-only L1/L2 refinement or collapse decision."""
+    """Evaluate one read-only adjacent refinement/collapse decision."""
     logger.info(
         "evaluate_fractal_refinement node=%s day=%s profile=%s",
         state.node_id,
@@ -499,15 +539,18 @@ def evaluate_fractal_refinement(
     if not 0.0 <= refinement_pressure <= 1.0:
         raise ValueError("Fractal refinement pressure outside [0,1]")
 
+    base_level = _node_base_level(state)
     current_level, prior_expand, prior_collapse = _initial_persistence(
         state=state,
         persistence=persistence,
+        base_level=base_level,
     )
     expand_streak = 0
     collapse_streak = 0
     proposals: list[FractalRefinementActionProposal] = []
 
-    if current_level == "L1_COUNTRY":
+    refined_level = NEXT_RESOLUTION_LEVEL[base_level]
+    if current_level == base_level:
         expand_streak = (
             prior_expand + 1
             if refinement_pressure >= expand_threshold
@@ -515,12 +558,12 @@ def evaluate_fractal_refinement(
         )
         matured = expand_streak >= expand_days
         action = "EXPAND"
-        from_level = "L1_COUNTRY"
-        to_level = "L2_REGION"
+        from_level = base_level
+        to_level = refined_level
         threshold = expand_threshold
         observed = expand_streak
         required = expand_days
-    elif current_level == "L2_REGION":
+    elif current_level == refined_level:
         collapse_streak = (
             prior_collapse + 1
             if refinement_pressure <= collapse_threshold
@@ -528,13 +571,16 @@ def evaluate_fractal_refinement(
         )
         matured = collapse_streak >= collapse_days
         action = "COLLAPSE"
-        from_level = "L2_REGION"
-        to_level = "L1_COUNTRY"
+        from_level = refined_level
+        to_level = base_level
         threshold = collapse_threshold
         observed = collapse_streak
         required = collapse_days
     else:
-        raise ValueError(f"Unsupported fractal level {current_level}")
+        raise ValueError(
+            f"Unsupported active resolution {current_level} "
+            f"for base level {base_level}"
+        )
 
     source_variables = tuple(
         sorted(
@@ -551,6 +597,7 @@ def evaluate_fractal_refinement(
         node_id=state.node_id,
         day=state.day,
         current_level=current_level,
+        base_level=base_level,
         refinement_pressure=refinement_pressure,
         component_scores=[
             item.to_dict() for item in component_scores
