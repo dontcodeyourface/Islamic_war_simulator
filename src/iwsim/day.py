@@ -2049,21 +2049,136 @@ def run_day_transaction(
         if fractal_runtime_plan_before.refined_parent_ids:
             if enable_graph_spillover:
                 raise RuntimeError(
-                    "v0.26 active L2 does not yet support multiscale graph "
+                    "v0.28 active L2 does not yet support multiscale graph "
                     "spillover; disable graph spillover until v0.29/v0.30"
                 )
-            if enable_phase_transitions:
+            if enable_phase_transitions and not enable_fractal_regional_regimes:
                 raise RuntimeError(
-                    "v0.26 active L2 does not yet support regional phase "
-                    "execution; disable phase transitions until v0.28"
+                    "Active L2 phase execution requires "
+                    "enable_fractal_regional_regimes"
                 )
-            if enable_security_regime_evaluator or (
+            if (
+                enable_security_regime_evaluator
+                or enable_security_regime_recovery_evaluator
+            ) and not enable_fractal_regional_regimes:
+                raise RuntimeError(
+                    "Active L2 security-regime execution requires "
+                    "enable_fractal_regional_regimes"
+                )
+
+    if enable_fractal_regional_regimes:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Regional regime runtime requires fractal runtime planning"
+            )
+        if fractal_regional_regime_config is None:
+            raise ValueError(
+                "Regional regime runtime requires "
+                "fractal_regional_regime_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_regional_regime_runtime_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Regional regime runtime is disabled by the day transaction contract"
+            )
+        required_flags = {
+            "phase_transitions": enable_phase_transitions,
+            "security_regime_evaluator": enable_security_regime_evaluator,
+            "security_regime_commits": enable_security_regime_commits,
+            "security_regime_recovery_evaluator": (
                 enable_security_regime_recovery_evaluator
-            ):
-                raise RuntimeError(
-                    "v0.26 active L2 does not yet support regional security "
-                    "regime execution; disable regime evaluators until v0.28"
+            ),
+            "security_regime_recovery_commits": (
+                enable_security_regime_recovery_commits
+            ),
+        }
+        disabled = sorted(
+            name for name, enabled in required_flags.items()
+            if not enabled
+        )
+        if disabled:
+            raise ValueError(
+                "Regional regime runtime requires global L1/L2 regime "
+                f"features enabled: {disabled}"
+            )
+        required_configs = {
+            "phase_config": phase_config,
+            "phase_transition_config": phase_transition_config,
+            "security_regime_config": security_regime_config,
+            "security_regime_transition_config": (
+                security_regime_transition_config
+            ),
+            "security_regime_recovery_config": (
+                security_regime_recovery_config
+            ),
+            "security_regime_recovery_transition_config": (
+                security_regime_recovery_transition_config
+            ),
+        }
+        missing_configs = sorted(
+            name for name, value in required_configs.items()
+            if value is None
+        )
+        if missing_configs:
+            raise ValueError(
+                "Regional regime runtime missing configs: "
+                f"{missing_configs}"
+            )
+        assert fractal_runtime_plan_before is not None
+        assert normalized_fractal_child_store is not None
+        active_regional_ids = (
+            fractal_runtime_plan_before.active_regional_node_ids
+        )
+        unknown_regional_context = (
+            set(normalized_fractal_regional_context_flags)
+            - set(active_regional_ids)
+        )
+        if unknown_regional_context:
+            raise ValueError(
+                "Regional regime context contains unknown/inactive L2 nodes: "
+                f"{sorted(unknown_regional_context)}"
+            )
+        normalized_fractal_regional_regime_store = (
+            bootstrap_or_validate_regional_regime_store(
+                child_store=normalized_fractal_child_store,
+                active_node_ids=active_regional_ids,
+                supplied_store=fractal_regional_regime_store,
+            )
+        )
+        fractal_regional_regime_inputs = {
+            "regional_config_hash": canonical_hash(
+                fractal_regional_regime_config
+            ),
+            "persistence_store": (
+                normalized_fractal_regional_regime_store.to_dict()
+            ),
+            "context_flags": {
+                node_id: dict(sorted(flags.items()))
+                for node_id, flags in sorted(
+                    normalized_fractal_regional_context_flags.items()
                 )
+            },
+            "phase_config_hash": canonical_hash(phase_config),
+            "phase_transition_config_hash": canonical_hash(
+                phase_transition_config
+            ),
+            "security_regime_config_hash": canonical_hash(
+                security_regime_config
+            ),
+            "security_transition_config_hash": canonical_hash(
+                security_regime_transition_config
+            ),
+            "security_recovery_config_hash": canonical_hash(
+                security_regime_recovery_config
+            ),
+            "security_recovery_transition_config_hash": canonical_hash(
+                security_regime_recovery_transition_config
+            ),
+        }
 
     if enable_security_regime_recovery_commits:
         if not enable_security_regime_recovery_evaluator:
