@@ -1,0 +1,50 @@
+schema_version: "1.0"
+status: "implementation-v0.26"
+purpose: "Autonomous node-local dynamics for beginning-of-day active L2 regional EngineState."
+
+mode:
+  autonomous_l2_dynamics_allowed: true
+  child_clock_advance_deferred_to_child_state_commit: true
+  one_owner_resolution_pass_per_l2_runtime: true
+
+supported_modules:
+  bounded_recovery: true
+  extremist_network_dynamics: true
+  reciprocal_radicalization: true
+  security_chain_dynamics: true
+
+deferred_modules:
+  strategic_event_projection: "v0.30"
+  graph_projection: "v0.29"
+  graph_spillover_execution: "v0.30"
+  security_regime_execution: "v0.28"
+  national_phase_execution: "v0.28"
+  parent_child_coupling: "v0.31"
+  dynamic_categorical_reaggregation: "v0.32"
+
+rules:
+  beginning_of_day_active_l2_only: true
+  new_same_day_children_do_not_execute: true
+  refined_l1_node_local_regional_dynamics_suppressed: true
+  proposal_target_must_be_active_l2: true
+  proposal_variable_must_be_regionalizable: true
+  national_only_child_proposal_forbidden: true
+  owner_resolution_uses_existing_generic_resolver: true
+  child_state_day_unchanged_until_child_state_commit: true
+  inactive_lineage_execution_forbidden: true
+  l1_event_or_spillover_regional_delta_to_refined_parent_fails_closed: true
+  unsupported_regime_execution_on_refined_parent_fails_closed: true
+  refined_parent_collapse_evaluation_deferred_until_child_aggregation: true
+  trace_required: true
+
+trace:
+  proposal_record: "fractal_l2_proposal"
+  resolution_record: "fractal_l2_resolution"
+  committed_record: "fractal_l2_dynamics_committed"
+
+safety:
+  civilian_identity_direct_dynamic_input: false
+  tactical_target_selection: false
+  weapon_selection: false
+  route_planning: false
+  operational_execution: false
