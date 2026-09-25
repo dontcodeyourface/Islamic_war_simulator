@@ -12,7 +12,12 @@ from .fractal import (
 )
 from .fractal_lifecycle import (
     allocate_lineage_generation,
+    allocate_recursive_lineage_generation,
     validate_lifecycle_config,
+)
+from .fractal_levels import (
+    validate_adjacent_expansion,
+    validate_topology_level,
 )
 from .manifest import RunManifest
 from .trace import TraceLedger
@@ -216,10 +221,7 @@ def _validate_topology(topology: FractalTopologyState) -> None:
     if len(node_ids) != len(set(node_ids)):
         raise ValueError("Duplicate node IDs in fractal topology")
     for item in topology.nodes:
-        if item.level != "L2_REGION":
-            raise ValueError(
-                f"v0.24 topology node {item.node_id} must be L2_REGION"
-            )
+        validate_topology_level(item.level)
         if item.initialization_weight <= 0.0:
             raise ValueError(
                 f"Fractal node {item.node_id} must have positive weight"
@@ -242,11 +244,11 @@ def _validate_topology(topology: FractalTopologyState) -> None:
 def _catalog_children(
     *,
     parent_node_id: str,
-    region_catalog: dict[str, Any],
+    child_catalog: dict[str, Any],
     constraints: dict[str, Any],
 ) -> tuple[dict[str, Any], ...]:
     logger.info("_catalog_children parent=%s", parent_node_id)
-    parents = region_catalog.get("parents")
+    parents = child_catalog.get("parents")
     if not isinstance(parents, dict):
         raise ValueError("Fractal region catalog parents must be a mapping")
     parent = parents.get(parent_node_id)
@@ -354,12 +356,12 @@ def _commit_id(
     return f"fractal-commit-{digest[:24]}"
 
 
-def materialize_l1_to_l2(
+def materialize_next_level(
     *,
     action: FractalRefinementActionProposal,
     persistence: FractalRefinementPersistenceState,
     topology: FractalTopologyState,
-    region_catalog: dict[str, Any],
+    child_catalog: dict[str, Any],
     materialization_config: dict[str, Any],
     manifest: RunManifest,
     trace: TraceLedger,
@@ -368,12 +370,14 @@ def materialize_l1_to_l2(
     FractalRefinementPersistenceState,
     FractalMaterializationCommitRecord,
 ]:
-    """Commit one matured L1->L2 topology expansion without child EngineState."""
+    """Commit one adjacent fractal topology expansion without child EngineState."""
     logger.info(
-        "materialize_l1_to_l2 parent=%s day=%s action=%s",
+        "materialize_next_level parent=%s day=%s action=%s from=%s to=%s",
         action.node_id,
         action.day,
         action.action,
+        action.from_level,
+        action.to_level,
     )
     constraints = _validate_materialization_config(materialization_config)
     _validate_topology(topology)
@@ -383,14 +387,18 @@ def materialize_l1_to_l2(
             f"Fractal action {action.action_id} is not commit-eligible"
         )
     if action.action != "EXPAND":
-        raise ValueError("v0.24 materializer supports EXPAND only")
-    if action.from_level != "L1_COUNTRY" or action.to_level != "L2_REGION":
-        raise ValueError("v0.24 supports only L1_COUNTRY -> L2_REGION")
+        raise ValueError("Fractal materializer supports EXPAND only")
+    validate_adjacent_expansion(
+        from_level=action.from_level,
+        to_level=action.to_level,
+        materialization_config=materialization_config,
+    )
     if persistence.node_id != action.node_id:
         raise ValueError("Fractal action/persistence node mismatch")
-    if persistence.current_level != "L1_COUNTRY":
+    if persistence.current_level != action.from_level:
         raise ValueError(
-            f"Fractal parent {action.node_id} is not at L1_COUNTRY"
+            f"Fractal parent {action.node_id} persistence level "
+            f"{persistence.current_level} != action from_level {action.from_level}"
         )
     if persistence.last_evaluated_day != action.day:
         raise ValueError(
@@ -410,19 +418,52 @@ def materialize_l1_to_l2(
             f"Fractal parent {action.node_id} already has active children"
         )
 
+    catalog_parent_node_id = action.node_id
+    if action.from_level != "L1_COUNTRY":
+        parent_candidates = [
+            item for item in topology.nodes
+            if item.node_id == action.node_id and item.active
+        ]
+        if len(parent_candidates) != 1:
+            raise ValueError(
+                f"Recursive fractal parent {action.node_id} must be one "
+                "active topology node"
+            )
+        parent_topology_node = parent_candidates[0]
+        if parent_topology_node.level != action.from_level:
+            raise ValueError(
+                f"Recursive fractal parent {action.node_id} topology level "
+                f"{parent_topology_node.level} != {action.from_level}"
+            )
+        catalog_parent_node_id = (
+            parent_topology_node.catalog_child_id
+            if parent_topology_node.catalog_child_id is not None
+            else parent_topology_node.node_id
+        )
+
     children = _catalog_children(
-        parent_node_id=action.node_id,
-        region_catalog=region_catalog,
+        parent_node_id=catalog_parent_node_id,
+        child_catalog=child_catalog,
         constraints=constraints,
     )
-    allocations = allocate_lineage_generation(
-        parent_node_id=action.node_id,
-        catalog_child_ids=tuple(
-            item["child_id"] for item in children
-        ),
-        topology=topology,
-        materialization_config=materialization_config,
+    catalog_child_ids_for_allocation = tuple(
+        item["child_id"] for item in children
     )
+    if action.from_level == "L1_COUNTRY":
+        allocations = allocate_lineage_generation(
+            parent_node_id=action.node_id,
+            catalog_child_ids=catalog_child_ids_for_allocation,
+            topology=topology,
+            materialization_config=materialization_config,
+        )
+    else:
+        allocations = allocate_recursive_lineage_generation(
+            runtime_parent_node_id=action.node_id,
+            catalog_parent_node_id=catalog_parent_node_id,
+            catalog_child_ids=catalog_child_ids_for_allocation,
+            topology=topology,
+            materialization_config=materialization_config,
+        )
     allocation_by_catalog = {
         item.catalog_child_id: item for item in allocations
     }
@@ -439,7 +480,7 @@ def materialize_l1_to_l2(
     lineage_generation = next(iter(lineage_generations))
     lineage_policy_id = next(iter(lineage_policy_ids))
 
-    catalog_hash = canonical_hash(region_catalog)
+    catalog_hash = canonical_hash(child_catalog)
     topology_hash_before = topology.topology_hash()
 
     new_nodes = list(topology.nodes)
@@ -450,7 +491,7 @@ def materialize_l1_to_l2(
                 node_id=allocation.runtime_node_id,
                 label=child["label"],
                 parent_node_id=action.node_id,
-                level="L2_REGION",
+                level=action.to_level,
                 created_day=action.day,
                 refinement_action_id=action.action_id,
                 refinement_reason=action.refinement_reason,
@@ -478,7 +519,7 @@ def materialize_l1_to_l2(
 
     persistence_after = FractalRefinementPersistenceState(
         node_id=persistence.node_id,
-        current_level="L2_REGION",
+        current_level=action.to_level,
         last_evaluated_day=persistence.last_evaluated_day,
         expand_streak=0,
         collapse_streak=0,
@@ -528,6 +569,39 @@ def materialize_l1_to_l2(
         )
     return topology_after, persistence_after, record
 
+
+
+def materialize_l1_to_l2(
+    *,
+    action: FractalRefinementActionProposal,
+    persistence: FractalRefinementPersistenceState,
+    topology: FractalTopologyState,
+    region_catalog: dict[str, Any],
+    materialization_config: dict[str, Any],
+    manifest: RunManifest,
+    trace: TraceLedger,
+) -> tuple[
+    FractalTopologyState,
+    FractalRefinementPersistenceState,
+    FractalMaterializationCommitRecord,
+]:
+    """Backward-compatible L1->L2 wrapper over the recursive materializer."""
+    logger.info(
+        "materialize_l1_to_l2 parent=%s day=%s",
+        action.node_id,
+        action.day,
+    )
+    if action.from_level != "L1_COUNTRY" or action.to_level != "L2_REGION":
+        raise ValueError("L1/L2 wrapper supports only L1_COUNTRY -> L2_REGION")
+    return materialize_next_level(
+        action=action,
+        persistence=persistence,
+        topology=topology,
+        child_catalog=region_catalog,
+        materialization_config=materialization_config,
+        manifest=manifest,
+        trace=trace,
+    )
 
 def advance_fractal_topology_without_materialization(
     *,
