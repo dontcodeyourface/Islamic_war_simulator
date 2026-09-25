@@ -88,6 +88,14 @@ jobs:
             echo '~~~'
           } > /tmp/pytest-comment.md
           gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/pytest-comment.md
+      - name: Upload pytest failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-failure-${{ matrix.python-version }}
+          path: /tmp/pytest.log
+          if-no-files-found: warn
+          retention-days: 1
       - name: Spain smoke replay
         run: |
           iwsim smoke             --repo-root .             --country config/countries/spain.yaml             --seed 42             --days 30             --git-commit "${GITHUB_SHA}"             --out /tmp/iwsim-spain
