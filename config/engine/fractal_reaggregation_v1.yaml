@@ -1,11 +1,11 @@
 schema_version: "1.0"
-status: "implementation-v0.23"
-purpose: "Atomic conservative L2->L1 collapse and parent-state reaggregation."
+status: "implementation-v0.34c3"
+purpose: "Atomic conservative adjacent L3->L2 and L2->L1 collapse with parent-state reaggregation."
 
 mode:
   enabled: true
   collapse_commit_allowed: true
-  l2_to_l1_only: true
+  l2_to_l1_only: false\n  adjacent_recursive_collapse_allowed: true
   complete_active_sibling_set_required: true
   child_dynamics_allowed: false
   country_graph_child_activation: false
