@@ -264,6 +264,26 @@ def test_v026_safe_modules_only_target_active_l2() -> None:
         "TST::R1",
         "TST::R2",
     }
+    assert all(
+        item.runtime_level == "L2_REGION"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_parent_node_id == "TST"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_authority_scope == "REGIONALIZABLE"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_plan_hash == plan.plan_hash()
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_policy_id == plan.policy_id
+        for item in result.resolutions
+    )
 
 
 def test_v026_rejects_national_only_child_mutation() -> None:
