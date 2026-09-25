@@ -252,7 +252,7 @@ def test_refined_plan_moves_regionalizable_authority_to_active_l2() -> None:
         assert child.owns_regionalizable_state is True
         assert child.owns_national_only_state is False
         assert child.authority_scope == "REGIONALIZABLE"
-        assert child.execution_status == "L2_REGIONAL_AUTHORITY_ACTIVE_V0_26"
+        assert child.execution_status == "L2_REGIONAL_AUTHORITY_ACTIVE_V0_29"
 
     assert "TST::OLD" not in by_id
 
