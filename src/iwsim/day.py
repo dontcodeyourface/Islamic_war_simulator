@@ -2543,6 +2543,12 @@ def run_day_transaction(
             phase="BEGINNING_OF_DAY",
             trace=staged_trace,
         )
+    if fractal_projected_graph_before is not None:
+        trace_fractal_projected_graph(
+            graph=fractal_projected_graph_before,
+            phase="BEGINNING_OF_DAY",
+            trace=staged_trace,
+        )
 
     fractal_child_dynamics_proposals: tuple[DeltaProposal, ...] = ()
     fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...] = ()
