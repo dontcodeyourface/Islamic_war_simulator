@@ -44,6 +44,12 @@ from .fractal_reaggregation import (
     FractalReaggregationAuditRecord,
     commit_fractal_collapses,
 )
+from .fractal_regional_regime import (
+    FractalRegionalRegimeResult,
+    FractalRegionalRegimeStore,
+    bootstrap_or_validate_regional_regime_store,
+    execute_regional_regime_runtime,
+)
 from .fractal_runtime import (
     FractalRuntimePlan,
     assert_beginning_of_day_runtime_supported,
@@ -193,6 +199,7 @@ class DayTransactionResult:
     fractal_runtime_plan_after: FractalRuntimePlan | None
     fractal_child_dynamics_proposals: tuple[DeltaProposal, ...]
     fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...]
+    fractal_regional_regime_result: FractalRegionalRegimeResult | None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -343,6 +350,11 @@ class DayTransactionResult:
                 item.to_dict()
                 for item in self.fractal_child_dynamics_resolutions
             ],
+            "fractal_regional_regime_result": (
+                self.fractal_regional_regime_result.to_dict()
+                if self.fractal_regional_regime_result is not None
+                else None
+            ),
         }
 
 
@@ -886,6 +898,7 @@ def _transaction_id(
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
     fractal_runtime_inputs: dict[str, Any] | None = None,
+    fractal_regional_regime_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -917,6 +930,9 @@ def _transaction_id(
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
             "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
             "fractal_runtime_inputs": fractal_runtime_inputs,
+            "fractal_regional_regime_inputs": (
+                fractal_regional_regime_inputs
+            ),
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1760,6 +1776,12 @@ def run_day_transaction(
     fractal_reaggregation_config: dict[str, Any] | None = None,
     enable_fractal_runtime_plan: bool = False,
     fractal_runtime_config: dict[str, Any] | None = None,
+    enable_fractal_regional_regimes: bool = False,
+    fractal_regional_regime_config: dict[str, Any] | None = None,
+    fractal_regional_regime_store: FractalRegionalRegimeStore | None = None,
+    fractal_regional_context_flags: (
+        dict[str, dict[str, bool]] | None
+    ) = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1794,7 +1816,17 @@ def run_day_transaction(
     fractal_uncertainty_inputs: dict[str, Any] | None = None
     fractal_reaggregation_inputs: dict[str, Any] | None = None
     fractal_runtime_inputs: dict[str, Any] | None = None
+    fractal_regional_regime_inputs: dict[str, Any] | None = None
     fractal_runtime_plan_before: FractalRuntimePlan | None = None
+    normalized_fractal_regional_regime_store: (
+        FractalRegionalRegimeStore | None
+    ) = None
+    normalized_fractal_regional_context_flags = {
+        node_id: dict(flags)
+        for node_id, flags in (
+            fractal_regional_context_flags or {}
+        ).items()
+    }
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -2291,6 +2323,9 @@ def run_day_transaction(
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
         fractal_reaggregation_inputs=fractal_reaggregation_inputs,
         fractal_runtime_inputs=fractal_runtime_inputs,
+        fractal_regional_regime_inputs=(
+            fractal_regional_regime_inputs
+        ),
     )
 
     working_rng = rng.clone()
@@ -3012,5 +3047,8 @@ def run_day_transaction(
         ),
         fractal_child_dynamics_resolutions=(
             fractal_child_dynamics_resolutions
+        ),
+        fractal_regional_regime_result=(
+            fractal_regional_regime_result
         ),
     )
