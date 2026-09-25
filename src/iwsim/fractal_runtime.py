@@ -492,13 +492,15 @@ def assert_beginning_of_day_runtime_supported(
     *,
     plan: FractalRuntimePlan,
     runtime_config: dict[str, Any],
+    autonomous_execution_enabled: bool = False,
 ) -> None:
     logger.info(
         "assert_beginning_of_day_runtime_supported day=%s refined=%s "
-        "child_dynamics=%s",
+        "plan_child_dynamics=%s execution_enabled=%s",
         plan.day,
         len(plan.refined_parent_ids),
         plan.autonomous_child_dynamics_allowed,
+        autonomous_execution_enabled,
     )
     mode = runtime_config.get("mode", {})
     require_autonomous = bool(
@@ -507,17 +509,19 @@ def assert_beginning_of_day_runtime_supported(
             True,
         )
     )
-    if (
-        require_autonomous
-        and plan.refined_parent_ids
-        and not plan.autonomous_child_dynamics_allowed
-    ):
+    if not require_autonomous or not plan.refined_parent_ids:
+        return
+    if not plan.autonomous_child_dynamics_allowed:
         raise RuntimeError(
             "Active L2 authority detected at beginning of day for "
-            f"{list(plan.refined_parent_ids)}, but autonomous child dynamics "
-            "are not implemented in v0.25. Refusing legacy L1 regional "
-            "execution to prevent duplicate or incorrect scale authority; "
-            "v0.26 must execute the active L2 runtime."
+            f"{list(plan.refined_parent_ids)}, but the runtime contract "
+            "does not allow autonomous child dynamics."
+        )
+    if not autonomous_execution_enabled:
+        raise RuntimeError(
+            "Active L2 authority detected at beginning of day for "
+            f"{list(plan.refined_parent_ids)}, but autonomous L2 execution "
+            "was not enabled for this day transaction."
         )
 
 
