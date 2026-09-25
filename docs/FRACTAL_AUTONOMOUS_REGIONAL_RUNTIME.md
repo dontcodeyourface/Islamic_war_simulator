@@ -402,7 +402,7 @@ Define the contract for categorical aggregation.
 
 Implementation detail: [FRACTAL_REGIONAL_REGIMES_V0.28.md](FRACTAL_REGIONAL_REGIMES_V0.28.md).
 
-### v0.29 — multiscale graph projection
+### v0.29 — multiscale graph projection — IMPLEMENTED
 
 Implement:
 
@@ -411,6 +411,8 @@ Implement:
 - explicit channel-specific allocation rules;
 - null preservation;
 - deterministic graph identity.
+
+Implementation detail: [FRACTAL_GRAPH_PROJECTION_V0.29.md](FRACTAL_GRAPH_PROJECTION_V0.29.md).
 
 ### v0.30 — regional event and spillover execution
 
