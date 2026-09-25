@@ -3188,6 +3188,43 @@ def run_day_transaction(
             if fractal_runtime_plan_after is not None
             else None
         ),
+        fractal_regional_regime_store_hash=(
+            fractal_regional_regime_result.persistence_store.store_hash()
+            if fractal_regional_regime_result is not None
+            else None
+        ),
+        fractal_regional_phase_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.phase_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_regional_security_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.security_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_regional_security_recovery_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.recovery_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_categorical_divergence_audit_ids=(
+            [
+                item.audit_id
+                for item in fractal_regional_regime_result.divergence_audits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
             if fractal_child_state_store_out is not None
