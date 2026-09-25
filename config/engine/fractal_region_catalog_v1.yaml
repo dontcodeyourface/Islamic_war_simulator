@@ -100,15 +100,15 @@ parents:
     weight_reference_date: "2024-09-01"
     weight_quality: "official_rounded"
     children:
-      - {child_id: "MAR::01", label: "Tanger-Tétouan-Al Hoceima", initialization_weight: 0.109428152493}
-      - {child_id: "MAR::02", label: "Oriental", initialization_weight: 0.062289562832}
+      - {child_id: "MAR::01", label: "Tanger-Tétouan-Al Hoceima", initialization_weight: 0.109427609428}
+      - {child_id: "MAR::02", label: "Oriental", initialization_weight: 0.062289562290}
       - {child_id: "MAR::03", label: "Fès-Meknès", initialization_weight: 0.121320734224}
-      - {child_id: "MAR::04", label: "Rabat-Salé-Kénitra", initialization_weight: 0.139378733572}
-      - {child_id: "MAR::05", label: "Béni Mellal-Khénifra", initialization_weight: 0.068589659498}
-      - {child_id: "MAR::06", label: "Casablanca-Settat", initialization_weight: 0.208782990116}
-      - {child_id: "MAR::07", label: "Marrakech-Safi", initialization_weight: 0.132834799609}
-      - {child_id: "MAR::08", label: "Drâa-Tafilalet", initialization_weight: 0.044965243293}
-      - {child_id: "MAR::09", label: "Souss-Massa", initialization_weight: 0.081999565005}
-      - {child_id: "MAR::10", label: "Guelmim-Oued Noun", initialization_weight: 0.012191267554}
-      - {child_id: "MAR::11", label: "Laâyoune-Sakia El Hamra", initialization_weight: 0.012245570761}
-      - {child_id: "MAR::12", label: "Dakhla-Oued Ed-Dahab", initialization_weight: 0.005973720043}
+      - {child_id: "MAR::04", label: "Rabat-Salé-Kénitra", initialization_weight: 0.139377647442}
+      - {child_id: "MAR::05", label: "Béni Mellal-Khénifra", initialization_weight: 0.068589116976}
+      - {child_id: "MAR::06", label: "Casablanca-Settat", initialization_weight: 0.208781362007}
+      - {child_id: "MAR::07", label: "Marrakech-Safi", initialization_weight: 0.132833713479}
+      - {child_id: "MAR::08", label: "Drâa-Tafilalet", initialization_weight: 0.044965786901}
+      - {child_id: "MAR::09", label: "Souss-Massa", initialization_weight: 0.082002823938}
+      - {child_id: "MAR::10", label: "Guelmim-Oued Noun", initialization_weight: 0.012191810579}
+      - {child_id: "MAR::11", label: "Laâyoune-Sakia El Hamra", initialization_weight: 0.012246117085}
+      - {child_id: "MAR::12", label: "Dakhla-Oued Ed-Dahab", initialization_weight: 0.005973715651}
