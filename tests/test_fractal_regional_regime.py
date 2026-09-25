@@ -289,13 +289,13 @@ def test_new_child_is_initialized_but_not_evaluated_same_day() -> None:
     logger.info(
         "test_new_child_is_initialized_but_not_evaluated_same_day"
     )
+    base = _run()
+    states = tuple(base.child_store.states) + (
+        _state("TST::R3", day=2, stressed=True),
+    )
     child_store = FractalChildStateStore(
         last_initialized_day=2,
-        states=(
-            _state("TST::R1", day=2, stressed=True),
-            _state("TST::R2", day=2, stressed=False),
-            _state("TST::R3", day=2, stressed=True),
-        ),
+        states=states,
     )
     trace = TraceLedger()
     result = execute_regional_regime_runtime(
@@ -434,21 +434,3 @@ def test_regional_runtime_failure_does_not_publish_partial_trace() -> None:
             trace=trace,
         )
     assert trace.records == []
-
-
-def test_debug_regional_run_only() -> None:
-    logger.info("test_debug_regional_run_only")
-    result = _run()
-    assert result is not None
-
-
-def test_debug_regional_config_only() -> None:
-    logger.info("test_debug_regional_config_only")
-    from iwsim.fractal_regional_regime import _validate_config
-
-    policy = _validate_config(
-        load_yaml(ROOT / "config/engine/fractal_regional_regime_v1.yaml")
-    )
-    assert policy["aggregation_policy_id"] == (
-        "FRACTAL_CATEGORICAL_AGGREGATION_V1"
-    )
