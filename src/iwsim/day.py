@@ -44,6 +44,12 @@ from .fractal_reaggregation import (
     FractalReaggregationAuditRecord,
     commit_fractal_collapses,
 )
+from .fractal_regional_regime import (
+    FractalRegionalRegimeResult,
+    FractalRegionalRegimeStore,
+    bootstrap_or_validate_regional_regime_store,
+    execute_regional_regime_runtime,
+)
 from .fractal_runtime import (
     FractalRuntimePlan,
     assert_beginning_of_day_runtime_supported,
@@ -193,6 +199,7 @@ class DayTransactionResult:
     fractal_runtime_plan_after: FractalRuntimePlan | None
     fractal_child_dynamics_proposals: tuple[DeltaProposal, ...]
     fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...]
+    fractal_regional_regime_result: FractalRegionalRegimeResult | None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -343,6 +350,11 @@ class DayTransactionResult:
                 item.to_dict()
                 for item in self.fractal_child_dynamics_resolutions
             ],
+            "fractal_regional_regime_result": (
+                self.fractal_regional_regime_result.to_dict()
+                if self.fractal_regional_regime_result is not None
+                else None
+            ),
         }
 
 
@@ -886,6 +898,7 @@ def _transaction_id(
     fractal_uncertainty_inputs: dict[str, Any] | None = None,
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
     fractal_runtime_inputs: dict[str, Any] | None = None,
+    fractal_regional_regime_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -917,6 +930,9 @@ def _transaction_id(
             "fractal_uncertainty_inputs": fractal_uncertainty_inputs,
             "fractal_reaggregation_inputs": fractal_reaggregation_inputs,
             "fractal_runtime_inputs": fractal_runtime_inputs,
+            "fractal_regional_regime_inputs": (
+                fractal_regional_regime_inputs
+            ),
         }
     )
     return f"daytx-{digest[:24]}"
@@ -1760,6 +1776,12 @@ def run_day_transaction(
     fractal_reaggregation_config: dict[str, Any] | None = None,
     enable_fractal_runtime_plan: bool = False,
     fractal_runtime_config: dict[str, Any] | None = None,
+    enable_fractal_regional_regimes: bool = False,
+    fractal_regional_regime_config: dict[str, Any] | None = None,
+    fractal_regional_regime_store: FractalRegionalRegimeStore | None = None,
+    fractal_regional_context_flags: (
+        dict[str, dict[str, bool]] | None
+    ) = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1794,7 +1816,17 @@ def run_day_transaction(
     fractal_uncertainty_inputs: dict[str, Any] | None = None
     fractal_reaggregation_inputs: dict[str, Any] | None = None
     fractal_runtime_inputs: dict[str, Any] | None = None
+    fractal_regional_regime_inputs: dict[str, Any] | None = None
     fractal_runtime_plan_before: FractalRuntimePlan | None = None
+    normalized_fractal_regional_regime_store: (
+        FractalRegionalRegimeStore | None
+    ) = None
+    normalized_fractal_regional_context_flags = {
+        node_id: dict(flags)
+        for node_id, flags in (
+            fractal_regional_context_flags or {}
+        ).items()
+    }
     normalized_fractal_child_store: FractalChildStateStore | None = None
     normalized_fractal_topology: FractalTopologyState | None = None
     normalized_fractal_refinement_persistence: dict[
@@ -2017,21 +2049,136 @@ def run_day_transaction(
         if fractal_runtime_plan_before.refined_parent_ids:
             if enable_graph_spillover:
                 raise RuntimeError(
-                    "v0.26 active L2 does not yet support multiscale graph "
+                    "v0.28 active L2 does not yet support multiscale graph "
                     "spillover; disable graph spillover until v0.29/v0.30"
                 )
-            if enable_phase_transitions:
+            if enable_phase_transitions and not enable_fractal_regional_regimes:
                 raise RuntimeError(
-                    "v0.26 active L2 does not yet support regional phase "
-                    "execution; disable phase transitions until v0.28"
+                    "Active L2 phase execution requires "
+                    "enable_fractal_regional_regimes"
                 )
-            if enable_security_regime_evaluator or (
+            if (
+                enable_security_regime_evaluator
+                or enable_security_regime_recovery_evaluator
+            ) and not enable_fractal_regional_regimes:
+                raise RuntimeError(
+                    "Active L2 security-regime execution requires "
+                    "enable_fractal_regional_regimes"
+                )
+
+    if enable_fractal_regional_regimes:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Regional regime runtime requires fractal runtime planning"
+            )
+        if fractal_regional_regime_config is None:
+            raise ValueError(
+                "Regional regime runtime requires "
+                "fractal_regional_regime_config"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_regional_regime_runtime_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Regional regime runtime is disabled by the day transaction contract"
+            )
+        required_flags = {
+            "phase_transitions": enable_phase_transitions,
+            "security_regime_evaluator": enable_security_regime_evaluator,
+            "security_regime_commits": enable_security_regime_commits,
+            "security_regime_recovery_evaluator": (
                 enable_security_regime_recovery_evaluator
-            ):
-                raise RuntimeError(
-                    "v0.26 active L2 does not yet support regional security "
-                    "regime execution; disable regime evaluators until v0.28"
+            ),
+            "security_regime_recovery_commits": (
+                enable_security_regime_recovery_commits
+            ),
+        }
+        disabled = sorted(
+            name for name, enabled in required_flags.items()
+            if not enabled
+        )
+        if disabled:
+            raise ValueError(
+                "Regional regime runtime requires global L1/L2 regime "
+                f"features enabled: {disabled}"
+            )
+        required_configs = {
+            "phase_config": phase_config,
+            "phase_transition_config": phase_transition_config,
+            "security_regime_config": security_regime_config,
+            "security_regime_transition_config": (
+                security_regime_transition_config
+            ),
+            "security_regime_recovery_config": (
+                security_regime_recovery_config
+            ),
+            "security_regime_recovery_transition_config": (
+                security_regime_recovery_transition_config
+            ),
+        }
+        missing_configs = sorted(
+            name for name, value in required_configs.items()
+            if value is None
+        )
+        if missing_configs:
+            raise ValueError(
+                "Regional regime runtime missing configs: "
+                f"{missing_configs}"
+            )
+        assert fractal_runtime_plan_before is not None
+        assert normalized_fractal_child_store is not None
+        active_regional_ids = (
+            fractal_runtime_plan_before.active_regional_node_ids
+        )
+        unknown_regional_context = (
+            set(normalized_fractal_regional_context_flags)
+            - set(active_regional_ids)
+        )
+        if unknown_regional_context:
+            raise ValueError(
+                "Regional regime context contains unknown/inactive L2 nodes: "
+                f"{sorted(unknown_regional_context)}"
+            )
+        normalized_fractal_regional_regime_store = (
+            bootstrap_or_validate_regional_regime_store(
+                child_store=normalized_fractal_child_store,
+                active_node_ids=active_regional_ids,
+                supplied_store=fractal_regional_regime_store,
+            )
+        )
+        fractal_regional_regime_inputs = {
+            "regional_config_hash": canonical_hash(
+                fractal_regional_regime_config
+            ),
+            "persistence_store": (
+                normalized_fractal_regional_regime_store.to_dict()
+            ),
+            "context_flags": {
+                node_id: dict(sorted(flags.items()))
+                for node_id, flags in sorted(
+                    normalized_fractal_regional_context_flags.items()
                 )
+            },
+            "phase_config_hash": canonical_hash(phase_config),
+            "phase_transition_config_hash": canonical_hash(
+                phase_transition_config
+            ),
+            "security_regime_config_hash": canonical_hash(
+                security_regime_config
+            ),
+            "security_transition_config_hash": canonical_hash(
+                security_regime_transition_config
+            ),
+            "security_recovery_config_hash": canonical_hash(
+                security_regime_recovery_config
+            ),
+            "security_recovery_transition_config_hash": canonical_hash(
+                security_regime_recovery_transition_config
+            ),
+        }
 
     if enable_security_regime_recovery_commits:
         if not enable_security_regime_recovery_evaluator:
@@ -2291,6 +2438,9 @@ def run_day_transaction(
         fractal_uncertainty_inputs=fractal_uncertainty_inputs,
         fractal_reaggregation_inputs=fractal_reaggregation_inputs,
         fractal_runtime_inputs=fractal_runtime_inputs,
+        fractal_regional_regime_inputs=(
+            fractal_regional_regime_inputs
+        ),
     )
 
     working_rng = rng.clone()
@@ -2499,6 +2649,11 @@ def run_day_transaction(
         resolved_states=resolution.states,
         engine_state_registry=engine_state_registry,
     )
+    l1_advanced_regional_states = {
+        node_id: state
+        for node_id, state in sorted(advanced_states.items())
+        if node_id not in refined_parent_ids
+    }
 
     security_regime_persistence_out: dict[
         str, SecurityRegimePersistenceState
@@ -2513,9 +2668,18 @@ def run_day_transaction(
             security_regime_evaluations,
             security_regime_proposals,
         ) = _evaluate_security_regimes(
-            states=advanced_states,
-            persistence=normalized_security_regime_persistence,
-            context_flags=normalized_security_regime_context_flags,
+            states=l1_advanced_regional_states,
+            persistence={
+                node_id: normalized_security_regime_persistence[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            context_flags={
+                node_id: normalized_security_regime_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             regime_config=security_regime_config,
             parameter_registry=parameter_registry,
             profile=profile,
@@ -2524,15 +2688,15 @@ def run_day_transaction(
         )
 
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...] = ()
-    security_committed_states = advanced_states
+    security_committed_states = dict(advanced_states)
     if enable_security_regime_commits:
         assert security_regime_transition_config is not None
         (
-            security_committed_states,
+            regional_security_committed_states,
             security_regime_persistence_out,
             security_regime_commits,
         ) = _commit_security_regimes(
-            states=advanced_states,
+            states=l1_advanced_regional_states,
             persistence=security_regime_persistence_out,
             proposals=security_regime_proposals,
             transition_config=security_regime_transition_config,
@@ -2540,6 +2704,33 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        security_committed_states.update(
+            regional_security_committed_states
+        )
+
+    if enable_security_regime_evaluator:
+        for node_id in sorted(refined_parent_ids):
+            current_regime = str(
+                advanced_states[node_id].regimes[
+                    "security_force_regime"
+                ]
+            )
+            security_regime_persistence_out[node_id] = (
+                SecurityRegimePersistenceState(
+                    node_id=node_id,
+                    current_regime=current_regime,
+                    last_evaluated_day=day_to,
+                    streaks=(),
+                )
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="security_force_regime",
+                value=current_regime,
+                reason="active_l2_authority",
+            )
 
     security_regime_recovery_persistence_out: dict[
         str, SecurityRegimeRecoveryPersistenceState
@@ -2558,9 +2749,23 @@ def run_day_transaction(
             security_regime_recovery_evaluations,
             security_regime_recovery_proposals,
         ) = _evaluate_security_regime_recoveries(
-            states=security_committed_states,
-            persistence=normalized_security_regime_recovery_persistence,
-            context_flags=normalized_security_regime_context_flags,
+            states={
+                node_id: security_committed_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            persistence={
+                node_id: normalized_security_regime_recovery_persistence[
+                    node_id
+                ]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            context_flags={
+                node_id: normalized_security_regime_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             recovery_config=security_regime_recovery_config,
             parameter_registry=parameter_registry,
             profile=profile,
@@ -2572,18 +2777,24 @@ def run_day_transaction(
     security_regime_recovery_commits: tuple[
         SecurityRegimeRecoveryCommitRecord, ...
     ] = ()
-    security_recovered_states = security_committed_states
+    security_recovered_states = dict(security_committed_states)
 
     if enable_security_regime_recovery_commits:
         assert security_regime_recovery_transition_config is not None
         (
-            security_recovered_states,
-            security_regime_persistence_out,
+            regional_security_recovered_states,
+            regional_escalation_persistence,
             security_regime_recovery_persistence_out,
             security_regime_recovery_commits,
         ) = _commit_security_regime_recoveries(
-            states=security_committed_states,
-            escalation_persistence=security_regime_persistence_out,
+            states={
+                node_id: security_committed_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            escalation_persistence={
+                node_id: security_regime_persistence_out[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             recovery_persistence=security_regime_recovery_persistence_out,
             proposals=security_regime_recovery_proposals,
             transition_config=security_regime_recovery_transition_config,
@@ -2591,6 +2802,35 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        security_recovered_states.update(
+            regional_security_recovered_states
+        )
+        for node_id, item in regional_escalation_persistence.items():
+            security_regime_persistence_out[node_id] = item
+
+    if enable_security_regime_recovery_evaluator:
+        for node_id in sorted(refined_parent_ids):
+            current_regime = str(
+                security_recovered_states[node_id].regimes[
+                    "security_force_regime"
+                ]
+            )
+            security_regime_recovery_persistence_out[node_id] = (
+                SecurityRegimeRecoveryPersistenceState(
+                    node_id=node_id,
+                    current_regime=current_regime,
+                    last_evaluated_day=day_to,
+                    streaks=(),
+                )
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="security_force_regime_recovery",
+                value=current_regime,
+                reason="active_l2_authority",
+            )
 
     phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
@@ -2602,15 +2842,27 @@ def run_day_transaction(
         assert phase_config is not None
         assert phase_transition_config is not None
         (
-            final_states,
+            regional_phase_states,
             phase_persistence_out,
             phase_evaluations,
             phase_arbitrations,
             phase_commits,
         ) = _evaluate_and_commit_phases(
-            states=security_recovered_states,
-            phase_persistence=normalized_phase_persistence,
-            phase_context_flags=normalized_phase_context_flags,
+            states={
+                node_id: security_recovered_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            phase_persistence={
+                node_id: normalized_phase_persistence[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            phase_context_flags={
+                node_id: normalized_phase_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             phase_config=phase_config,
             phase_transition_config=phase_transition_config,
             parameter_registry=parameter_registry,
@@ -2619,6 +2871,26 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        final_states = dict(security_recovered_states)
+        final_states.update(regional_phase_states)
+        for node_id in sorted(refined_parent_ids):
+            current_phase = str(
+                final_states[node_id].regimes["national_phase"]
+            )
+            phase_persistence_out[node_id] = PhasePersistenceState(
+                node_id=node_id,
+                current_phase=current_phase,
+                last_evaluated_day=day_to,
+                streaks=(),
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="national_phase",
+                value=current_phase,
+                reason="active_l2_authority",
+            )
 
     fractal_refinement_persistence_out: dict[
         str, FractalRefinementPersistenceState
@@ -2750,6 +3022,52 @@ def run_day_transaction(
         fractal_uncertainty_records = uncertainty_result.records
         fractal_uncertainty_audits = uncertainty_result.audits
 
+    fractal_regional_regime_result: (
+        FractalRegionalRegimeResult | None
+    ) = None
+    if enable_fractal_regional_regimes:
+        assert fractal_child_state_store_out is not None
+        assert normalized_fractal_regional_regime_store is not None
+        assert fractal_runtime_plan_before is not None
+        assert fractal_regional_regime_config is not None
+        assert phase_config is not None
+        assert phase_transition_config is not None
+        assert security_regime_config is not None
+        assert security_regime_transition_config is not None
+        assert security_regime_recovery_config is not None
+        assert security_regime_recovery_transition_config is not None
+        fractal_regional_regime_result = execute_regional_regime_runtime(
+            child_store=fractal_child_state_store_out,
+            beginning_active_node_ids=(
+                fractal_runtime_plan_before.active_regional_node_ids
+            ),
+            persistence_store=(
+                normalized_fractal_regional_regime_store
+            ),
+            context_flags=normalized_fractal_regional_context_flags,
+            regional_config=fractal_regional_regime_config,
+            phase_config=phase_config,
+            phase_transition_config=phase_transition_config,
+            security_regime_config=security_regime_config,
+            security_transition_config=(
+                security_regime_transition_config
+            ),
+            security_recovery_config=(
+                security_regime_recovery_config
+            ),
+            security_recovery_transition_config=(
+                security_regime_recovery_transition_config
+            ),
+            engine_state_registry=engine_state_registry,
+            parameter_registry=parameter_registry,
+            profile=profile,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = (
+            fractal_regional_regime_result.child_store
+        )
+
     fractal_collapse_commits: tuple[
         FractalCollapseCommitRecord, ...
     ] = ()
@@ -2869,6 +3187,43 @@ def run_day_transaction(
             fractal_runtime_plan_after.plan_hash()
             if fractal_runtime_plan_after is not None
             else None
+        ),
+        fractal_regional_regime_store_hash=(
+            fractal_regional_regime_result.persistence_store.store_hash()
+            if fractal_regional_regime_result is not None
+            else None
+        ),
+        fractal_regional_phase_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.phase_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_regional_security_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.security_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_regional_security_recovery_commit_ids=(
+            [
+                item.commit_id
+                for item in fractal_regional_regime_result.recovery_commits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
+        ),
+        fractal_categorical_divergence_audit_ids=(
+            [
+                item.audit_id
+                for item in fractal_regional_regime_result.divergence_audits
+            ]
+            if fractal_regional_regime_result is not None
+            else []
         ),
         fractal_child_state_store=(
             fractal_child_state_store_out.to_dict()
@@ -3012,5 +3367,8 @@ def run_day_transaction(
         ),
         fractal_child_dynamics_resolutions=(
             fractal_child_dynamics_resolutions
+        ),
+        fractal_regional_regime_result=(
+            fractal_regional_regime_result
         ),
     )
