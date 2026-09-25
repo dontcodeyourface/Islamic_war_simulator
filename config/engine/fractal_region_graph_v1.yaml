@@ -1,0 +1,16 @@
+schema_version: "1.0"
+status: "scaffold-no-regional-graph-data"
+purpose: "Explicit evidence-backed L2 graph data keyed by stable catalog-region IDs. Empty until regional graph evidence is added through dedicated data PRs."
+
+edges: []
+
+rules:
+  endpoint_kinds:
+    - "country"
+    - "regional_catalog"
+  stable_catalog_ids_required: true
+  explicit_edge_source_id_required: true
+  omitted_channels_are_unresolved_null: true
+  country_country_overrides_forbidden: true
+  regional_to_own_parent_country_edge_forbidden: true
+  identity_based_extremist_or_criminal_inference_forbidden: true
