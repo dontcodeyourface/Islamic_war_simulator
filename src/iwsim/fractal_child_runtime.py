@@ -81,7 +81,7 @@ def _validate_child_runtime_inputs(
     runtime_plan: FractalRuntimePlan,
 ) -> dict[str, EngineState]:
     logger.info(
-        "_validate_child_runtime_inputs day=%s active_l2=%s",
+        "_validate_child_runtime_inputs day=%s active_dynamic=%s",
         runtime_plan.day,
         len(runtime_plan.active_regional_node_ids),
     )
@@ -98,17 +98,17 @@ def _validate_child_runtime_inputs(
     state_map = child_store.state_map()
     expected_ids = set(runtime_plan.active_regional_node_ids)
     actual_ids = set(state_map)
-    if actual_ids != expected_ids:
+    missing = expected_ids - actual_ids
+    if missing:
         raise ValueError(
             "Fractal child runtime state coverage mismatch: "
-            f"missing={sorted(expected_ids - actual_ids)} "
-            f"unexpected={sorted(actual_ids - expected_ids)}"
+            f"missing={sorted(missing)}"
         )
 
     authority = {
         item.runtime_node_id: item
         for item in runtime_plan.nodes
-        if item.level == "L2_REGION"
+        if item.runtime_node_id in expected_ids
     }
     if set(authority) != expected_ids:
         raise ValueError(
@@ -131,7 +131,10 @@ def _validate_child_runtime_inputs(
             raise ValueError(
                 f"Fractal child {node_id} may not own national-only state"
             )
-    return state_map
+    return {
+        node_id: state_map[node_id]
+        for node_id in sorted(expected_ids)
+    }
 
 
 def _validate_proposal_authority(
@@ -150,17 +153,17 @@ def _validate_proposal_authority(
     for proposal in proposals:
         if proposal.target_node not in active_ids:
             raise ValueError(
-                f"L2 proposal {proposal.proposal_id} targets non-active child "
+                f"Fractal child proposal {proposal.proposal_id} targets non-active child "
                 f"{proposal.target_node}"
             )
         if proposal.variable in national_only:
             raise ValueError(
-                f"L2 proposal {proposal.proposal_id} attempts to mutate "
+                f"Fractal child proposal {proposal.proposal_id} attempts to mutate "
                 f"national-only latent {proposal.variable}"
             )
         if proposal.variable not in regionalizable:
             raise ValueError(
-                f"L2 proposal {proposal.proposal_id} targets latent without "
+                f"Fractal child proposal {proposal.proposal_id} targets latent without "
                 f"regional authority: {proposal.variable}"
             )
 
@@ -182,15 +185,14 @@ def execute_autonomous_l2_dynamics(
     enable_security_chain_dynamics: bool = False,
     security_chain_config: dict[str, Any] | None = None,
 ) -> FractalChildDynamicsResult:
-    """Resolve the v0.26 safe endogenous modules on active L2 children.
+    """Resolve safe endogenous modules on deepest active child authority.
 
-    The returned child states intentionally remain on the beginning-of-day clock.
-    The existing child-state lifecycle advances them exactly once later in the
-    atomic day transaction. This prevents double clock advancement while allowing
-    the resolved L2 state to flow into uncertainty/reaggregation/lifecycle code.
+    The legacy function name is preserved for compatibility. v0.34b may execute
+    either L2 or L3 leaf nodes. Refined child parents remain in the child store as
+    context states but are excluded from proposal generation and resolution.
     """
     logger.info(
-        "execute_autonomous_l2_dynamics day=%s children=%s profile=%s",
+        "execute_autonomous_l2_dynamics day=%s active_dynamic=%s profile=%s",
         runtime_plan.day,
         len(runtime_plan.active_regional_node_ids),
         profile,
@@ -215,7 +217,7 @@ def execute_autonomous_l2_dynamics(
 
     if enable_recovery:
         if recovery_config is None:
-            raise ValueError("L2 recovery requires recovery_config")
+            raise ValueError("Fractal child recovery requires recovery_config")
         enabled_modules.append("bounded_recovery")
         proposals.extend(
             propose_recovery_effects(
@@ -231,7 +233,7 @@ def execute_autonomous_l2_dynamics(
     if enable_extremist_network_dynamics:
         if extremist_network_config is None:
             raise ValueError(
-                "L2 extremist-network dynamics require extremist_network_config"
+                "Fractal child extremist-network dynamics require extremist_network_config"
             )
         enabled_modules.append("extremist_network_dynamics")
         proposals.extend(
@@ -248,7 +250,7 @@ def execute_autonomous_l2_dynamics(
     if enable_reciprocal_radicalization:
         if reciprocal_radicalization_config is None:
             raise ValueError(
-                "L2 reciprocal radicalization requires "
+                "Fractal child reciprocal radicalization requires "
                 "reciprocal_radicalization_config"
             )
         enabled_modules.append("reciprocal_radicalization")
@@ -266,7 +268,7 @@ def execute_autonomous_l2_dynamics(
     if enable_security_chain_dynamics:
         if security_chain_config is None:
             raise ValueError(
-                "L2 security-chain dynamics require security_chain_config"
+                "Fractal child security-chain dynamics require security_chain_config"
             )
         enabled_modules.append("security_chain_dynamics")
         proposals.extend(
@@ -285,7 +287,7 @@ def execute_autonomous_l2_dynamics(
     )
     proposal_ids = [item.proposal_id for item in proposal_tuple]
     if len(proposal_ids) != len(set(proposal_ids)):
-        raise ValueError("Duplicate autonomous L2 proposal IDs")
+        raise ValueError("Duplicate autonomous Fractal child proposal IDs")
 
     _validate_proposal_authority(
         proposals=proposal_tuple,
@@ -306,16 +308,21 @@ def execute_autonomous_l2_dynamics(
         runtime_context_by_node=runtime_context,
     )
 
-    resolved_states = tuple(
-        _clone_with_runtime_metadata(
+    resolved_states = {
+        node_id: _clone_with_runtime_metadata(
             state=resolution.states[node_id],
             plan=runtime_plan,
         )
         for node_id in sorted(resolution.states)
-    )
+    }
+    merged_states = child_store.state_map()
+    merged_states.update(resolved_states)
     store = FractalChildStateStore(
         last_initialized_day=child_store.last_initialized_day,
-        states=resolved_states,
+        states=tuple(
+            merged_states[node_id]
+            for node_id in sorted(merged_states)
+        ),
     )
 
     staged_trace.append(
