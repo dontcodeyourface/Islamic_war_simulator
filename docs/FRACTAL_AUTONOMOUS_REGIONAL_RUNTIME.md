@@ -361,7 +361,7 @@ Generation identity from v0.24 remains mandatory.
 
 The next implementation sequence is canonical unless superseded by a later architecture decision.
 
-### v0.25 — active multiscale runtime set — IMPLEMENTED
+### v0.25 — active multiscale runtime set — IMPLEMENTED — IMPLEMENTED
 
 Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 
@@ -373,7 +373,7 @@ Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 
 Because autonomous L2 execution is intentionally still disabled in v0.25, an already-refined beginning-of-day plan fails closed instead of applying regionalizable dynamics at L1.
 
-### v0.26 — autonomous L2 day transaction
+### v0.26 — autonomous L2 day transaction — IMPLEMENTED
 
 Enable generic lower-level execution for safe modules first:
 
@@ -385,6 +385,8 @@ Enable generic lower-level execution for safe modules first:
 - security-chain dynamics.
 
 Keep unsupported modules fail-closed.
+
+Implementation detail: [FRACTAL_CHILD_DYNAMICS_V0.26.md](FRACTAL_CHILD_DYNAMICS_V0.26.md).
 
 ### v0.27 — multiscale Owner Resolver and transaction atomicity
 

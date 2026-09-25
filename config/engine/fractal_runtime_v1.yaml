@@ -1,10 +1,10 @@
 schema_version: "1.0"
-status: "implementation-v0.25"
+status: "implementation-v0.26"
 purpose: "Deterministic multiscale runtime authority plan for L1/L2 adaptive execution."
 
 mode:
   runtime_plan_generation_allowed: true
-  autonomous_child_dynamics_allowed: false
+  autonomous_child_dynamics_allowed: true
   topology_changes_take_effect_next_day: true
   refined_beginning_of_day_requires_autonomous_runtime: true
 
@@ -102,8 +102,28 @@ authority:
 execution_status:
   coarse_l1: "L1_FULL_AUTHORITY"
   refined_l1_parent: "L1_NATIONAL_ONLY_AUTHORITY"
-  active_l2: "L2_REGIONAL_AUTHORITY_BLOCKED_UNTIL_V0_26"
+  active_l2: "L2_REGIONAL_AUTHORITY_ACTIVE_V0_26"
   inactive_lineage: "INACTIVE_HISTORY_EXCLUDED"
+
+autonomous_l2:
+  policy_id: "FRACTAL_L2_AUTONOMOUS_DYNAMICS_V1"
+  enabled_modules:
+    - "bounded_recovery"
+    - "extremist_network_dynamics"
+    - "reciprocal_radicalization"
+    - "security_chain_dynamics"
+    - "owner_resolver"
+  deferred_modules:
+    security_regime_and_phase: "v0.28"
+    multiscale_graph_projection: "v0.29"
+    regional_event_and_spillover_execution: "v0.30"
+    parent_child_coupling: "v0.31"
+    divergent_categorical_reaggregation: "v0.32"
+  beginning_of_day_child_state_is_authoritative: true
+  resolve_before_child_clock_advance: true
+  l1_parent_regionalizable_modules_must_be_suppressed: true
+  proposal_target_must_be_regionalizable: true
+  national_only_child_mutation_forbidden: true
 
 rules:
   exact_registry_coverage_required: true

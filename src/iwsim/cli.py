@@ -393,6 +393,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_uncertainty_widening",
             "fractal_collapse_reaggregation",
             "fractal_active_runtime_plan",
+            "fractal_autonomous_l2_dynamics",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -598,6 +599,12 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 result.fractal_runtime_plan_after.plan_hash()
                 if result.fractal_runtime_plan_after is not None
                 else None
+            ),
+            "fractal_child_dynamics_proposal_count": len(
+                result.fractal_child_dynamics_proposals
+            ),
+            "fractal_child_dynamics_resolution_count": len(
+                result.fractal_child_dynamics_resolutions
             ),
             "fractal_child_state_store": (
                 result.fractal_child_state_store.to_dict()

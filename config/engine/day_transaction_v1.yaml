@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.25"
+status: "implementation-v0.26"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -54,7 +54,7 @@ mode:
   fractal_runtime_plan_allowed: true
   fractal_runtime_plan_requires_explicit_enable_flag: true
   fractal_runtime_contract: "config/engine/fractal_runtime_v1.yaml"
-  fractal_child_engine_state_activation_allowed: false
+  fractal_child_engine_state_activation_allowed: true
   fractal_child_random_variation_allowed: true
   recovery_allowed: true
   recovery_requires_explicit_enable_flag: true
@@ -129,7 +129,13 @@ transaction_rules:
   fractal_runtime_inactive_lineage_execution_forbidden: true
   fractal_runtime_duplicate_l1_l2_regional_execution_forbidden: true
   fractal_runtime_v0_25_refined_beginning_of_day_fails_closed: true
-  fractal_child_dynamics_allowed: false
+  fractal_child_dynamics_allowed: true
+  fractal_child_dynamics_safe_modules_v0_26:
+    - "bounded_recovery"
+    - "extremist_network_dynamics"
+    - "reciprocal_radicalization"
+    - "security_chain_dynamics"
+    - "owner_resolver"
   recovery_and_event_proposals_share_beginning_state: true
   all_state_delta_proposals_share_one_owner_resolution: true
   proposals_resolved_once_per_day: true
@@ -178,6 +184,7 @@ ordering:
   fractal_refinement_evaluation: "after_phase_commit"
   fractal_materialization: "after_fractal_refinement"
   fractal_child_state_initialization: "after_fractal_materialization"
+  fractal_child_autonomous_dynamics: "beginning_of_day_active_l2_before_l1_regionalizable_proposals"
   fractal_uncertainty: "after_fractal_child_state_initialization"
   fractal_reaggregation: "after_fractal_uncertainty_before_checkpoint"
   fractal_runtime_plan_after: "after_fractal_reaggregation_before_checkpoint_for_next_day"

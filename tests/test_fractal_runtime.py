@@ -252,9 +252,7 @@ def test_refined_plan_moves_regionalizable_authority_to_active_l2() -> None:
         assert child.owns_regionalizable_state is True
         assert child.owns_national_only_state is False
         assert child.authority_scope == "REGIONALIZABLE"
-        assert child.execution_status == (
-            "L2_REGIONAL_AUTHORITY_BLOCKED_UNTIL_V0_26"
-        )
+        assert child.execution_status == "L2_REGIONAL_AUTHORITY_ACTIVE_V0_26"
 
     assert "TST::OLD" not in by_id
 
@@ -362,9 +360,9 @@ def test_inactive_lineage_state_is_forbidden() -> None:
         )
 
 
-def test_v025_fails_closed_when_day_begins_with_active_l2() -> None:
+def test_v026_accepts_beginning_of_day_active_l2_authority() -> None:
     logger.info(
-        "test_v025_fails_closed_when_day_begins_with_active_l2"
+        "test_v026_accepts_beginning_of_day_active_l2_authority"
     )
     registry = _registry()
     topology = FractalTopologyState(
@@ -385,14 +383,11 @@ def test_v025_fails_closed_when_day_begins_with_active_l2() -> None:
         engine_state_registry=registry,
     )
 
-    with pytest.raises(
-        RuntimeError,
-        match="autonomous child dynamics are not implemented in v0.25",
-    ):
-        assert_beginning_of_day_runtime_supported(
-            plan=plan,
-            runtime_config=config,
-        )
+    assert plan.autonomous_child_dynamics_allowed is True
+    assert_beginning_of_day_runtime_supported(
+        plan=plan,
+        runtime_config=config,
+    )
 
 
 def test_child_parent_metadata_mismatch_fails_closed() -> None:
