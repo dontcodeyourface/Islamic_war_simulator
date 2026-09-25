@@ -24,7 +24,6 @@ from .fractal_materialization import (
     FractalTopologyState,
     advance_fractal_topology_without_materialization,
     empty_fractal_topology,
-    materialize_l1_to_l2,
     materialize_next_level,
 )
 from .fractal_child_state import (
@@ -54,6 +53,7 @@ from .fractal_regional_regime import (
     FractalRegionalRegimeStore,
     bootstrap_or_validate_regional_regime_store,
     execute_regional_regime_runtime,
+    reconcile_regional_regime_store_after_topology_change,
 )
 from .fractal_graph_projection import (
     FractalProjectedGraph,
@@ -3664,6 +3664,42 @@ def run_day_transaction(
         fractal_collapse_commits = collapse_result.commits
         fractal_reaggregation_audits = collapse_result.audits
 
+    if fractal_topology_out is not None:
+        active_l2_persistence_ids = {
+            item.node_id
+            for item in fractal_topology_out.nodes
+            if item.active and item.level == "L2_REGION"
+        }
+        allowed_refinement_ids = (
+            set(final_states) | active_l2_persistence_ids
+        )
+        retired_refinement_ids = (
+            set(fractal_refinement_persistence_out)
+            - allowed_refinement_ids
+        )
+        if retired_refinement_ids:
+            staged_trace.append(
+                "fractal_refinement_persistence_retired",
+                day=day_to,
+                node_ids=sorted(retired_refinement_ids),
+            )
+        fractal_refinement_persistence_out = {
+            node_id: item
+            for node_id, item in sorted(
+                fractal_refinement_persistence_out.items()
+            )
+            if node_id in allowed_refinement_ids
+        }
+        missing_refinement_ids = (
+            allowed_refinement_ids
+            - set(fractal_refinement_persistence_out)
+        )
+        if missing_refinement_ids:
+            raise RuntimeError(
+                "Fractal refinement persistence missing active base nodes: "
+                f"{sorted(missing_refinement_ids)}"
+            )
+
     fractal_runtime_plan_after: FractalRuntimePlan | None = None
     fractal_projected_graph_after: FractalProjectedGraph | None = None
     if enable_fractal_runtime_plan:
@@ -3682,6 +3718,48 @@ def run_day_transaction(
             plan=fractal_runtime_plan_after,
             phase="COMMITTED_NEXT_DAY",
             trace=staged_trace,
+        )
+
+    if fractal_regional_regime_result is not None:
+        assert fractal_runtime_plan_after is not None
+        assert fractal_child_state_store_out is not None
+        reconciled_regional_store = (
+            reconcile_regional_regime_store_after_topology_change(
+                child_store=fractal_child_state_store_out,
+                active_node_ids=(
+                    fractal_runtime_plan_after.active_regional_node_ids
+                ),
+                supplied_store=(
+                    fractal_regional_regime_result.persistence_store
+                ),
+                trace=staged_trace,
+            )
+        )
+        fractal_regional_regime_result = FractalRegionalRegimeResult(
+            child_store=fractal_child_state_store_out,
+            persistence_store=reconciled_regional_store,
+            phase_evaluations=(
+                fractal_regional_regime_result.phase_evaluations
+            ),
+            phase_arbitrations=(
+                fractal_regional_regime_result.phase_arbitrations
+            ),
+            phase_commits=fractal_regional_regime_result.phase_commits,
+            security_evaluations=(
+                fractal_regional_regime_result.security_evaluations
+            ),
+            security_commits=(
+                fractal_regional_regime_result.security_commits
+            ),
+            recovery_evaluations=(
+                fractal_regional_regime_result.recovery_evaluations
+            ),
+            recovery_commits=(
+                fractal_regional_regime_result.recovery_commits
+            ),
+            divergence_audits=(
+                fractal_regional_regime_result.divergence_audits
+            ),
         )
 
     if enable_fractal_graph_projection:
