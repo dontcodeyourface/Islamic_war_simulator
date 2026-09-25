@@ -770,6 +770,38 @@ def execute_regional_regime_runtime(
                 f"Regional {name} prior persistence coverage mismatch"
             )
 
+    expected_prior_day = child_store.last_initialized_day - 1
+    for node_id in sorted(beginning):
+        state = state_map[node_id]
+        if phase_prior[node_id].last_evaluated_day != expected_prior_day:
+            raise ValueError(
+                f"Regional phase prior day mismatch for {node_id}"
+            )
+        if security_prior[node_id].last_evaluated_day != expected_prior_day:
+            raise ValueError(
+                f"Regional security prior day mismatch for {node_id}"
+            )
+        if recovery_prior[node_id].last_evaluated_day != expected_prior_day:
+            raise ValueError(
+                f"Regional recovery prior day mismatch for {node_id}"
+            )
+        if (
+            phase_prior[node_id].current_phase
+            != state.regimes["national_phase"]
+        ):
+            raise ValueError(
+                f"Regional phase prior state mismatch for {node_id}"
+            )
+        current_security = state.regimes["security_force_regime"]
+        if security_prior[node_id].current_regime != current_security:
+            raise ValueError(
+                f"Regional security prior state mismatch for {node_id}"
+            )
+        if recovery_prior[node_id].current_regime != current_security:
+            raise ValueError(
+                f"Regional recovery prior state mismatch for {node_id}"
+            )
+
     staged_trace = TraceLedger()
     next_states = dict(state_map)
     phase_out: dict[str, PhasePersistenceState] = {}
