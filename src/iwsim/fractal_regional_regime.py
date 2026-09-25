@@ -419,16 +419,60 @@ def bootstrap_or_validate_regional_regime_store(
     phase = supplied_store.phase_map()
     security = supplied_store.security_map()
     recovery = supplied_store.recovery_map()
-    for name, mapping in (
-        ("phase", phase),
-        ("security", security),
-        ("security_recovery", recovery),
-    ):
-        if set(mapping) != expected:
+    coverage_sets = {
+        "phase": set(phase),
+        "security": set(security),
+        "security_recovery": set(recovery),
+    }
+    if len({frozenset(value) for value in coverage_sets.values()}) != 1:
+        raise ValueError(
+            "Regional persistence stores disagree on node coverage"
+        )
+    supplied_ids = set(phase)
+    missing = expected - supplied_ids
+    if missing:
+        raise ValueError(
+            "Regional persistence missing active nodes: "
+            f"{sorted(missing)}"
+        )
+
+    extras = supplied_ids - expected
+    if extras:
+        parent_by_child = {
+            node_id: state.metadata.get("fractal_parent_node_id")
+            for node_id, state in child_map.items()
+        }
+        invalid_extras: list[str] = []
+        for extra in sorted(extras):
+            if extra not in child_map:
+                invalid_extras.append(extra)
+                continue
+            is_active_ancestor = False
+            for active_id in sorted(expected):
+                current = active_id
+                visited: set[str] = set()
+                while current in parent_by_child:
+                    if current in visited:
+                        raise ValueError(
+                            "Regional child ancestry contains a cycle"
+                        )
+                    visited.add(current)
+                    parent = parent_by_child[current]
+                    if parent is None:
+                        break
+                    parent = str(parent)
+                    if parent == extra:
+                        is_active_ancestor = True
+                        break
+                    current = parent
+                if is_active_ancestor:
+                    break
+            if not is_active_ancestor:
+                invalid_extras.append(extra)
+        if invalid_extras:
             raise ValueError(
-                f"Regional {name} persistence coverage mismatch: "
-                f"missing={sorted(expected - set(mapping))} "
-                f"unexpected={sorted(set(mapping) - expected)}"
+                "Regional persistence contains non-active, non-ancestor "
+                f"nodes: {invalid_extras}"
             )
 
     for node_id in sorted(expected):
