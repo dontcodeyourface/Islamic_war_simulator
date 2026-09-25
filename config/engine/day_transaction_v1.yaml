@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.27"
+status: "implementation-v0.28"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:
@@ -54,6 +54,9 @@ mode:
   fractal_runtime_plan_allowed: true
   fractal_runtime_plan_requires_explicit_enable_flag: true
   fractal_runtime_contract: "config/engine/fractal_runtime_v1.yaml"
+  fractal_regional_regime_runtime_allowed: true
+  fractal_regional_regime_runtime_requires_explicit_enable_flag: true
+  fractal_regional_regime_contract: "config/engine/fractal_regional_regime_v1.yaml"
   fractal_child_engine_state_activation_allowed: true
   fractal_child_random_variation_allowed: true
   recovery_allowed: true
@@ -128,7 +131,12 @@ transaction_rules:
   fractal_runtime_active_children_own_regionalizable_authority: true
   fractal_runtime_inactive_lineage_execution_forbidden: true
   fractal_runtime_duplicate_l1_l2_regional_execution_forbidden: true
-  fractal_runtime_v0_25_refined_beginning_of_day_fails_closed: true
+  fractal_regional_phase_and_security_use_end_of_day_child_state: true
+  fractal_regional_persistence_history_required_after_first_execution: true
+  fractal_regional_sibling_divergence_allowed: true
+  fractal_regional_categorical_collapse_requires_consensus_until_v0_32: true
+  fractal_refined_parent_phase_and_security_persistence_reset_while_l2_active: true
+  fractal_runtime_refined_beginning_of_day_requires_supported_multiscale_modules: true
   fractal_child_dynamics_allowed: true
   fractal_child_dynamics_safe_modules_v0_26:
     - "bounded_recovery"
@@ -166,6 +174,8 @@ trace:
   include_fractal_collapse_commit_ids: true
   include_fractal_reaggregation_audit_ids: true
   include_fractal_runtime_plan_hashes: true
+  include_fractal_regional_regime_commit_ids: true
+  include_fractal_categorical_divergence_audits: true
   include_applied_spillover_ids: true
 
 ordering:
@@ -186,6 +196,10 @@ ordering:
   fractal_child_state_initialization: "after_fractal_materialization"
   fractal_child_autonomous_dynamics: "beginning_of_day_active_l2_before_l1_regionalizable_proposals"
   fractal_uncertainty: "after_fractal_child_state_initialization"
+  fractal_regional_security_regime: "after_child_clock_advance_and_uncertainty"
+  fractal_regional_security_recovery: "after_regional_security_regime"
+  fractal_regional_phase: "after_regional_security_recovery"
+  fractal_regional_divergence_audit: "after_regional_phase_before_reaggregation"
   fractal_reaggregation: "after_fractal_uncertainty_before_checkpoint"
   fractal_runtime_plan_after: "after_fractal_reaggregation_before_checkpoint_for_next_day"
 
