@@ -246,6 +246,7 @@ def _configs() -> dict[str, dict]:
         "regional": "fractal_regional_regime_v1.yaml",
         "projection": "fractal_graph_projection_v1.yaml",
         "spillover": "graph_spillover_v1.yaml",
+        "reaggregation": "fractal_reaggregation_v1.yaml",
         "phase": "phase_evaluator_v1.yaml",
         "phase_transition": "phase_transition_v1.yaml",
         "security": "security_regime_evaluator_v1.yaml",
@@ -478,11 +479,22 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
         enable_graph_spillover=True,
         spillover_config=configs["spillover"],
         spillover_queue=empty_spillover_queue(1),
+        enable_fractal_parent_child_coupling=True,
+        fractal_parent_child_coupling_config=configs["reaggregation"],
         fractal_regional_regime_store=regional_store,
         **_common_regime_kwargs(configs),
     )
 
     assert second.fractal_regional_regime_result is not None
+    assert second.fractal_parent_child_coupling_result is not None
+    assert len(second.fractal_parent_child_coupling_result.audits) == 1
+    coupled_children = (
+        second.fractal_parent_child_coupling_result.child_store.state_map()
+    )
+    assert all(
+        "fractal_parent_context" in child.metadata
+        for child in coupled_children.values()
+    )
     assert second.fractal_projected_graph_before is not None
     assert any(
         item.source_node == "ESP::R1"
