@@ -521,6 +521,40 @@ def assert_beginning_of_day_runtime_supported(
         )
 
 
+def build_runtime_resolver_context(
+    *,
+    plan: FractalRuntimePlan,
+    node_ids: set[str] | tuple[str, ...] | list[str],
+) -> dict[str, dict[str, Any]]:
+    logger.info(
+        "build_runtime_resolver_context day=%s nodes=%s",
+        plan.day,
+        len(node_ids),
+    )
+    by_id = {
+        item.runtime_node_id: item
+        for item in plan.nodes
+    }
+    requested = set(node_ids)
+    missing = requested - set(by_id)
+    if missing:
+        raise ValueError(
+            "Runtime resolver context requested unknown runtime nodes: "
+            f"{sorted(missing)}"
+        )
+    plan_hash = plan.plan_hash()
+    return {
+        node_id: {
+            "runtime_level": by_id[node_id].level,
+            "runtime_parent_node_id": by_id[node_id].parent_node_id,
+            "runtime_authority_scope": by_id[node_id].authority_scope,
+            "runtime_plan_hash": plan_hash,
+            "runtime_policy_id": plan.policy_id,
+        }
+        for node_id in sorted(requested)
+    }
+
+
 def trace_fractal_runtime_plan(
     *,
     plan: FractalRuntimePlan,
