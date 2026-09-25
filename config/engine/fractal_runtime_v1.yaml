@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.29"
-purpose: "Deterministic multiscale runtime authority plan for L1/L2 adaptive execution."
+status: "implementation-v0.34b"
+purpose: "Deterministic deepest-active multiscale runtime authority plan for recursive fractal execution."
 
 mode:
   runtime_plan_generation_allowed: true
@@ -103,6 +103,8 @@ execution_status:
   coarse_l1: "L1_FULL_AUTHORITY"
   refined_l1_parent: "L1_NATIONAL_ONLY_AUTHORITY"
   active_l2: "L2_REGIONAL_AUTHORITY_ACTIVE_V0_29"
+  active_l3: "L3_REGIONAL_AUTHORITY_ACTIVE_V0_34B"
+  refined_child_parent: "FRACTAL_PARENT_CONTEXT_NO_DUPLICATE_EXECUTION"
   inactive_lineage: "INACTIVE_HISTORY_EXCLUDED"
 
 multiscale_resolver:
@@ -139,6 +141,17 @@ autonomous_l2:
   l1_parent_regionalizable_modules_must_be_suppressed: true
   proposal_target_must_be_regionalizable: true
   national_only_child_mutation_forbidden: true
+
+recursive_runtime:
+  deepest_active_descendant_owns_regionalizable_state: true
+  refined_child_parent_executes_delegated_dynamics: false
+  active_context_state_remains_materialized: true
+  supported_dynamic_levels:
+    - "L2_REGION"
+    - "L3_METRO_OR_LOGISTICS_AREA"
+  deferred_dynamic_levels:
+    - "L4_ACTOR_NETWORK"
+    - "L5_EVENT_CLUSTER"
 
 rules:
   exact_registry_coverage_required: true
