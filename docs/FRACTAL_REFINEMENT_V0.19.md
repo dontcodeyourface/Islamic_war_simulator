@@ -147,7 +147,9 @@ The documented implementation sequence is:
 3. **v0.21** — conservation-aware parent-to-child initialization;
 4. **v0.22** — uncertainty widening at finer scales;
 5. **v0.23** — L2 -> L1 collapse/reaggregation conservation;
-6. later — extension to L3/L4/L5 using the same interfaces.
+6. **v0.24** — immutable topology lineage generations;
+7. **v0.25-v0.33** — autonomous L2 runtime, multiscale authority, graph/event execution, coupling and dynamic reaggregation;
+8. **v0.34+** — extension to L3/L4/L5 using the same recursive interfaces.
 
 Each step remains a separate PR.
 
@@ -156,3 +158,10 @@ Each step remains a separate PR.
 Refinement is a computational-resolution decision, not a political or military outcome.
 
 No tactical targeting, route planning, weapon selection or operational instruction is introduced.
+
+
+## Post-v0.24 roadmap clarification
+
+The original sequence above correctly staged the topology lifecycle through v0.24, but direct extension to L3/L4/L5 is no longer the immediate next step.
+
+Before deeper recursive refinement, L2 must become an autonomous dynamic runtime. The canonical intervening sequence is defined in [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md) and covers v0.25-v0.33. Recursive L2 -> L3 and deeper execution begins only after that lifecycle is validated.

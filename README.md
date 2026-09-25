@@ -68,6 +68,8 @@ Atomic phase-transition infrastructure: [docs/PHASE_TRANSITION_V0.9.md](docs/PHA
 
 Adaptive fractal execution now reaches **v0.24**: v0.19 evaluates persistent refine/collapse pressure, v0.20 materializes explicit L2 topology, v0.21 initializes child EngineState with exact additive-stock conservation, [docs/FRACTAL_UNCERTAINTY_V0.22.md](docs/FRACTAL_UNCERTAINTY_V0.22.md) adds one-time correlated local latent variation while preserving each parent's weighted latent mean, [docs/FRACTAL_REAGGREGATION_V0.23.md](docs/FRACTAL_REAGGREGATION_V0.23.md) commits conservative L2->L1 collapse, and [docs/FRACTAL_LIFECYCLE_V0.24.md](docs/FRACTAL_LIFECYCLE_V0.24.md) adds immutable lineage generations for repeated refine-collapse-refine cycles. Child dynamics remain disabled.
 
+Canonical next fractal milestone: [docs/FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](docs/FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md). The current disabled-child state is an intermediate implementation boundary, not the target architecture. Once L1 is refined, active L2 children must eventually become the authoritative dynamic domains for regionalizable state while the L1 parent remains authoritative for national-only state and acts as an aggregate/cross-scale coordinator. The implementation must prevent duplicate L1+L2 application of the same causal mechanism.
+
 ---
 
 ## 2. Core analytical rule
@@ -1730,8 +1732,10 @@ Implement:
 7. security-chain cohesion;
 8. alliance response;
 9. state-machine escalation;
-10. Monte Carlo;
-11. complete causal trace for every material transition and collapse.
+10. autonomous fractal regional execution when L1 stress triggers L2 refinement;
+11. multiscale parent/child coupling and conservative dynamic reaggregation;
+12. Monte Carlo;
+13. complete causal trace for every material transition, refinement and collapse.
 
 Only after Phase 1 passes validation should the model expand country by country.
 
@@ -1747,6 +1751,9 @@ The first serious simulator is complete when:
 - France and Portugal affect Spain through explicit typed graph links;
 - Sahel deterioration can increase European stress without guaranteeing European collapse;
 - alliance support can stabilize states but is constrained by simultaneous crises;
+- a refined L1 country delegates regionalizable dynamics to active L2 children without duplicate parent execution;
+- sibling L2 regions can diverge under different local conditions and later reaggregate under explicit conservation/aggregation rules;
+- inactive historical fractal nodes never participate in runtime dynamics and repeated refinement creates immutable new lineage generations;
 - coalitions can form and fragment dynamically;
 - every stochastic event records event provenance, hazard, RNG stream and random draw;
 - every phase transition records rule ID, thresholds, persistence and supporting causal trace IDs;

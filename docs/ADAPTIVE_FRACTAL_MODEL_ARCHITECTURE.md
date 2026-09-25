@@ -54,6 +54,18 @@ The model should normally operate at L1.
 
 Lower levels are activated only when needed.
 
+### 2.1 Runtime authority after refinement
+
+Activation of a lower level is not merely a topology or visualization change. Once an L1 country is refined, the active L2 children must become autonomous dynamic domains for variables whose scale policy is regionalizable.
+
+The parent remains present for lineage, national-only state, aggregation and cross-scale coordination, but the same regionalizable causal mechanism must not execute independently at both L1 and L2 in the same day.
+
+Canonical rule:
+
+> resolution follows stress, and dynamic authority follows active resolution.
+
+The concrete post-v0.24 implementation contract is [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md).
+
 ---
 
 ## 3. Refinement triggers
@@ -546,6 +558,10 @@ When lower nodes are collapsed, they aggregate back into the parent.
 
 The operation should preserve conserved quantities where appropriate.
 
+After autonomous child dynamics are enabled, aggregation is not allowed to discard regional divergence. Additive stocks require exact conservation; intensive variables require explicit weighted aggregation; categorical regimes require an explicit aggregation policy or collapse must fail closed.
+
+A refined parent is therefore a mixed-scale object: national-only fields may remain authoritative at L1 while spatialized fields are derived from active lower-level nodes.
+
 ---
 
 ## 15. Uncertainty across scales
@@ -608,6 +624,22 @@ Only then implement:
 - network contagion;
 - Monte Carlo;
 - sensitivity analysis.
+
+### Phase G — autonomous multiscale runtime
+
+After the topology lifecycle is proven, activate lower-level dynamics before declaring the fractal architecture complete:
+
+1. active multiscale runtime set and state-authority policy;
+2. autonomous L2 day dynamics;
+3. multiscale Owner Resolver and transaction atomicity;
+4. regional phase/security divergence;
+5. multiscale graph projection and regional events/spillovers;
+6. parent-child coupling without double counting;
+7. dynamic conservative L2 -> L1 reaggregation;
+8. end-to-end refine -> diverge -> interact -> collapse -> re-refine validation;
+9. only then generalize recursively to L3/L4/L5.
+
+See [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md).
 
 ---
 

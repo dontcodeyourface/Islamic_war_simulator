@@ -105,3 +105,23 @@ The materialization config hash already participates in day transaction identity
 v0.24 changes topology lifecycle identity only.
 
 It does not change stress thresholds, uncertainty distributions, child dynamics, graph activation, tactical targeting, route planning, weapon selection or operational execution.
+
+
+## Canonical next architecture milestone
+
+v0.24 completes provenance-safe topology lifecycle identity. It does **not** complete adaptive fractal execution.
+
+The next architectural block is [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md):
+
+1. v0.25 active multiscale runtime set;
+2. v0.26 autonomous L2 day dynamics;
+3. v0.27 multiscale Owner Resolver and atomicity;
+4. v0.28 regional regime/phase divergence;
+5. v0.29 multiscale graph projection;
+6. v0.30 regional event/spillover execution;
+7. v0.31 parent-child coupling;
+8. v0.32 dynamic reaggregation;
+9. v0.33 end-to-end lifecycle validation;
+10. v0.34+ recursive L3/L4/L5.
+
+Therefore, the statement in Scope that child dynamics are unchanged describes v0.24 itself, not the intended terminal state of the fractal model.
