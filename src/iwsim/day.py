@@ -3416,6 +3416,225 @@ def run_day_transaction(
             fractal_parent_child_coupling_result.child_store
         )
 
+    late_fractal_actions: tuple[
+        FractalRefinementActionProposal, ...
+    ] = ()
+    if (
+        enable_fractal_refinement_evaluator
+        and fractal_topology_out is not None
+        and fractal_child_state_store_out is not None
+    ):
+        assert fractal_refinement_config is not None
+        child_state_map = fractal_child_state_store_out.state_map()
+        active_l2_nodes = {
+            item.node_id: item
+            for item in fractal_topology_out.nodes
+            if item.active and item.level == "L2_REGION"
+        }
+        late_refinement_states: dict[str, EngineState] = {}
+
+        if fractal_runtime_plan_before is not None:
+            for parent_id in sorted(
+                fractal_runtime_plan_before.refined_parent_ids
+            ):
+                late_refinement_states[parent_id] = final_states[parent_id]
+
+        for node_id, topology_node in sorted(active_l2_nodes.items()):
+            if topology_node.created_day == day_to:
+                continue
+            if node_id not in child_state_map:
+                raise ValueError(
+                    f"Late fractal refinement missing L2 state {node_id}"
+                )
+            late_refinement_states[node_id] = child_state_map[node_id]
+
+        if late_refinement_states:
+            (
+                fractal_refinement_persistence_out,
+                late_evaluations,
+                late_fractal_actions,
+            ) = _evaluate_fractal_refinements(
+                states=late_refinement_states,
+                persistence=fractal_refinement_persistence_out,
+                refinement_config=fractal_refinement_config,
+                parameter_registry=parameter_registry,
+                profile=profile,
+                manifest=manifest,
+                trace=staged_trace,
+            )
+            fractal_refinement_evaluations = tuple(
+                sorted(
+                    (
+                        *fractal_refinement_evaluations,
+                        *late_evaluations,
+                    ),
+                    key=lambda item: item.persistence.node_id,
+                )
+            )
+            fractal_refinement_actions = tuple(
+                sorted(
+                    (
+                        *fractal_refinement_actions,
+                        *late_fractal_actions,
+                    ),
+                    key=lambda item: item.action_id,
+                )
+            )
+
+    effective_late_actions: list[FractalRefinementActionProposal] = []
+    late_action_nodes = {item.node_id for item in late_fractal_actions}
+    for action in late_fractal_actions:
+        if (
+            action.action == "COLLAPSE"
+            and action.from_level == "L2_REGION"
+            and action.to_level == "L1_COUNTRY"
+            and fractal_topology_out is not None
+        ):
+            direct_children = {
+                item.node_id
+                for item in fractal_topology_out.active_children(
+                    action.node_id
+                )
+            }
+            conflicting_descendants = direct_children & late_action_nodes
+            if conflicting_descendants:
+                staged_trace.append(
+                    "fractal_collapse_deferred",
+                    action_id=action.action_id,
+                    node_id=action.node_id,
+                    day=action.day,
+                    reason="descendant_resolution_action_same_day",
+                    conflicting_descendant_node_ids=sorted(
+                        conflicting_descendants
+                    ),
+                )
+                continue
+        effective_late_actions.append(action)
+
+    recursive_expansion_actions = tuple(
+        item
+        for item in effective_late_actions
+        if item.action == "EXPAND"
+    )
+    recursive_collapse_actions = tuple(
+        item
+        for item in effective_late_actions
+        if item.action == "COLLAPSE"
+    )
+    fractal_collapse_actions = tuple(
+        sorted(
+            (*fractal_collapse_actions, *recursive_collapse_actions),
+            key=lambda item: item.action_id,
+        )
+    )
+
+    if recursive_expansion_actions:
+        if not enable_fractal_materialization:
+            raise ValueError(
+                "Recursive fractal expansion requires materialization"
+            )
+        assert fractal_topology_out is not None
+        assert fractal_materialization_config is not None
+        assert fractal_region_catalog is not None
+        (
+            fractal_topology_out,
+            fractal_refinement_persistence_out,
+            recursive_materialization_commits,
+        ) = _commit_fractal_materializations(
+            day=day_to,
+            actions=recursive_expansion_actions,
+            persistence=fractal_refinement_persistence_out,
+            topology=fractal_topology_out,
+            region_catalog=fractal_region_catalog,
+            materialization_config=fractal_materialization_config,
+            manifest=manifest,
+            trace=staged_trace,
+        )
+        fractal_materialization_commits = tuple(
+            sorted(
+                (
+                    *fractal_materialization_commits,
+                    *recursive_materialization_commits,
+                ),
+                key=lambda item: item.commit_id,
+            )
+        )
+
+        if not enable_fractal_child_state_initialization:
+            raise ValueError(
+                "Recursive fractal expansion requires child-state "
+                "initialization"
+            )
+        assert fractal_child_state_store_out is not None
+        assert fractal_child_state_config is not None
+        recursive_child_result = initialize_fractal_child_states(
+            parent_states=final_states,
+            topology=fractal_topology_out,
+            child_store=fractal_child_state_store_out,
+            initialization_config=fractal_child_state_config,
+            engine_state_registry=engine_state_registry,
+            trace=staged_trace,
+        )
+        fractal_child_state_store_out = recursive_child_result.store
+        recursive_initializations = (
+            recursive_child_result.initialization_records
+        )
+        fractal_child_initialization_records = tuple(
+            sorted(
+                (
+                    *fractal_child_initialization_records,
+                    *recursive_initializations,
+                ),
+                key=lambda item: item.initialization_id,
+            )
+        )
+        fractal_conservation_audits = tuple(
+            sorted(
+                (
+                    *fractal_conservation_audits,
+                    *recursive_child_result.conservation_audits,
+                ),
+                key=lambda item: item.audit_id,
+            )
+        )
+
+        if enable_fractal_uncertainty and recursive_initializations:
+            assert fractal_uncertainty_config is not None
+            recursive_uncertainty = apply_fractal_uncertainty(
+                parent_states=final_states,
+                topology=fractal_topology_out,
+                child_store=fractal_child_state_store_out,
+                new_child_ids=tuple(
+                    item.child_node_id
+                    for item in recursive_initializations
+                ),
+                uncertainty_config=fractal_uncertainty_config,
+                engine_state_registry=engine_state_registry,
+                parameter_registry=parameter_registry,
+                profile=profile,
+                rng=working_rng,
+                trace=staged_trace,
+            )
+            fractal_child_state_store_out = recursive_uncertainty.store
+            fractal_uncertainty_records = tuple(
+                sorted(
+                    (
+                        *fractal_uncertainty_records,
+                        *recursive_uncertainty.records,
+                    ),
+                    key=lambda item: item.variation_id,
+                )
+            )
+            fractal_uncertainty_audits = tuple(
+                sorted(
+                    (
+                        *fractal_uncertainty_audits,
+                        *recursive_uncertainty.audits,
+                    ),
+                    key=lambda item: item.audit_id,
+                )
+            )
+
     fractal_collapse_commits: tuple[
         FractalCollapseCommitRecord, ...
     ] = ()
