@@ -434,3 +434,61 @@ def test_regional_runtime_failure_does_not_publish_partial_trace() -> None:
             trace=trace,
         )
     assert trace.records == []
+
+
+def test_regional_persistence_rejects_duplicate_node_ids() -> None:
+    logger.info(
+        "test_regional_persistence_rejects_duplicate_node_ids"
+    )
+    store = _persistence_store()
+
+    duplicate_phase = FractalRegionalRegimeStore(
+        last_committed_day=store.last_committed_day,
+        phase_persistence=(
+            store.phase_persistence[0],
+            store.phase_persistence[0],
+        ),
+        security_persistence=store.security_persistence,
+        security_recovery_persistence=(
+            store.security_recovery_persistence
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="Duplicate regional phase persistence node IDs",
+    ):
+        duplicate_phase.phase_map()
+
+    duplicate_security = FractalRegionalRegimeStore(
+        last_committed_day=store.last_committed_day,
+        phase_persistence=store.phase_persistence,
+        security_persistence=(
+            store.security_persistence[0],
+            store.security_persistence[0],
+        ),
+        security_recovery_persistence=(
+            store.security_recovery_persistence
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="Duplicate regional security persistence node IDs",
+    ):
+        duplicate_security.security_map()
+
+    duplicate_recovery = FractalRegionalRegimeStore(
+        last_committed_day=store.last_committed_day,
+        phase_persistence=store.phase_persistence,
+        security_persistence=store.security_persistence,
+        security_recovery_persistence=(
+            store.security_recovery_persistence[0],
+            store.security_recovery_persistence[0],
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Duplicate regional security_recovery persistence node IDs"
+        ),
+    ):
+        duplicate_recovery.recovery_map()
