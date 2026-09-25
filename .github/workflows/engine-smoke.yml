@@ -2,7 +2,7 @@
 name: engine-smoke
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -29,6 +29,8 @@ jobs:
         python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -51,6 +53,20 @@ jobs:
               echo '~~~'
             } >> "$GITHUB_STEP_SUMMARY"
             exit "$status"
+          fi
+      - name: Commit pytest debug tail
+        if: failure()
+        run: |
+          if [ -f /tmp/pytest.log ] && [ ! -f ci_debug.txt ]; then
+            {
+              echo "Temporary CI debug for ${GITHUB_SHA}"
+              tail -n 260 /tmp/pytest.log
+            } > ci_debug.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ci_debug.txt
+            git commit -m "ci(debug): capture pytest failure"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
           fi
       - name: Upload pytest debug artifact
         if: always()
