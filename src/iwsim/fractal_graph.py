@@ -388,6 +388,33 @@ def _validate_projection_config(
     if policy_id != "FRACTAL_GRAPH_PROJECTION_V1":
         raise ValueError("Unsupported fractal graph projection policy")
 
+    rules = config.get("projection_rules", {})
+    required_rule_true = (
+        "parent_scaled_requires_distinct_parent_country_edge",
+        "unresolved_parent_channel_remains_null_after_scaling",
+        "pair_distance_requires_explicit_regional_data",
+        "pair_land_border_requires_explicit_regional_data",
+    )
+    for key in required_rule_true:
+        if rules.get(key) is not True:
+            raise ValueError(
+                f"v0.29 graph projection rule {key} must be true"
+            )
+    if rules.get("omitted_l2_channel_mode") != "unresolved":
+        raise ValueError(
+            "v0.29 omitted L2 graph channels must remain unresolved"
+        )
+    bounds = rules.get("explicit_value_bounds")
+    factor_bounds = rules.get("parent_scaled_factor_bounds")
+    if bounds != [0.0, 1.0]:
+        raise ValueError(
+            "v0.29 explicit graph values must remain bounded to [0,1]"
+        )
+    if factor_bounds != [0.0, 1.0]:
+        raise ValueError(
+            "v0.29 parent-scaled factors must remain bounded to [0,1]"
+        )
+
     raw_modes = config.get("channel_modes")
     if not isinstance(raw_modes, dict):
         raise ValueError("fractal graph channel_modes must be a mapping")
@@ -1013,6 +1040,14 @@ def _project_l2_edge(
             target_parent=parent_b,
             channel=channel,
         )
+        if (
+            str(spec.get("mode", "unresolved")) == "parent_scaled"
+            and source_edge is None
+        ):
+            raise ValueError(
+                "parent_scaled projection requires a distinct parent-country "
+                f"source edge for {a.runtime_node_id}/{b.runtime_node_id}"
+            )
         value, parameter_id, record = _project_value(
             channel=channel,
             direction="SYMMETRIC",
@@ -1051,6 +1086,15 @@ def _project_l2_edge(
                 target_parent=target_parent,
                 channel=channel,
             )
+            if (
+                str(spec.get("mode", "unresolved")) == "parent_scaled"
+                and source_edge is None
+            ):
+                raise ValueError(
+                    "parent_scaled projection requires a distinct "
+                    "parent-country source edge for "
+                    f"{a.runtime_node_id}/{b.runtime_node_id}"
+                )
             value, parameter_id, record = _project_value(
                 channel=channel,
                 direction=direction,
