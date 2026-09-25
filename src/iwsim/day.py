@@ -34,6 +34,10 @@ from .fractal_child_state import (
     initialize_fractal_child_states,
 )
 from .fractal_child_runtime import execute_autonomous_l2_dynamics
+from .fractal_coupling import (
+    FractalParentChildCouplingResult,
+    execute_parent_child_coupling,
+)
 from .fractal_uncertainty import (
     FractalUncertaintyAuditRecord,
     FractalUncertaintyRecord,
@@ -207,6 +211,9 @@ class DayTransactionResult:
     fractal_regional_regime_result: FractalRegionalRegimeResult | None
     fractal_projected_graph_before: FractalProjectedGraph | None
     fractal_projected_graph_after: FractalProjectedGraph | None
+    fractal_parent_child_coupling_result: (
+        FractalParentChildCouplingResult | None
+    )
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -370,6 +377,11 @@ class DayTransactionResult:
             "fractal_projected_graph_after": (
                 self.fractal_projected_graph_after.to_dict()
                 if self.fractal_projected_graph_after is not None
+                else None
+            ),
+            "fractal_parent_child_coupling_result": (
+                self.fractal_parent_child_coupling_result.to_dict()
+                if self.fractal_parent_child_coupling_result is not None
                 else None
             ),
         }
@@ -917,6 +929,7 @@ def _transaction_id(
     fractal_runtime_inputs: dict[str, Any] | None = None,
     fractal_regional_regime_inputs: dict[str, Any] | None = None,
     fractal_graph_projection_inputs: dict[str, Any] | None = None,
+    fractal_parent_child_coupling_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -953,6 +966,9 @@ def _transaction_id(
             ),
             "fractal_graph_projection_inputs": (
                 fractal_graph_projection_inputs
+            ),
+            "fractal_parent_child_coupling_inputs": (
+                fractal_parent_child_coupling_inputs
             ),
         }
     )
@@ -1827,6 +1843,8 @@ def run_day_transaction(
     enable_fractal_graph_projection: bool = False,
     fractal_graph_projection_config: dict[str, Any] | None = None,
     fractal_region_graph_catalog: dict[str, Any] | None = None,
+    enable_fractal_parent_child_coupling: bool = False,
+    fractal_parent_child_coupling_config: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1863,6 +1881,7 @@ def run_day_transaction(
     fractal_runtime_inputs: dict[str, Any] | None = None
     fractal_regional_regime_inputs: dict[str, Any] | None = None
     fractal_graph_projection_inputs: dict[str, Any] | None = None
+    fractal_parent_child_coupling_inputs: dict[str, Any] | None = None
     fractal_runtime_plan_before: FractalRuntimePlan | None = None
     fractal_projected_graph_before: FractalProjectedGraph | None = None
     normalized_fractal_regional_regime_store: (
@@ -2090,6 +2109,22 @@ def run_day_transaction(
             "runtime_config_hash": canonical_hash(fractal_runtime_config),
             "runtime_plan_before_hash": (
                 fractal_runtime_plan_before.plan_hash()
+            ),
+        }
+
+    if enable_fractal_parent_child_coupling:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Parent-child coupling requires fractal runtime planning"
+            )
+        if fractal_parent_child_coupling_config is None:
+            raise ValueError(
+                "Parent-child coupling requires an aggregation config"
+            )
+        fractal_parent_child_coupling_inputs = {
+            "policy_id": "FRACTAL_PARENT_CHILD_COUPLING_V1",
+            "aggregation_config_hash": canonical_hash(
+                fractal_parent_child_coupling_config
             ),
         }
 
@@ -2536,6 +2571,9 @@ def run_day_transaction(
         ),
         fractal_graph_projection_inputs=(
             fractal_graph_projection_inputs
+        ),
+        fractal_parent_child_coupling_inputs=(
+            fractal_parent_child_coupling_inputs
         ),
     )
 
@@ -3239,6 +3277,31 @@ def run_day_transaction(
             fractal_regional_regime_result.child_store
         )
 
+    fractal_parent_child_coupling_result: (
+        FractalParentChildCouplingResult | None
+    ) = None
+    if (
+        enable_fractal_parent_child_coupling
+        and fractal_runtime_plan_before is not None
+        and fractal_runtime_plan_before.refined_parent_ids
+    ):
+        assert fractal_child_state_store_out is not None
+        assert fractal_parent_child_coupling_config is not None
+        fractal_parent_child_coupling_result = execute_parent_child_coupling(
+            parent_states=final_states,
+            child_store=fractal_child_state_store_out,
+            runtime_plan=fractal_runtime_plan_before,
+            engine_state_registry=engine_state_registry,
+            reaggregation_config=fractal_parent_child_coupling_config,
+            trace=staged_trace,
+        )
+        final_states = (
+            fractal_parent_child_coupling_result.parent_states
+        )
+        fractal_child_state_store_out = (
+            fractal_parent_child_coupling_result.child_store
+        )
+
     fractal_collapse_commits: tuple[
         FractalCollapseCommitRecord, ...
     ] = ()
@@ -3417,6 +3480,14 @@ def run_day_transaction(
             if fractal_regional_regime_result is not None
             else []
         ),
+        fractal_parent_child_coupling_audit_ids=(
+            [
+                item.audit_id
+                for item in fractal_parent_child_coupling_result.audits
+            ]
+            if fractal_parent_child_coupling_result is not None
+            else []
+        ),
         fractal_categorical_divergence_audit_ids=(
             [
                 item.audit_id
@@ -3576,5 +3647,8 @@ def run_day_transaction(
         ),
         fractal_projected_graph_after=(
             fractal_projected_graph_after
+        ),
+        fractal_parent_child_coupling_result=(
+            fractal_parent_child_coupling_result
         ),
     )
