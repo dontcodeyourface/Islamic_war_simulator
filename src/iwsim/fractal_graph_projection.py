@@ -429,7 +429,8 @@ def _validate_projection_config(
         }
         if subnational_mode not in allowed_subnational:
             raise ValueError(
-                f"Unsupported subnational projection mode {subnational_mode} for {channel}"
+                "Unsupported subnational projection mode "
+                f"{subnational_mode} for {channel}"
             )
         if (
             channel == "alliance_link"
@@ -443,7 +444,8 @@ def _validate_projection_config(
             and subnational_mode != "explicit_catalog_required"
         ):
             raise ValueError(
-                f"Fractal subnational channel {channel} requires explicit catalog"
+                f"Fractal subnational channel {channel} requires "
+                "explicit catalog"
             )
         if not channel_policy_id:
             raise ValueError(
@@ -762,7 +764,9 @@ def _edge_kind(
         if a.parent_node_id == b.parent_node_id:
             return f"INTERNAL_{suffix}"
         return f"CROSS_PARENT_{suffix}"
-    return "MULTISCALE_EXTERNAL"
+    if "L3_METRO_OR_LOGISTICS_AREA" in {a.level, b.level}:
+        return "MULTISCALE_EXTERNAL"
+    return "L2_EXTERNAL"
 
 
 def _base_channel(
