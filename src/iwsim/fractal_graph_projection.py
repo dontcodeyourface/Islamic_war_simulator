@@ -529,6 +529,11 @@ def _catalog_edge_index(
                 "Regional graph catalog contains unknown channels: "
                 f"{sorted(unknown)}"
             )
+        if "alliance_link" in channels:
+            raise ValueError(
+                "Regional graph catalog may not project alliance_link; "
+                "that channel remains parent-retained"
+            )
 
         key = tuple(sorted((endpoint_a, endpoint_b)))
         if key in result:
