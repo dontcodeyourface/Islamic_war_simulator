@@ -361,7 +361,7 @@ Generation identity from v0.24 remains mandatory.
 
 The next implementation sequence is canonical unless superseded by a later architecture decision.
 
-### v0.25 — active multiscale runtime set — IMPLEMENTED — IMPLEMENTED
+### v0.25 — active multiscale runtime set — IMPLEMENTED
 
 Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 
@@ -371,7 +371,7 @@ Implemented by [FRACTAL_RUNTIME_V0.25.md](FRACTAL_RUNTIME_V0.25.md):
 - prevention of silent legacy L1 execution once a day begins refined;
 - runtime-plan trace and replay identity.
 
-Because autonomous L2 execution is intentionally still disabled in v0.25, an already-refined beginning-of-day plan fails closed instead of applying regionalizable dynamics at L1.
+v0.25 originally failed closed when beginning-of-day L2 authority existed without autonomous execution. v0.26-v0.27 activate safe child dynamics and scale-aware resolution; v0.27.1 then removes the circular day-transaction gate by suppressing stale L1 refinement evaluation while active L2 owns regionalizable state.
 
 ### v0.26 — autonomous L2 day transaction — IMPLEMENTED
 
@@ -394,11 +394,13 @@ Extend proposal and resolution identity to L2 and validate full transaction roll
 
 Implementation detail: [FRACTAL_MULTISCALE_RESOLVER_V0.27.md](FRACTAL_MULTISCALE_RESOLVER_V0.27.md).
 
-### v0.28 — L2 security/phase divergence
+### v0.28 — L2 security/phase divergence — IMPLEMENTED
 
 Enable regional regime/phase persistence and transitions where their semantics are valid at L2.
 
 Define the contract for categorical aggregation.
+
+Implementation detail: [FRACTAL_REGIONAL_REGIMES_V0.28.md](FRACTAL_REGIONAL_REGIMES_V0.28.md).
 
 ### v0.29 — multiscale graph projection
 
