@@ -5,6 +5,7 @@ from pathlib import Path
 
 from iwsim.config import load_yaml
 from iwsim.fractal_child_runtime import execute_autonomous_l2_dynamics
+from iwsim.fractal_uncertainty import apply_fractal_uncertainty
 from iwsim.fractal_child_state import (
     FractalChildStateStore,
     initialize_fractal_child_states,
@@ -14,6 +15,7 @@ from iwsim.fractal_materialization import (
     FractalTopologyState,
 )
 from iwsim.fractal_runtime import build_fractal_runtime_plan
+from iwsim.rng import RNGManager
 from iwsim.state import EngineState, extract_latent_registry
 from iwsim.trace import TraceLedger
 
@@ -307,3 +309,109 @@ def test_autonomous_execution_preserves_refined_l2_context_state() -> None:
         states[node_id].metadata["fractal_child_dynamics_active"] is True
         for node_id in result.executed_node_ids
     )
+
+
+
+def test_same_day_recursive_augmentation_does_not_advance_parent_twice() -> None:
+    logger.info(
+        "test_same_day_recursive_augmentation_does_not_advance_parent_twice"
+    )
+    parent = _l2_state(day=2)
+    result = initialize_fractal_child_states(
+        parent_states={"TST": _l1(day=2)},
+        topology=_topology(),
+        child_store=FractalChildStateStore(
+            last_initialized_day=2,
+            states=(parent,),
+        ),
+        initialization_config=load_yaml(
+            ROOT / "config/engine/fractal_child_state_v1.yaml"
+        ),
+        engine_state_registry=_registry(),
+        trace=TraceLedger(),
+    )
+
+    states = result.store.state_map()
+    assert states["TST::R1"].day == 2
+    assert states["TST::R1"].state_hash() == parent.state_hash()
+    assert {
+        item.parent_node_id
+        for item in result.initialization_records
+    } == {"TST::R1"}
+    assert {
+        item.child_node_id
+        for item in result.initialization_records
+    } == {
+        "TST::R1::METRO_A",
+        "TST::R1::LOGISTICS_B",
+    }
+    assert result.conservation_audits[0].conserved is True
+
+
+def test_recursive_uncertainty_uses_l2_parent_from_child_store() -> None:
+    logger.info(
+        "test_recursive_uncertainty_uses_l2_parent_from_child_store"
+    )
+    initialized = initialize_fractal_child_states(
+        parent_states={"TST": _l1(day=2)},
+        topology=_topology(),
+        child_store=FractalChildStateStore(
+            last_initialized_day=2,
+            states=(_l2_state(day=2),),
+        ),
+        initialization_config=load_yaml(
+            ROOT / "config/engine/fractal_child_state_v1.yaml"
+        ),
+        engine_state_registry=_registry(),
+        trace=TraceLedger(),
+    )
+    before = {
+        node_id: state.to_dict()
+        for node_id, state in initialized.store.state_map().items()
+    }
+
+    result = apply_fractal_uncertainty(
+        parent_states={"TST": _l1(day=2)},
+        topology=_topology(),
+        child_store=initialized.store,
+        new_child_ids=tuple(
+            item.child_node_id
+            for item in initialized.initialization_records
+        ),
+        uncertainty_config=load_yaml(
+            ROOT / "config/engine/fractal_uncertainty_v1.yaml"
+        ),
+        engine_state_registry=_registry(),
+        parameter_registry=load_yaml(
+            ROOT / "config/engine/parameter_registry_v1.yaml"
+        ),
+        profile="synthetic_smoke_v1",
+        rng=RNGManager(3434),
+        trace=TraceLedger(),
+    )
+
+    states = result.store.state_map()
+    assert states["TST::R1"].to_dict() == before["TST::R1"]
+    assert {
+        item.parent_node_id for item in result.records
+    } == {"TST::R1"}
+    assert {
+        item.parent_node_id for item in result.audits
+    } == {"TST::R1"}
+    assert all(item.preserved for item in result.audits)
+
+    for node_id in (
+        "TST::R1::METRO_A",
+        "TST::R1::LOGISTICS_B",
+    ):
+        assert (
+            states[node_id].physical_stocks
+            == before[node_id]["physical_stocks"]
+        )
+        assert states[node_id].regimes == before[node_id]["regimes"]
+        assert (
+            states[node_id].metadata[
+                "fractal_uncertainty_policy_id"
+            ]
+            == "FRACTAL_SPATIAL_LOCAL_VARIATION_V2"
+        )
