@@ -521,6 +521,81 @@ def assert_beginning_of_day_runtime_supported(
         )
 
 
+def build_active_regional_state_map(
+    *,
+    parent_states: dict[str, EngineState],
+    child_store: FractalChildStateStore,
+    plan: FractalRuntimePlan,
+) -> dict[str, EngineState]:
+    logger.info(
+        "build_active_regional_state_map day=%s parents=%s children=%s",
+        plan.day,
+        len(parent_states),
+        len(child_store.states),
+    )
+    child_states = child_store.state_map()
+    active_children = set(plan.active_regional_node_ids)
+    if set(child_states) != active_children:
+        raise ValueError(
+            "Active regional state-map child coverage mismatch: "
+            f"missing={sorted(active_children - set(child_states))} "
+            f"unexpected={sorted(set(child_states) - active_children)}"
+        )
+
+    result: dict[str, EngineState] = {}
+    for authority in sorted(
+        plan.nodes,
+        key=lambda item: item.runtime_node_id,
+    ):
+        if not authority.owns_regionalizable_state:
+            continue
+        node_id = authority.runtime_node_id
+        if authority.level == "L1_COUNTRY":
+            if node_id not in parent_states:
+                raise ValueError(
+                    f"Active L1 runtime state missing parent state {node_id}"
+                )
+            state = parent_states[node_id]
+        elif authority.level == "L2_REGION":
+            if node_id not in child_states:
+                raise ValueError(
+                    f"Active L2 runtime state missing child state {node_id}"
+                )
+            state = child_states[node_id]
+        else:
+            raise ValueError(
+                f"Unsupported active regional runtime level {authority.level}"
+            )
+        if state.day != plan.day:
+            raise ValueError(
+                f"Active runtime state {node_id} day mismatch: "
+                f"{state.day} != {plan.day}"
+            )
+        if node_id in result:
+            raise ValueError(
+                f"Duplicate active regional runtime state {node_id}"
+            )
+        result[node_id] = state
+
+    expected = {
+        item.runtime_node_id
+        for item in plan.nodes
+        if item.owns_regionalizable_state
+    }
+    if set(result) != expected:
+        raise ValueError(
+            "Active regional state-map authority coverage mismatch"
+        )
+    refined = set(plan.refined_parent_ids)
+    leaked_parents = refined & set(result)
+    if leaked_parents:
+        raise ValueError(
+            "Refined L1 parents leaked into active regional state map: "
+            f"{sorted(leaked_parents)}"
+        )
+    return result
+
+
 def build_runtime_resolver_context(
     *,
     plan: FractalRuntimePlan,
