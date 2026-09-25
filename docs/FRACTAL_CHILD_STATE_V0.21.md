@@ -118,3 +118,14 @@ v0.22 adds finer-scale uncertainty widening/local variation while preserving the
 It must not change the additive stock totals.
 
 No tactical or operational military functionality is introduced.
+
+
+## Post-v0.24 architectural clarification
+
+The `Child dynamics: disabled` status above is the deliberate scope of v0.21 only. It is not a permanent architecture decision.
+
+After the topology lifecycle through v0.24 is complete, active L2 children are required to become autonomous runtime domains for regionalizable state. The parent remains authoritative for national-only state and as the aggregate/cross-scale coordinator.
+
+The canonical follow-up contract is [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md).
+
+In particular, the current exclusion of child states from event passes, spillover and Owner Resolver is an intermediate staging constraint that the v0.25+ sequence must remove safely while preserving atomicity and preventing duplicate L1/L2 execution.
