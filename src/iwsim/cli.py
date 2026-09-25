@@ -114,6 +114,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_reaggregation_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-runtime-config",
+        default="config/engine/fractal_runtime_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -301,6 +305,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_reaggregation_config = load_yaml(
         root / args.fractal_reaggregation_config
     )
+    fractal_runtime_config = load_yaml(
+        root / args.fractal_runtime_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -385,6 +392,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_child_state_initialization",
             "fractal_uncertainty_widening",
             "fractal_collapse_reaggregation",
+            "fractal_active_runtime_plan",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -459,6 +467,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         fractal_uncertainty_config=fractal_uncertainty_config,
         enable_fractal_reaggregation=True,
         fractal_reaggregation_config=fractal_reaggregation_config,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=fractal_runtime_config,
     )
 
     out = Path(args.out)
@@ -579,6 +589,16 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 item.audit_id
                 for item in result.fractal_reaggregation_audits
             ],
+            "fractal_runtime_plan_before_hash": (
+                result.fractal_runtime_plan_before.plan_hash()
+                if result.fractal_runtime_plan_before is not None
+                else None
+            ),
+            "fractal_runtime_plan_after_hash": (
+                result.fractal_runtime_plan_after.plan_hash()
+                if result.fractal_runtime_plan_after is not None
+                else None
+            ),
             "fractal_child_state_store": (
                 result.fractal_child_state_store.to_dict()
                 if result.fractal_child_state_store is not None

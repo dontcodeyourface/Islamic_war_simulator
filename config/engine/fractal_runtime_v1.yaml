@@ -1,0 +1,127 @@
+schema_version: "1.0"
+status: "implementation-v0.25"
+purpose: "Deterministic multiscale runtime authority plan for L1/L2 adaptive execution."
+
+mode:
+  runtime_plan_generation_allowed: true
+  autonomous_child_dynamics_allowed: false
+  topology_changes_take_effect_next_day: true
+  refined_beginning_of_day_requires_autonomous_runtime: true
+
+authority:
+  policy_id: "FRACTAL_RUNTIME_AUTHORITY_V1"
+
+  physical_stocks:
+    regionalizable:
+      - "population_total"
+      - "working_age_population"
+      - "dependent_population"
+      - "displaced_people"
+      - "reception_population"
+      - "fuel_stock_days_equivalent"
+      - "strategic_food_stock_days"
+      - "available_police_personnel"
+      - "prison_population"
+    national_only:
+      - "available_military_personnel"
+      - "foreign_reserves_usd"
+      - "gold_reserves_tonnes"
+
+  latents:
+    regionalizable:
+      - "demographic_momentum"
+      - "migration_pressure"
+      - "dependency_pressure"
+      - "social_cohesion"
+      - "polarization"
+      - "communal_fear"
+      - "reception_pressure"
+      - "displacement_pressure"
+      - "government_legitimacy"
+      - "state_cohesion"
+      - "elite_cohesion"
+      - "administrative_capacity"
+      - "judicial_continuity"
+      - "fiscal_capacity"
+      - "salary_payment_continuity"
+      - "center_region_cohesion"
+      - "territorial_control"
+      - "regional_fragmentation_pressure"
+      - "police_effective_capacity"
+      - "intelligence_effectiveness"
+      - "security_chain_cohesion"
+      - "command_cohesion"
+      - "constitutional_loyalty"
+      - "operational_fatigue"
+      - "public_order_stress"
+      - "prison_control"
+      - "terrorism_threat_pressure"
+      - "criminal_network_power"
+      - "black_market_expansion"
+      - "violent_islamist_pressure"
+      - "violent_ultranationalist_pressure"
+      - "revolutionary_extremist_pressure"
+      - "organized_armed_actor_capacity"
+      - "foreign_support_nonstate"
+      - "civilizational_narrative_strength"
+      - "economic_output"
+      - "inflation_pressure"
+      - "unemployment_pressure"
+      - "financial_buffer"
+      - "trade_access"
+      - "energy_resilience"
+      - "electricity_functionality"
+      - "fuel_distribution_functionality"
+      - "food_resilience"
+      - "water_resilience"
+      - "transport_logistics_functionality"
+      - "telecom_internet_functionality"
+      - "health_system_functionality"
+      - "external_conflict_pressure"
+    national_only:
+      - "military_land_effective"
+      - "military_air_effective"
+      - "military_naval_effective"
+      - "military_isr_ew_effective"
+      - "military_drone_cuas_effective"
+      - "military_logistics_availability"
+      - "defence_industrial_capacity"
+      - "replenishment_capacity"
+      - "ai_defence_maturity"
+      - "cyber_resilience"
+      - "alliance_support"
+
+  regimes:
+    regionalizable:
+      - "national_phase"
+      - "security_force_regime"
+      - "prison_regime"
+      - "organized_crime_regime"
+    national_only: []
+
+execution_status:
+  coarse_l1: "L1_FULL_AUTHORITY"
+  refined_l1_parent: "L1_NATIONAL_ONLY_AUTHORITY"
+  active_l2: "L2_REGIONAL_AUTHORITY_BLOCKED_UNTIL_V0_26"
+  inactive_lineage: "INACTIVE_HISTORY_EXCLUDED"
+
+rules:
+  exact_registry_coverage_required: true
+  duplicate_authority_assignment_forbidden: true
+  active_child_state_required: true
+  inactive_child_state_forbidden: true
+  active_child_parent_metadata_required: true
+  active_children_replace_parent_for_regionalizable_authority: true
+  parent_retains_national_only_authority: true
+  duplicate_l1_l2_regional_execution_forbidden: true
+  beginning_of_day_plan_controls_current_day: true
+  committed_topology_controls_next_day: true
+  runtime_plan_hash_in_transaction_identity: true
+  runtime_plan_trace_required: true
+
+safety:
+  civilian_identity_direct_authority_input: false
+  tactical_target_selection: false
+  weapon_selection: false
+  route_planning: false
+  operational_execution: false
