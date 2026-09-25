@@ -4280,3 +4280,134 @@ def test_fractal_second_refinement_uses_new_runtime_generation() -> None:
         "ESP::R2::g2",
     }
     assert all(item["lineage_generation"] == 2 for item in created)
+
+
+def test_active_l2_runtime_can_advance_second_day_without_parent_refinement_eval() -> None:
+    logger.info(
+        "test_active_l2_runtime_can_advance_second_day_without_parent_refinement_eval"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1053
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    runtime_config = load_yaml(
+        ROOT / "config/engine/fractal_runtime_v1.yaml"
+    )
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=runtime_config,
+    )
+    assert first.fractal_runtime_plan_after is not None
+    assert first.fractal_runtime_plan_after.refined_parent_ids == ("ESP",)
+    assert first.fractal_child_state_store is not None
+    assert first.fractal_topology is not None
+
+    trace = TraceLedger()
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence={
+            node_id: item
+            for node_id, item in first.fractal_refinement_persistence.items()
+        },
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=first.fractal_topology,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=first.fractal_child_state_store,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=runtime_config,
+    )
+
+    assert second.fractal_runtime_plan_before is not None
+    assert second.fractal_runtime_plan_before.refined_parent_ids == ("ESP",)
+    assert second.fractal_child_state_store is not None
+    assert all(
+        child.day == 2
+        for child in second.fractal_child_state_store.states
+    )
+    assert all(
+        child.metadata["fractal_child_dynamics_active"] is True
+        for child in second.fractal_child_state_store.states
+    )
+    assert second.fractal_refinement_persistence[
+        "ESP"
+    ] == FractalRefinementPersistenceState(
+        node_id="ESP",
+        current_level="L2_REGION",
+        last_evaluated_day=2,
+        expand_streak=0,
+        collapse_streak=0,
+    )
+    assert not any(
+        item.node_id == "ESP"
+        for item in second.fractal_refinement_actions
+    )
+    suppressed = [
+        item
+        for item in trace.records
+        if item["record_type"]
+        == "fractal_refinement_evaluation_suppressed"
+        and item["node_id"] == "ESP"
+    ]
+    assert len(suppressed) == 1
+    assert suppressed[0]["reason"] == "awaiting_parent_child_coupling"
