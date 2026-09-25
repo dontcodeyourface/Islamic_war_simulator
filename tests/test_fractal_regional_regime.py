@@ -434,3 +434,9 @@ def test_regional_runtime_failure_does_not_publish_partial_trace() -> None:
             trace=trace,
         )
     assert trace.records == []
+
+
+def test_debug_regional_run_only() -> None:
+    logger.info("test_debug_regional_run_only")
+    result = _run()
+    assert result is not None
