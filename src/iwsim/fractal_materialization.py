@@ -183,19 +183,19 @@ def _validate_materialization_config(config: dict[str, Any]) -> dict[str, Any]:
     logger.info("_validate_materialization_config")
     mode = config.get("mode", {})
     if mode.get("expansion_commit_allowed") is not True:
-        raise ValueError("v0.24 requires expansion_commit_allowed=true")
+        raise ValueError("Fractal materialization requires expansion_commit_allowed=true")
     if mode.get("collapse_commit_allowed") is not False:
-        raise ValueError("v0.24 topology materializer does not commit collapse")
+        raise ValueError("Fractal topology materializer does not commit collapse")
     if mode.get("engine_state_child_activation") is not False:
         raise ValueError(
-            "v0.24 must not activate child EngineState dynamics"
+            "Topology materialization must not activate child EngineState dynamics"
         )
     if mode.get("country_graph_child_activation") is not False:
         raise ValueError(
-            "v0.24 must not insert children into CountryGraph"
+            "Topology materialization must not insert children into CountryGraph"
         )
     if mode.get("explicit_catalog_required") is not True:
-        raise ValueError("v0.24 requires an explicit region catalog")
+        raise ValueError("Fractal materialization requires an explicit child catalog")
 
     min_children = int(config["catalog_constraints"]["min_children"])
     max_children = int(config["catalog_constraints"]["max_children"])
@@ -350,7 +350,12 @@ def _commit_id(
             "catalog_child_ids": list(catalog_child_ids),
             "lineage_generation": lineage_generation,
             "lineage_policy_id": lineage_policy_id,
-            "commit_contract": "FRACTAL_L2_MATERIALIZATION_V2",
+            "commit_contract": (
+                "FRACTAL_L2_MATERIALIZATION_V2"
+                if action.from_level == "L1_COUNTRY"
+                and action.to_level == "L2_REGION"
+                else "FRACTAL_RECURSIVE_MATERIALIZATION_V1"
+            ),
         }
     )
     return f"fractal-commit-{digest[:24]}"
