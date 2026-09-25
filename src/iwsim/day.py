@@ -1607,21 +1607,20 @@ def _evaluate_fractal_refinements(
             carried = FractalRefinementPersistenceState(
                 node_id=node_id,
                 current_level=prior.current_level,
-                last_evaluated_day=states[node_id].day,
-                expand_streak=0,
-                collapse_streak=0,
+                last_evaluated_day=prior.last_evaluated_day,
+                expand_streak=prior.expand_streak,
+                collapse_streak=prior.collapse_streak,
             )
             persistence_out[node_id] = carried
             trace.append(
-                "fractal_refinement_evaluation_suppressed",
+                "fractal_refinement_evaluation_deferred",
                 node_id=node_id,
                 day=states[node_id].day,
                 current_level=prior.current_level,
                 reason="awaiting_parent_child_coupling",
-                expand_streak_before=prior.expand_streak,
-                collapse_streak_before=prior.collapse_streak,
-                expand_streak_after=0,
-                collapse_streak_after=0,
+                expand_streak=prior.expand_streak,
+                collapse_streak=prior.collapse_streak,
+                last_evaluated_day=prior.last_evaluated_day,
             )
             continue
 
