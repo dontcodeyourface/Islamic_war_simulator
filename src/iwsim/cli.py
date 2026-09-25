@@ -118,6 +118,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="config/engine/fractal_runtime_v1.yaml",
     )
     day_smoke.add_argument(
+        "--fractal-regional-regime-config",
+        default="config/engine/fractal_regional_regime_v1.yaml",
+    )
+    day_smoke.add_argument(
         "--phase-transition-config",
         default="config/engine/phase_transition_v1.yaml",
     )
@@ -308,6 +312,9 @@ def run_day_smoke(args: argparse.Namespace) -> int:
     fractal_runtime_config = load_yaml(
         root / args.fractal_runtime_config
     )
+    fractal_regional_regime_config = load_yaml(
+        root / args.fractal_regional_regime_config
+    )
     phase_transition_config = load_yaml(root / args.phase_transition_config)
     distance_matrix = load_yaml(root / graph_config["distance_matrix_path"])
 
@@ -394,6 +401,7 @@ def run_day_smoke(args: argparse.Namespace) -> int:
             "fractal_collapse_reaggregation",
             "fractal_active_runtime_plan",
             "fractal_autonomous_l2_dynamics",
+            "fractal_regional_phase_security",
             "trace",
         ),
         normalization_version="1.0-hybrid-v0.2",
@@ -470,6 +478,12 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         fractal_reaggregation_config=fractal_reaggregation_config,
         enable_fractal_runtime_plan=True,
         fractal_runtime_config=fractal_runtime_config,
+        enable_fractal_regional_regimes=True,
+        fractal_regional_regime_config=(
+            fractal_regional_regime_config
+        ),
+        fractal_regional_regime_store=None,
+        fractal_regional_context_flags={},
     )
 
     out = Path(args.out)
@@ -610,6 +624,35 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 result.fractal_child_state_store.to_dict()
                 if result.fractal_child_state_store is not None
                 else None
+            ),
+            "fractal_regional_regime_store": (
+                result.fractal_regional_regime_result.persistence_store.to_dict()
+                if result.fractal_regional_regime_result is not None
+                else None
+            ),
+            "fractal_regional_phase_commit_ids": (
+                [
+                    item.commit_id
+                    for item in result.fractal_regional_regime_result.phase_commits
+                ]
+                if result.fractal_regional_regime_result is not None
+                else []
+            ),
+            "fractal_regional_security_commit_ids": (
+                [
+                    item.commit_id
+                    for item in result.fractal_regional_regime_result.security_commits
+                ]
+                if result.fractal_regional_regime_result is not None
+                else []
+            ),
+            "fractal_categorical_divergence_audits": (
+                [
+                    item.to_dict()
+                    for item in result.fractal_regional_regime_result.divergence_audits
+                ]
+                if result.fractal_regional_regime_result is not None
+                else []
             ),
             "spillover_queue": (
                 result.spillover_queue.to_dict()
