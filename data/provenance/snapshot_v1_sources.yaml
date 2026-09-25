@@ -201,3 +201,65 @@ sources:
     type: "official_humanitarian_reception_program"
     quality: "high"
     notes: "For eligible vulnerable irregular arrivals lacking resources; includes accommodation, food, basic healthcare, language support, material assistance and basic economic aid."
+
+  EU-EUROSTAT-NUTS-2024:
+    title: "NUTS 2024 - Nomenclature of territorial units for statistics"
+    publisher: "Eurostat"
+    url: "https://ec.europa.eu/eurostat/web/nuts"
+    reference_date: "2024-01-01"
+    type: "official_statistical_geography"
+    quality: "high"
+    notes: "Canonical statistical hierarchy for EU spatial refinement. Used as topology evidence only; population weights require separate national or Eurostat population tables."
+
+  ES-INE-ECP-PROVINCES-2026:
+    title: "Estadística Continua de Población - resultados por provincias"
+    publisher: "Instituto Nacional de Estadística"
+    url: "https://www.ine.es/dynt3/inebase/index.htm?capsel=9635&padre=9620"
+    reference_date: "2026-07-01"
+    publication_date: "2026-08-06"
+    type: "official_subnational_demography"
+    quality: "high"
+    notes: "INE ECP provides resident population at province level and is the preferred weight source for Spanish L3 province partitions."
+
+  FR-INSEE-SUBREGIONAL-POP:
+    title: "INSEE subregional population tables"
+    publisher: "Institut national de la statistique et des études économiques"
+    reference_date: "latest-compatible-with-snapshot"
+    type: "official_subnational_demography"
+    quality: "high"
+    notes: "Stable repository provenance identifier reserved for the department/NUTS3 population table selected in the dedicated L3 data PR. No runtime child weights may use this source ID until exact table/date are recorded."
+
+  DE-DESTATIS-SUBREGIONAL-POP:
+    title: "Destatis subregional population tables"
+    publisher: "Statistisches Bundesamt"
+    reference_date: "latest-compatible-with-snapshot"
+    type: "official_subnational_demography"
+    quality: "high"
+    notes: "Stable repository provenance identifier reserved for the NUTS2/subregional population table selected in the dedicated L3 data PR. No runtime child weights may use this source ID until exact table/date are recorded."
+
+  UK-ONS-ITL-2025:
+    title: "International Territorial Levels (ITLs) 2025"
+    publisher: "Office for National Statistics"
+    url: "https://www.ons.gov.uk/methodology/geography/ukgeographies/eurostat"
+    reference_date: "2025"
+    type: "official_statistical_geography"
+    quality: "high"
+    notes: "UK-managed hierarchical statistical geography replacing NUTS; reviewed periodically and suitable for stable subnational catalog identity."
+
+  UK-ONS-ITL-POP-2025:
+    title: "ONS population estimates by International Territorial Level"
+    publisher: "Office for National Statistics"
+    reference_date: "2025-compatible"
+    type: "official_subnational_demography"
+    quality: "high"
+    notes: "Reserved source ID for the exact ITL population release selected in the dedicated L3 data PR. No runtime child weights may use this source ID until exact table/date are recorded."
+
+  MA-HCP-RGPH-2024-TERRITORIAL:
+    title: "Population légale par régions, provinces, préfectures et communes - RGPH 2024"
+    publisher: "Haut-Commissariat au Plan, Morocco"
+    url: "https://www.hcp.ma/Population-legale-du-Royaume-du-Maroc-repartie-par-regions-provinces-et-prefectures-et-communes-selon-les-resultats-du_a3975.html"
+    reference_date: "2024"
+    publication_date: "2024-11-07"
+    type: "official_census_subnational"
+    quality: "high"
+    notes: "Provides the legal population hierarchy needed to derive region -> province/prefecture L3 child sets and population-share weights."
