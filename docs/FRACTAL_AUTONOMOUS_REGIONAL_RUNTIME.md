@@ -506,9 +506,15 @@ Implemented by [FRACTAL_L3_PARTITION_POLICY_V0.34D.md](FRACTAL_L3_PARTITION_POLI
 
 The recursive engine now distinguishes missing L3 data from invalid configured data. A matured L2 -> L3 expansion with no explicit child catalog is blocked and traced without aborting the day transaction; malformed configured catalogs still fail closed. Country-specific partition bases and provenance requirements are explicit for ESP/FRA/DEU/GBR/MAR, with population-share weights required before activation and no equal-weight fallback.
 
-### v0.34e+ — populate production L3 child data and graph coverage
+### v0.34e — Spain production L3 province catalog — IMPLEMENTED
 
-Next, evidence-backed L3 child sets and exact population weights must be added country by country, followed by L3 graph-channel coverage and configured lifecycle validation. Only after those production data paths pass should runtime activation continue to L4 actor networks and L5 event clusters.
+Implemented by [FRACTAL_SPAIN_L3_CATALOG_V0.34E.md](FRACTAL_SPAIN_L3_CATALOG_V0.34E.md).
+
+Ten Spanish multi-province L2 parents now have explicit production L3 province child sets with INE ECP 1 July 2026 raw population counts and normalized initialization weights. The remaining nine Spanish L2 parents are deliberately unpartitioned under the province policy and continue to use the v0.34d block-not-abort path. Stable catalog IDs use INE two-digit province codes and remain separate from runtime lineage generation.
+
+### v0.34f+ — remaining production L3 data and graph coverage
+
+Next, evidence-backed L3 child sets and exact weights must be populated for Morocco, France, Germany and the United Kingdom, followed by L3 graph-channel coverage and configured lifecycle validation. Only after those production data paths pass should runtime activation continue to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

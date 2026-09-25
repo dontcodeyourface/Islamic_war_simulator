@@ -924,7 +924,7 @@ def test_v034d_missing_l3_catalog_blocks_refinement_without_aborting_day() -> No
         **common,
     )
 
-    target = "ESP::CT"
+    target = "ESP::MD"
     assert first.fractal_child_state_store is not None
     assert first.fractal_topology is not None
 
