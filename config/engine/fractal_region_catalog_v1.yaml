@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "evidence-backed-canonical-l2"
-purpose: "Canonical L2 administrative divisions for every country in snapshot v1. Initialization weights are population shares and are provenance-scoped."
+status: "evidence-backed-canonical-l2-plus-spain-l3"
+purpose: "Canonical L2 administrative divisions for every country in snapshot v1 plus evidence-backed Spanish L3 province partitions where a multi-child administrative partition exists. Initialization weights are population shares and are provenance-scoped."
 
 weight_policy:
   id: "FRACTAL_CHILD_INIT_POPULATION_SHARE_V1"
@@ -117,3 +117,137 @@ parents:
       - {child_id: "MAR::10", label: "Guelmim-Oued Noun", initialization_weight: 0.012191810579}
       - {child_id: "MAR::11", label: "Laâyoune-Sakia El Hamra", initialization_weight: 0.012246117085}
       - {child_id: "MAR::12", label: "Dakhla-Oued Ed-Dahab", initialization_weight: 0.005973715651}
+
+
+  ESP::AN:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 8778051
+    children:
+      - {child_id: "ESP::AN::04", label: "Almería", population_reference_count: 788934, initialization_weight: 0.089875759437}
+      - {child_id: "ESP::AN::11", label: "Cádiz", population_reference_count: 1267916, initialization_weight: 0.144441630608}
+      - {child_id: "ESP::AN::14", label: "Córdoba", population_reference_count: 772913, initialization_weight: 0.088050639031}
+      - {child_id: "ESP::AN::18", label: "Granada", population_reference_count: 959738, initialization_weight: 0.109333837318}
+      - {child_id: "ESP::AN::21", label: "Huelva", population_reference_count: 543302, initialization_weight: 0.061893238032}
+      - {child_id: "ESP::AN::23", label: "Jaén", population_reference_count: 620254, initialization_weight: 0.070659648708}
+      - {child_id: "ESP::AN::29", label: "Málaga", population_reference_count: 1820507, initialization_weight: 0.207393076208}
+      - {child_id: "ESP::AN::41", label: "Sevilla", population_reference_count: 2004487, initialization_weight: 0.228352170658}
+
+  ESP::AR:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 1389298
+    children:
+      - {child_id: "ESP::AR::22", label: "Huesca", population_reference_count: 234361, initialization_weight: 0.168690230606}
+      - {child_id: "ESP::AR::44", label: "Teruel", population_reference_count: 137488, initialization_weight: 0.098962209692}
+      - {child_id: "ESP::AR::50", label: "Zaragoza", population_reference_count: 1017449, initialization_weight: 0.732347559702}
+
+  ESP::CN:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 2277705
+    children:
+      - {child_id: "ESP::CN::35", label: "Las Palmas", population_reference_count: 1182281, initialization_weight: 0.519066779939}
+      - {child_id: "ESP::CN::38", label: "Santa Cruz de Tenerife", population_reference_count: 1095424, initialization_weight: 0.480933220061}
+
+  ESP::CL:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 2427156
+    children:
+      - {child_id: "ESP::CL::05", label: "Ávila", population_reference_count: 162743, initialization_weight: 0.067050902373}
+      - {child_id: "ESP::CL::09", label: "Burgos", population_reference_count: 367864, initialization_weight: 0.151561745516}
+      - {child_id: "ESP::CL::24", label: "León", population_reference_count: 450910, initialization_weight: 0.185777098794}
+      - {child_id: "ESP::CL::34", label: "Palencia", population_reference_count: 160620, initialization_weight: 0.066176216115}
+      - {child_id: "ESP::CL::37", label: "Salamanca", population_reference_count: 331264, initialization_weight: 0.136482368665}
+      - {child_id: "ESP::CL::40", label: "Segovia", population_reference_count: 161261, initialization_weight: 0.066440311212}
+      - {child_id: "ESP::CL::42", label: "Soria", population_reference_count: 90559, initialization_weight: 0.037310745580}
+      - {child_id: "ESP::CL::47", label: "Valladolid", population_reference_count: 536425, initialization_weight: 0.221009692002}
+      - {child_id: "ESP::CL::49", label: "Zamora", population_reference_count: 165510, initialization_weight: 0.068190919743}
+
+  ESP::CM:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 2169241
+    children:
+      - {child_id: "ESP::CM::02", label: "Albacete", population_reference_count: 394702, initialization_weight: 0.181953964543}
+      - {child_id: "ESP::CM::13", label: "Ciudad Real", population_reference_count: 500441, initialization_weight: 0.230698663726}
+      - {child_id: "ESP::CM::16", label: "Cuenca", population_reference_count: 201233, initialization_weight: 0.092766548300}
+      - {child_id: "ESP::CM::19", label: "Guadalajara", population_reference_count: 293762, initialization_weight: 0.135421559891}
+      - {child_id: "ESP::CM::45", label: "Toledo", population_reference_count: 779103, initialization_weight: 0.359159263540}
+
+  ESP::CT:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 8233788
+    children:
+      - {child_id: "ESP::CT::08", label: "Barcelona", population_reference_count: 6028373, initialization_weight: 0.732150621318}
+      - {child_id: "ESP::CT::17", label: "Girona", population_reference_count: 840086, initialization_weight: 0.102029102522}
+      - {child_id: "ESP::CT::25", label: "Lleida", population_reference_count: 467938, initialization_weight: 0.056831436515}
+      - {child_id: "ESP::CT::43", label: "Tarragona", population_reference_count: 897391, initialization_weight: 0.108988839645}
+
+  ESP::VC:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 5574948
+    children:
+      - {child_id: "ESP::VC::03", label: "Alicante/Alacant", population_reference_count: 2099866, initialization_weight: 0.376661091727}
+      - {child_id: "ESP::VC::12", label: "Castellón/Castelló", population_reference_count: 647819, initialization_weight: 0.116201801344}
+      - {child_id: "ESP::VC::46", label: "Valencia/València", population_reference_count: 2827263, initialization_weight: 0.507137106929}
+
+  ESP::EX:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 1055849
+    children:
+      - {child_id: "ESP::EX::06", label: "Badajoz", population_reference_count: 667584, initialization_weight: 0.632272228321}
+      - {child_id: "ESP::EX::10", label: "Cáceres", population_reference_count: 388265, initialization_weight: 0.367727771679}
+
+  ESP::GA:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 2734494
+    children:
+      - {child_id: "ESP::GA::15", label: "A Coruña", population_reference_count: 1146768, initialization_weight: 0.419371188966}
+      - {child_id: "ESP::GA::27", label: "Lugo", population_reference_count: 328547, initialization_weight: 0.120149102540}
+      - {child_id: "ESP::GA::32", label: "Ourense", population_reference_count: 307119, initialization_weight: 0.112312917856}
+      - {child_id: "ESP::GA::36", label: "Pontevedra", population_reference_count: 952060, initialization_weight: 0.348166790638}
+
+  ESP::PV:
+    source_id: "ES-INE-ECP-PROVINCES-2026"
+    administrative_level: "province"
+    weight_reference_date: "2026-07-01"
+    weight_quality: "official_provisional"
+    topology_source_id: "EU-EUROSTAT-NUTS-2024"
+    population_reference_total: 2257392
+    children:
+      - {child_id: "ESP::PV::01", label: "Araba/Álava", population_reference_count: 345912, initialization_weight: 0.153235237832}
+      - {child_id: "ESP::PV::20", label: "Gipuzkoa", population_reference_count: 736532, initialization_weight: 0.326275631348}
+      - {child_id: "ESP::PV::48", label: "Bizkaia", population_reference_count: 1174948, initialization_weight: 0.520489130820}
