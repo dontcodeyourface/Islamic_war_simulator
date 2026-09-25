@@ -1296,34 +1296,73 @@ def commit_fractal_collapses(
                 f"Multiple fractal collapse actions for {action.node_id}"
             )
         seen_parents.add(action.node_id)
-        if action.node_id not in states_out:
-            raise ValueError(
-                f"Fractal collapse targets unknown parent {action.node_id}"
-            )
         if action.node_id not in persistence_out:
             raise ValueError(
                 f"Fractal collapse targets unknown persistence {action.node_id}"
             )
 
-        (
-            parent_after,
-            topology_out,
-            child_store_out,
-            persistence_after,
-            commit_record,
-            audit,
-        ) = collapse_l2_to_l1(
-            parent_state=states_out[action.node_id],
-            action=action,
-            persistence=persistence_out[action.node_id],
-            topology=topology_out,
-            child_store=child_store_out,
-            reaggregation_config=reaggregation_config,
-            engine_state_registry=engine_state_registry,
-            manifest=manifest,
-            trace=trace,
-        )
-        states_out[action.node_id] = parent_after
+        if (
+            action.from_level == "L2_REGION"
+            and action.to_level == "L1_COUNTRY"
+        ):
+            if action.node_id not in states_out:
+                raise ValueError(
+                    f"Fractal L2 collapse targets unknown L1 parent "
+                    f"{action.node_id}"
+                )
+            (
+                parent_after,
+                topology_out,
+                child_store_out,
+                persistence_after,
+                commit_record,
+                audit,
+            ) = collapse_l2_to_l1(
+                parent_state=states_out[action.node_id],
+                action=action,
+                persistence=persistence_out[action.node_id],
+                topology=topology_out,
+                child_store=child_store_out,
+                reaggregation_config=reaggregation_config,
+                engine_state_registry=engine_state_registry,
+                manifest=manifest,
+                trace=trace,
+            )
+            states_out[action.node_id] = parent_after
+        elif (
+            action.from_level == "L3_METRO_OR_LOGISTICS_AREA"
+            and action.to_level == "L2_REGION"
+        ):
+            child_map = child_store_out.state_map()
+            if action.node_id not in child_map:
+                raise ValueError(
+                    f"Fractal L3 collapse targets unknown L2 parent "
+                    f"{action.node_id}"
+                )
+            (
+                _,
+                topology_out,
+                child_store_out,
+                persistence_after,
+                commit_record,
+                audit,
+            ) = collapse_l3_to_l2(
+                parent_state=child_map[action.node_id],
+                action=action,
+                persistence=persistence_out[action.node_id],
+                topology=topology_out,
+                child_store=child_store_out,
+                reaggregation_config=reaggregation_config,
+                engine_state_registry=engine_state_registry,
+                manifest=manifest,
+                trace=trace,
+            )
+        else:
+            raise ValueError(
+                "Unsupported fractal collapse transition "
+                f"{action.from_level} -> {action.to_level}"
+            )
+
         persistence_out[action.node_id] = persistence_after
         commits.append(commit_record)
         audits.append(audit)
