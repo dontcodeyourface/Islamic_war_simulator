@@ -4411,3 +4411,282 @@ def test_active_l2_runtime_can_advance_second_day_without_parent_refinement_eval
     ]
     assert len(suppressed) == 1
     assert suppressed[0]["reason"] == "awaiting_parent_child_coupling"
+
+
+def test_v028_day_transaction_commits_real_regional_divergence() -> None:
+    logger.info(
+        "test_v028_day_transaction_commits_real_regional_divergence"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+    from iwsim.fractal_child_state import FractalChildStateStore
+    from iwsim.fractal_regional_regime import (
+        FractalRegionalRegimeStore,
+    )
+    from iwsim.phases import PhasePersistenceState
+    from iwsim.state import EngineState
+
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1054
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    runtime_config = load_yaml(
+        ROOT / "config/engine/fractal_runtime_v1.yaml"
+    )
+    regional_config = load_yaml(
+        ROOT / "config/engine/fractal_regional_regime_v1.yaml"
+    )
+    phase_config = load_yaml(
+        ROOT / "config/engine/phase_evaluator_v1.yaml"
+    )
+    phase_transition_config = load_yaml(
+        ROOT / "config/engine/phase_transition_v1.yaml"
+    )
+    security_config = load_yaml(
+        ROOT / "config/engine/security_regime_evaluator_v1.yaml"
+    )
+    security_transition_config = load_yaml(
+        ROOT / "config/engine/security_regime_transition_v1.yaml"
+    )
+    security_recovery_config = load_yaml(
+        ROOT / "config/engine/security_regime_recovery_v1.yaml"
+    )
+    security_recovery_transition_config = load_yaml(
+        ROOT
+        / "config/engine/security_regime_recovery_transition_v1.yaml"
+    )
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+        state.latents["security_chain_cohesion"] = 0.90
+        state.latents["operational_fatigue"] = 0.10
+        state.latents["command_cohesion"] = 0.90
+    _set_fractal_high_pressure_state(states["ESP"])
+    states["ESP"].latents["security_chain_cohesion"] = 0.90
+    states["ESP"].latents["operational_fatigue"] = 0.10
+    states["ESP"].latents["command_cohesion"] = 0.90
+    _set_fractal_parent_physical_stocks(states["ESP"])
+
+    refinement_persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+
+    first = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=TraceLedger(),
+        enable_phase_transitions=True,
+        phase_config=phase_config,
+        phase_transition_config=phase_transition_config,
+        phase_persistence=None,
+        phase_context_flags={},
+        enable_security_regime_evaluator=True,
+        security_regime_config=security_config,
+        security_regime_persistence=None,
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=security_transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=security_recovery_config,
+        security_regime_recovery_persistence=None,
+        enable_security_regime_recovery_commits=True,
+        security_regime_recovery_transition_config=(
+            security_recovery_transition_config
+        ),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=refinement_persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=runtime_config,
+        enable_fractal_regional_regimes=True,
+        fractal_regional_regime_config=regional_config,
+        fractal_regional_regime_store=None,
+        fractal_regional_context_flags={},
+    )
+
+    assert first.fractal_child_state_store is not None
+    assert first.fractal_topology is not None
+    assert first.fractal_regional_regime_result is not None
+    first_children = first.fractal_child_state_store.state_map()
+    assert set(first_children) == {"ESP::R1", "ESP::R2"}
+
+    prepared_children = {}
+    for node_id, child in sorted(first_children.items()):
+        latents = dict(child.latents)
+        if node_id == "ESP::R1":
+            latents.update(
+                {
+                    "public_order_stress": 0.90,
+                    "polarization": 0.90,
+                    "external_conflict_pressure": 0.50,
+                    "security_chain_cohesion": 0.50,
+                    "operational_fatigue": 0.80,
+                    "command_cohesion": 0.70,
+                }
+            )
+        else:
+            latents.update(
+                {
+                    "public_order_stress": 0.10,
+                    "polarization": 0.10,
+                    "external_conflict_pressure": 0.10,
+                    "security_chain_cohesion": 0.90,
+                    "operational_fatigue": 0.10,
+                    "command_cohesion": 0.90,
+                }
+            )
+        prepared_children[node_id] = EngineState(
+            node_id=child.node_id,
+            day=child.day,
+            physical_stocks=dict(child.physical_stocks),
+            latents=latents,
+            regimes=dict(child.regimes),
+            metadata=dict(child.metadata),
+        )
+
+    prepared_store = FractalChildStateStore(
+        last_initialized_day=first.fractal_child_state_store.last_initialized_day,
+        states=tuple(
+            prepared_children[node_id]
+            for node_id in sorted(prepared_children)
+        ),
+    )
+    regional_store = (
+        first.fractal_regional_regime_result.persistence_store
+    )
+    phase_map = regional_store.phase_map()
+    regional_store = FractalRegionalRegimeStore(
+        last_committed_day=regional_store.last_committed_day,
+        phase_persistence=tuple(
+            (
+                PhasePersistenceState(
+                    node_id=node_id,
+                    current_phase=item.current_phase,
+                    last_evaluated_day=item.last_evaluated_day,
+                    streaks=(("PHASE_STABLE_TENSION_V1", 2),),
+                )
+                if node_id == "ESP::R1"
+                else item
+            )
+            for node_id, item in sorted(phase_map.items())
+        ),
+        security_persistence=regional_store.security_persistence,
+        security_recovery_persistence=(
+            regional_store.security_recovery_persistence
+        ),
+    )
+
+    trace = TraceLedger()
+    second = run_day_transaction(
+        states=first.states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_phase_transitions=True,
+        phase_config=phase_config,
+        phase_transition_config=phase_transition_config,
+        phase_persistence={
+            node_id: item
+            for node_id, item in first.phase_persistence.items()
+        },
+        phase_context_flags={},
+        enable_security_regime_evaluator=True,
+        security_regime_config=security_config,
+        security_regime_persistence={
+            node_id: item
+            for node_id, item in first.security_regime_persistence.items()
+        },
+        security_regime_context_flags={},
+        enable_security_regime_commits=True,
+        security_regime_transition_config=security_transition_config,
+        enable_security_regime_recovery_evaluator=True,
+        security_regime_recovery_config=security_recovery_config,
+        security_regime_recovery_persistence={
+            node_id: item
+            for node_id, item in (
+                first.security_regime_recovery_persistence.items()
+            )
+        },
+        enable_security_regime_recovery_commits=True,
+        security_regime_recovery_transition_config=(
+            security_recovery_transition_config
+        ),
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence={
+            node_id: item
+            for node_id, item in first.fractal_refinement_persistence.items()
+        },
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=first.fractal_topology,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=prepared_store,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=runtime_config,
+        enable_fractal_regional_regimes=True,
+        fractal_regional_regime_config=regional_config,
+        fractal_regional_regime_store=regional_store,
+        fractal_regional_context_flags={},
+    )
+
+    assert second.fractal_regional_regime_result is not None
+    assert second.fractal_child_state_store is not None
+    regional_states = second.fractal_child_state_store.state_map()
+    assert regional_states["ESP::R1"].regimes["national_phase"] == "TENSION"
+    assert regional_states["ESP::R2"].regimes["national_phase"] == "STABLE"
+    assert (
+        regional_states["ESP::R1"].regimes["security_force_regime"]
+        == "STRAINED"
+    )
+    assert (
+        regional_states["ESP::R2"].regimes["security_force_regime"]
+        == "COHESIVE"
+    )
+
+    audit = second.fractal_regional_regime_result.divergence_audits[0]
+    assert audit.parent_node_id == "ESP"
+    assert audit.phase_divergent is True
+    assert audit.security_regime_divergent is True
+    assert audit.collapse_consensus_ready is False
+    assert any(
+        item["record_type"] == "fractal_categorical_divergence_audit"
+        and item["parent_node_id"] == "ESP"
+        for item in trace.records
+    )
