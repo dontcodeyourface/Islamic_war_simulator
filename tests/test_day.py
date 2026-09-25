@@ -4411,3 +4411,225 @@ def test_active_l2_runtime_can_advance_second_day_without_parent_refinement_eval
     ]
     assert len(suppressed) == 1
     assert suppressed[0]["reason"] == "awaiting_parent_child_coupling"
+
+
+def test_fractal_graph_projection_switches_runtime_nodes_next_day() -> None:
+    logger.info(
+        "test_fractal_graph_projection_switches_runtime_nodes_next_day"
+    )
+    from iwsim.fractal import FractalRefinementPersistenceState
+
+    states, graph, day_config, registry, parameters, rng, manifest = _runtime(
+        seed=1054
+    )
+    parameters = _disable_all_events(parameters)
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    runtime_config = load_yaml(
+        ROOT / "config/engine/fractal_runtime_v1.yaml"
+    )
+    projection_config = load_yaml(
+        ROOT / "config/engine/fractal_graph_projection_v1.yaml"
+    )
+    regional_graph_catalog = load_yaml(
+        ROOT / "config/engine/fractal_region_graph_catalog_v1.yaml"
+    )
+
+    for state in states.values():
+        for variable in state.latents:
+            state.latents[variable] = 0.5
+    _set_fractal_high_pressure_state(states["ESP"])
+    _set_fractal_parent_physical_stocks(states["ESP"])
+
+    persistence = {
+        node_id: FractalRefinementPersistenceState(
+            node_id=node_id,
+            current_level="L1_COUNTRY",
+            last_evaluated_day=0,
+            expand_streak=7 if node_id == "ESP" else 0,
+            collapse_streak=0,
+        )
+        for node_id in states
+    }
+    trace = TraceLedger()
+
+    result = run_day_transaction(
+        states=states,
+        graph=graph,
+        day_config=day_config,
+        engine_state_registry=registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        rng=rng,
+        manifest=manifest,
+        trace=trace,
+        enable_fractal_refinement_evaluator=True,
+        fractal_refinement_config=refinement_config,
+        fractal_refinement_persistence=persistence,
+        enable_fractal_materialization=True,
+        fractal_materialization_config=materialization_config,
+        fractal_region_catalog=_fractal_test_catalog_for_esp(),
+        fractal_topology=None,
+        enable_fractal_child_state_initialization=True,
+        fractal_child_state_config=child_config,
+        fractal_child_state_store=None,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=runtime_config,
+        enable_fractal_graph_projection=True,
+        fractal_graph_projection_config=projection_config,
+        fractal_region_graph_catalog=regional_graph_catalog,
+    )
+
+    assert result.fractal_projected_graph_before is not None
+    assert result.fractal_projected_graph_after is not None
+    before = result.fractal_projected_graph_before
+    after = result.fractal_projected_graph_after
+
+    before_nodes = {
+        item.runtime_node_id
+        for item in before.nodes
+    }
+    after_nodes = {
+        item.runtime_node_id
+        for item in after.nodes
+    }
+    assert before_nodes == {"DEU", "ESP", "FRA", "GBR", "MAR"}
+    assert "ESP" not in after_nodes
+    assert {"ESP::R1", "ESP::R2"} <= after_nodes
+    assert len(after_nodes) == 6
+    assert len(before.edges) == 10
+    assert len(after.edges) == 15
+
+    projected = after.edge("ESP::R1", "FRA")
+    assert projected.channel(
+        "ESP::R1",
+        "FRA",
+        "geographic_proximity",
+    ) is None
+    assert projected.channel_status(
+        "ESP::R1",
+        "FRA",
+        "geographic_proximity",
+    ) == "UNRESOLVED_REGIONAL_PROJECTION"
+    assert projected.channel(
+        "ESP::R1",
+        "FRA",
+        "alliance_link",
+    ) is None
+    assert projected.channel_status(
+        "ESP::R1",
+        "FRA",
+        "alliance_link",
+    ) == "PARENT_RETAINED_NOT_PROJECTED"
+
+    base_preserved = after.edge("DEU", "FRA")
+    assert base_preserved.channel(
+        "DEU",
+        "FRA",
+        "geographic_proximity",
+    ) == graph.edge("DEU", "FRA").channel(
+        "DEU",
+        "FRA",
+        "geographic_proximity",
+    )
+
+    projected_trace = [
+        item
+        for item in trace.records
+        if item["record_type"] == "fractal_projected_graph"
+    ]
+    assert [item["phase"] for item in projected_trace] == [
+        "BEGINNING_OF_DAY",
+        "COMMITTED_NEXT_DAY",
+    ]
+    assert projected_trace[0]["graph_hash"] == before.graph_hash()
+    assert projected_trace[1]["graph_hash"] == after.graph_hash()
+
+
+def test_fractal_graph_catalog_changes_transaction_identity() -> None:
+    logger.info(
+        "test_fractal_graph_catalog_changes_transaction_identity"
+    )
+    runtime_a = _runtime(seed=1055)
+    runtime_b = _runtime(seed=1055)
+    params_a = _disable_all_events(runtime_a[4])
+    params_b = _disable_all_events(runtime_b[4])
+    refinement_config = load_yaml(
+        ROOT / "config/engine/fractal_refinement_v1.yaml"
+    )
+    materialization_config = load_yaml(
+        ROOT / "config/engine/fractal_materialization_v1.yaml"
+    )
+    child_config = load_yaml(
+        ROOT / "config/engine/fractal_child_state_v1.yaml"
+    )
+    runtime_config = load_yaml(
+        ROOT / "config/engine/fractal_runtime_v1.yaml"
+    )
+    projection_config = load_yaml(
+        ROOT / "config/engine/fractal_graph_projection_v1.yaml"
+    )
+    catalog_a = load_yaml(
+        ROOT / "config/engine/fractal_region_graph_catalog_v1.yaml"
+    )
+    catalog_b = copy.deepcopy(catalog_a)
+    catalog_b["status"] = "identity-test-variant"
+    empty_regions = {"schema_version": "1.0", "parents": {}}
+
+    common = {
+        "enable_fractal_refinement_evaluator": True,
+        "fractal_refinement_config": refinement_config,
+        "fractal_refinement_persistence": None,
+        "enable_fractal_materialization": True,
+        "fractal_materialization_config": materialization_config,
+        "fractal_region_catalog": empty_regions,
+        "fractal_topology": None,
+        "enable_fractal_child_state_initialization": True,
+        "fractal_child_state_config": child_config,
+        "fractal_child_state_store": None,
+        "enable_fractal_runtime_plan": True,
+        "fractal_runtime_config": runtime_config,
+        "enable_fractal_graph_projection": True,
+        "fractal_graph_projection_config": projection_config,
+    }
+
+    result_a = run_day_transaction(
+        states=runtime_a[0],
+        graph=runtime_a[1],
+        day_config=runtime_a[2],
+        engine_state_registry=runtime_a[3],
+        parameter_registry=params_a,
+        profile="synthetic_smoke_v1",
+        rng=runtime_a[5],
+        manifest=runtime_a[6],
+        trace=TraceLedger(),
+        fractal_region_graph_catalog=catalog_a,
+        **common,
+    )
+    result_b = run_day_transaction(
+        states=runtime_b[0],
+        graph=runtime_b[1],
+        day_config=runtime_b[2],
+        engine_state_registry=runtime_b[3],
+        parameter_registry=params_b,
+        profile="synthetic_smoke_v1",
+        rng=runtime_b[5],
+        manifest=runtime_b[6],
+        trace=TraceLedger(),
+        fractal_region_graph_catalog=catalog_b,
+        **common,
+    )
+
+    assert result_a.transaction_id != result_b.transaction_id
+    assert result_a.states == result_b.states
+    assert (
+        result_a.fractal_projected_graph_before.graph_hash()
+        != result_b.fractal_projected_graph_before.graph_hash()
+    )
