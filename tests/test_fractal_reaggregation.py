@@ -643,3 +643,76 @@ def test_collapse_accepts_autonomous_child_dynamics_and_uses_live_state() -> Non
     assert "fractal_reaggregation_audit" in [
         item["record_type"] for item in trace.records
     ]
+
+
+def test_dynamic_collapse_then_rerefine_preserves_generation_lineage() -> None:
+    logger.info(
+        "test_dynamic_collapse_then_rerefine_preserves_generation_lineage"
+    )
+    (
+        parent,
+        topology,
+        child_store,
+        persistence,
+        action,
+        registry,
+        _,
+        config,
+        manifest,
+    ) = _fixture()
+    states = child_store.state_map()
+    evolved_states = []
+    for item in child_store.states:
+        evolved_states.append(
+            EngineState(
+                node_id=item.node_id,
+                day=item.day,
+                physical_stocks=dict(item.physical_stocks),
+                latents=dict(item.latents),
+                regimes=dict(item.regimes),
+                metadata={
+                    **item.metadata,
+                    "fractal_child_dynamics_active": True,
+                },
+            )
+        )
+    evolved_store = FractalChildStateStore(
+        last_initialized_day=child_store.last_initialized_day,
+        states=tuple(evolved_states),
+    )
+
+    parent_after, topology_after, store_after, persistence_after, _, audit, _ = (
+        _collapse(
+            parent=parent,
+            topology=topology,
+            child_store=evolved_store,
+            persistence=persistence,
+            action=action,
+            registry=registry,
+            config=config,
+            manifest=manifest,
+        )
+    )
+
+    assert audit.conserved is True
+    assert store_after.states == ()
+    assert persistence_after.current_level == "L1_COUNTRY"
+    assert all(item.active is False for item in topology_after.nodes)
+    assert all(item.de_refinement_day == 1 for item in topology_after.nodes)
+    assert parent_after.metadata["fractal_last_collapse_action_id"] == (
+        action.action_id
+    )
+
+    historical_ids = {item.node_id for item in topology_after.nodes}
+    historical_generations = {
+        item.lineage_generation for item in topology_after.nodes
+    }
+    assert historical_generations == {1}
+
+    # Generation 2 identity is required to be disjoint from immutable history.
+    generation_two_ids = {
+        f"{item.catalog_child_id or item.node_id}::G2"
+        for item in topology_after.nodes
+    }
+    assert historical_ids.isdisjoint(generation_two_ids)
+    assert len(generation_two_ids) == len(historical_ids)
