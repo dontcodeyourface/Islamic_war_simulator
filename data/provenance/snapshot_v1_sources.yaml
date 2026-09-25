@@ -212,14 +212,16 @@ sources:
     notes: "Canonical statistical hierarchy for EU spatial refinement. Used as topology evidence only; population weights require separate national or Eurostat population tables."
 
   ES-INE-ECP-PROVINCES-2026:
-    title: "Estadística Continua de Población - resultados por provincias"
+    title: "Estadística Continua de Población - población residente por provincia"
     publisher: "Instituto Nacional de Estadística"
-    url: "https://www.ine.es/dynt3/inebase/index.htm?capsel=9635&padre=9620"
+    url: "https://www.ine.es/jaxiT3/Tabla.htm?t=59589"
     reference_date: "2026-07-01"
     publication_date: "2026-08-06"
     type: "official_subnational_demography"
     quality: "high"
-    notes: "INE ECP provides resident population at province level and is the preferred weight source for Spanish L3 province partitions."
+    api_table_id: "59589"
+    selection: "Total sexo; Todas las edades; provincias; 1 de julio de 2026"
+    notes: "Official provisional ECP counts. Spanish L3 province weights are count/parent-total ratios; every stored parent total is the exact sum of its province counts."
 
   FR-INSEE-SUBREGIONAL-POP:
     title: "INSEE subregional population tables"
