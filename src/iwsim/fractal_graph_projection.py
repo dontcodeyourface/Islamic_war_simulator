@@ -481,10 +481,70 @@ def _validate_projection_config(
     }
 
 
+def _validate_catalog_channel_shape(
+    *,
+    channel_name: str,
+    raw_channel: dict[str, Any],
+    edge_source_id: str,
+) -> None:
+    logger.info(
+        "_validate_catalog_channel_shape channel=%s source=%s",
+        channel_name,
+        edge_source_id,
+    )
+    if channel_name in SYMMETRIC_CHANNELS:
+        allowed = {"value", "parameter_id", "source_id"}
+        unknown = set(raw_channel) - allowed
+        if unknown:
+            raise ValueError(
+                f"Unexpected keys for symmetric regional channel "
+                f"{channel_name}: {sorted(unknown)}"
+            )
+        if "value" not in raw_channel:
+            raise ValueError(
+                f"Explicit symmetric regional channel {channel_name} "
+                "requires value (numeric or null)"
+            )
+        return
+
+    if channel_name in DIRECTED_CHANNELS:
+        allowed = {
+            "a_to_b",
+            "b_to_a",
+            "parameter_id_a_to_b",
+            "parameter_id_b_to_a",
+            "source_id_a_to_b",
+            "source_id_b_to_a",
+        }
+        unknown = set(raw_channel) - allowed
+        if unknown:
+            raise ValueError(
+                f"Unexpected keys for directed regional channel "
+                f"{channel_name}: {sorted(unknown)}"
+            )
+        if (
+            "a_to_b" not in raw_channel
+            and "b_to_a" not in raw_channel
+        ):
+            raise ValueError(
+                f"Explicit directed regional channel {channel_name} "
+                "requires at least one directional value"
+            )
+        return
+
+    raise ValueError(
+        f"Unknown regional graph channel {channel_name}"
+    )
+
+
 def _catalog_edge_index(
     catalog: dict[str, Any],
 ) -> dict[tuple[str, str], dict[str, Any]]:
     logger.info("_catalog_edge_index")
+    if str(catalog.get("schema_version", "")) != "1.0":
+        raise ValueError(
+            "Regional graph catalog schema_version must be 1.0"
+        )
     raw_edges = catalog.get("edges")
     if not isinstance(raw_edges, list):
         raise ValueError(
@@ -497,9 +557,20 @@ def _catalog_edge_index(
             raise ValueError(
                 "Regional graph catalog edge must be a mapping"
             )
-        endpoint_a = str(raw.get("a", "")).strip()
-        endpoint_b = str(raw.get("b", "")).strip()
-        source_id = str(raw.get("source_id", "")).strip()
+        raw_a = raw.get("a")
+        raw_b = raw.get("b")
+        raw_source_id = raw.get("source_id")
+        if not isinstance(raw_a, str) or not isinstance(raw_b, str):
+            raise ValueError(
+                "Regional graph catalog endpoints must be strings"
+            )
+        if not isinstance(raw_source_id, str):
+            raise ValueError(
+                "Regional graph catalog source_id must be a string"
+            )
+        endpoint_a = raw_a.strip()
+        endpoint_b = raw_b.strip()
+        source_id = raw_source_id.strip()
         if (
             not endpoint_a
             or not endpoint_b
@@ -533,6 +604,17 @@ def _catalog_edge_index(
             raise ValueError(
                 "Regional graph catalog may not project alliance_link; "
                 "that channel remains parent-retained"
+            )
+        for channel_name, raw_channel in sorted(channels.items()):
+            if not isinstance(raw_channel, dict):
+                raise ValueError(
+                    f"Regional graph catalog channel {channel_name} "
+                    "must be a mapping"
+                )
+            _validate_catalog_channel_shape(
+                channel_name=channel_name,
+                raw_channel=raw_channel,
+                edge_source_id=source_id,
             )
 
         key = tuple(sorted((endpoint_a, endpoint_b)))
@@ -763,11 +845,17 @@ def _catalog_directional_metadata(
         label=f"{edge_source_id}:{direction}",
     )
     parameter_id = raw.get(f"parameter_id_{direction}")
-    source_id = raw.get(f"source_id_{direction}", edge_source_id)
+    source_id = raw.get(f"source_id_{direction}")
+    if source_id is None:
+        source_id = edge_source_id
+    if not isinstance(source_id, str) or not source_id.strip():
+        raise ValueError(
+            f"Regional graph directional source ID invalid for {direction}"
+        )
     return (
         value,
         str(parameter_id) if parameter_id is not None else None,
-        str(source_id),
+        source_id.strip(),
     )
 
 
@@ -812,9 +900,17 @@ def _explicit_catalog_channel(
             label=f"{source_id}:{channel_name}:value",
         )
         parameter = raw_channel.get("parameter_id")
-        channel_source = str(
-            raw_channel.get("source_id", source_id)
-        )
+        raw_channel_source = raw_channel.get("source_id")
+        if raw_channel_source is None:
+            raw_channel_source = source_id
+        if (
+            not isinstance(raw_channel_source, str)
+            or not raw_channel_source.strip()
+        ):
+            raise ValueError(
+                f"Regional graph source ID invalid for {channel_name}"
+            )
+        channel_source = raw_channel_source.strip()
         status = (
             statuses["explicit_resolved"]
             if value is not None
