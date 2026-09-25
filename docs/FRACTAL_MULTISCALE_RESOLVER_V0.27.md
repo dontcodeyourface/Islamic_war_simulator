@@ -107,3 +107,28 @@ v0.28 enables persistent L2 security-regime and phase divergence, with explicit 
 ---
 
 No tactical targeting, route planning, weapon selection or operational execution is introduced.
+
+
+## v0.27.1 lifecycle gating fix
+
+The first v0.26/v0.27 integration retained a staging guard that blocked the
+fractal refinement evaluator whenever beginning-of-day L2 authority existed.
+Because the existing child lifecycle advances through the materialization
+transaction path, this created a circular end-to-end gate on the second refined
+day.
+
+v0.27.1 resolves that contradiction without evaluating invalid L1 collapse
+pressure:
+
+- the refinement evaluator still runs for coarse L1 parents;
+- already refined L1 parents are explicitly excluded while L2 owns regional
+  state;
+- excluded parent refinement persistence advances to the committed day with
+  expand/collapse streaks reset to zero;
+- a trace record states that evaluation was suppressed pending explicit
+  parent-child coupling;
+- materialization/topology retention and child-state advancement continue
+  normally.
+
+This permits consecutive autonomous L2 days while preventing stale L1 aggregate
+state from generating collapse pressure before the coupling milestone.
