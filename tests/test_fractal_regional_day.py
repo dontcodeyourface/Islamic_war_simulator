@@ -14,6 +14,7 @@ from iwsim.initializer import initialize_hybrid_state
 from iwsim.manifest import build_manifest
 from iwsim.phases import PhasePersistenceState
 from iwsim.rng import RNGManager
+from iwsim.spillover import empty_spillover_queue
 from iwsim.state import EngineState
 from iwsim.trace import TraceLedger
 
@@ -152,6 +153,38 @@ def _catalog() -> dict:
     }
 
 
+def _regional_graph_catalog() -> dict:
+    logger.info("_regional_graph_catalog")
+    return {
+        "schema_version": "1.0",
+        "status": "synthetic-test",
+        "edges": [
+            {
+                "a": "ESP::R1",
+                "b": "ESP::R2",
+                "source_id": "SYN_R1_R2",
+                "channels": {
+                    "geographic_proximity": {"value": 0.85},
+                    "land_border": {"value": 1.0},
+                    "information_link": {
+                        "a_to_b": 0.20,
+                        "b_to_a": 0.70,
+                    },
+                },
+            },
+            {
+                "a": "ESP::R1",
+                "b": "FRA",
+                "source_id": "SYN_R1_FRA",
+                "channels": {
+                    "geographic_proximity": {"value": 0.55},
+                    "land_border": {"value": 1.0},
+                },
+            },
+        ],
+    }
+
+
 def _force_refinement_state(state: EngineState) -> None:
     logger.info("_force_refinement_state node=%s", state.node_id)
     for variable in (
@@ -211,6 +244,8 @@ def _configs() -> dict[str, dict]:
         "child": "fractal_child_state_v1.yaml",
         "runtime": "fractal_runtime_v1.yaml",
         "regional": "fractal_regional_regime_v1.yaml",
+        "projection": "fractal_graph_projection_v1.yaml",
+        "spillover": "graph_spillover_v1.yaml",
         "phase": "phase_evaluator_v1.yaml",
         "phase_transition": "phase_transition_v1.yaml",
         "security": "security_regime_evaluator_v1.yaml",
@@ -312,6 +347,11 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
     ) = _runtime()
     parameters = _disable_events(parameters)
     configs = _configs()
+    latencies = parameters["parameter_sets"]["synthetic_smoke_v1"][
+        "parameters"
+    ]["GRAPH_LATENCIES_SYN_V1"]["value"]
+    latencies["geographic_proximity"] = [0, 0]
+    latencies["land_border"] = [0, 0]
 
     for state in states.values():
         for variable in state.latents:
@@ -432,11 +472,34 @@ def test_day_transaction_allows_regional_phase_and_security_divergence() -> None
         fractal_child_state_store=second_child_store,
         enable_fractal_runtime_plan=True,
         fractal_runtime_config=configs["runtime"],
+        enable_fractal_graph_projection=True,
+        fractal_graph_projection_config=configs["projection"],
+        fractal_region_graph_catalog=_regional_graph_catalog(),
+        enable_graph_spillover=True,
+        spillover_config=configs["spillover"],
+        spillover_queue=empty_spillover_queue(1),
         fractal_regional_regime_store=regional_store,
         **_common_regime_kwargs(configs),
     )
 
     assert second.fractal_regional_regime_result is not None
+    assert second.fractal_projected_graph_before is not None
+    assert any(
+        item.source_node == "ESP::R1"
+        and item.target_node == "FRA"
+        and item.status == "SCHEDULED"
+        for item in second.spillover_candidates
+    )
+    assert any(
+        item.target_node == "ESP::R1"
+        and item.runtime_level == "L2_REGION"
+        for item in second.resolutions
+    )
+    assert any(
+        item.target_node == "FRA"
+        and item.runtime_level == "L1_COUNTRY"
+        for item in second.resolutions
+    )
     children = second.fractal_child_state_store.state_map()
     assert children["ESP::R1"].regimes["national_phase"] == "TENSION"
     assert children["ESP::R2"].regimes["national_phase"] == "STABLE"
