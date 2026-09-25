@@ -31,6 +31,11 @@ class ResolutionRecord:
     equation_id: str
     parameter_ids: tuple[str, ...]
     apply_status: str
+    runtime_level: str = "L1_COUNTRY"
+    runtime_parent_node_id: str | None = None
+    runtime_authority_scope: str = "FULL"
+    runtime_plan_hash: str | None = None
+    runtime_policy_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info("ResolutionRecord.to_dict resolution_id=%s", self.resolution_id)
@@ -51,6 +56,11 @@ class ResolutionRecord:
             "equation_id": self.equation_id,
             "parameter_ids": list(self.parameter_ids),
             "apply_status": self.apply_status,
+            "runtime_level": self.runtime_level,
+            "runtime_parent_node_id": self.runtime_parent_node_id,
+            "runtime_authority_scope": self.runtime_authority_scope,
+            "runtime_plan_hash": self.runtime_plan_hash,
+            "runtime_policy_id": self.runtime_policy_id,
         }
 
 
@@ -125,12 +135,48 @@ def _clone_state(state: EngineState) -> EngineState:
     )
 
 
+def _runtime_context(
+    *,
+    target_node: str,
+    runtime_context_by_node: dict[str, dict[str, Any]] | None,
+) -> dict[str, Any]:
+    logger.info("_runtime_context target_node=%s", target_node)
+    default = {
+        "runtime_level": "L1_COUNTRY",
+        "runtime_parent_node_id": None,
+        "runtime_authority_scope": "FULL",
+        "runtime_plan_hash": None,
+        "runtime_policy_id": None,
+    }
+    if runtime_context_by_node is None:
+        return default
+    raw = runtime_context_by_node.get(target_node)
+    if raw is None:
+        raise ValueError(
+            f"Missing runtime resolver context for target node {target_node}"
+        )
+    level = str(raw.get("runtime_level", "")).strip()
+    scope = str(raw.get("runtime_authority_scope", "")).strip()
+    if not level or not scope:
+        raise ValueError(
+            f"Incomplete runtime resolver context for {target_node}"
+        )
+    return {
+        "runtime_level": level,
+        "runtime_parent_node_id": raw.get("runtime_parent_node_id"),
+        "runtime_authority_scope": scope,
+        "runtime_plan_hash": raw.get("runtime_plan_hash"),
+        "runtime_policy_id": raw.get("runtime_policy_id"),
+    }
+
+
 def _resolution_id(
     *,
     target_node: str,
     variable: str,
     proposal_ids: tuple[str, ...],
     equation_id: str,
+    runtime_context: dict[str, Any],
 ) -> str:
     logger.info(
         "_resolution_id target_node=%s variable=%s proposals=%s",
@@ -144,6 +190,7 @@ def _resolution_id(
             "variable": variable,
             "proposal_ids": list(proposal_ids),
             "equation_id": equation_id,
+            "runtime_context": runtime_context,
         }
     )
     return f"resolve-{digest[:24]}"
@@ -162,6 +209,7 @@ def resolve_delta_proposals(
     parameter_registry: dict[str, Any],
     profile: str,
     trace: TraceLedger,
+    runtime_context_by_node: dict[str, dict[str, Any]] | None = None,
 ) -> ResolutionResult:
     logger.info(
         "resolve_delta_proposals states=%s proposals=%s profile=%s",
@@ -169,6 +217,13 @@ def resolve_delta_proposals(
         len(proposals),
         profile,
     )
+    if runtime_context_by_node is not None:
+        unknown_context_nodes = set(runtime_context_by_node) - set(states)
+        if unknown_context_nodes:
+            raise ValueError(
+                "Runtime resolver context contains unknown nodes: "
+                f"{sorted(unknown_context_nodes)}"
+            )
     policy, policy_parameter_id = _resolver_policy(
         parameter_registry,
         profile=profile,
@@ -238,6 +293,10 @@ def resolve_delta_proposals(
         bounded_delta = value_after - value_before
         clamp_amount = unbounded - value_after
         owner_module = owners[variable]
+        runtime_context = _runtime_context(
+            target_node=target_node,
+            runtime_context_by_node=runtime_context_by_node,
+        )
 
         record = ResolutionRecord(
             resolution_id=_resolution_id(
@@ -245,6 +304,7 @@ def resolve_delta_proposals(
                 variable=variable,
                 proposal_ids=proposal_id_tuple,
                 equation_id="OWNER_RESOLVE_SUM_CLAMP_V1",
+                runtime_context=runtime_context,
             ),
             target_node=target_node,
             variable=variable,
@@ -261,6 +321,15 @@ def resolve_delta_proposals(
             equation_id="OWNER_RESOLVE_SUM_CLAMP_V1",
             parameter_ids=(policy_parameter_id,),
             apply_status="COMMITTED",
+            runtime_level=runtime_context["runtime_level"],
+            runtime_parent_node_id=(
+                runtime_context["runtime_parent_node_id"]
+            ),
+            runtime_authority_scope=(
+                runtime_context["runtime_authority_scope"]
+            ),
+            runtime_plan_hash=runtime_context["runtime_plan_hash"],
+            runtime_policy_id=runtime_context["runtime_policy_id"],
         )
         next_states[target_node].latents[variable] = value_after
         trace.append("owner_resolution", **record.to_dict())
