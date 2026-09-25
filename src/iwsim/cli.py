@@ -467,6 +467,8 @@ def run_day_smoke(args: argparse.Namespace) -> int:
         fractal_uncertainty_config=fractal_uncertainty_config,
         enable_fractal_reaggregation=True,
         fractal_reaggregation_config=fractal_reaggregation_config,
+        enable_fractal_runtime_plan=True,
+        fractal_runtime_config=fractal_runtime_config,
     )
 
     out = Path(args.out)
@@ -587,6 +589,16 @@ def run_day_smoke(args: argparse.Namespace) -> int:
                 item.audit_id
                 for item in result.fractal_reaggregation_audits
             ],
+            "fractal_runtime_plan_before_hash": (
+                result.fractal_runtime_plan_before.plan_hash()
+                if result.fractal_runtime_plan_before is not None
+                else None
+            ),
+            "fractal_runtime_plan_after_hash": (
+                result.fractal_runtime_plan_after.plan_hash()
+                if result.fractal_runtime_plan_after is not None
+                else None
+            ),
             "fractal_child_state_store": (
                 result.fractal_child_state_store.to_dict()
                 if result.fractal_child_state_store is not None
