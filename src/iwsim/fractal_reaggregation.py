@@ -162,8 +162,11 @@ def _validate_config(
     for key in required_true:
         if mode.get(key) is not True:
             raise ValueError(f"v0.23 requires {key}=true")
-    if mode.get("child_dynamics_allowed") is not False:
-        raise ValueError("v0.23 child dynamics must remain disabled")
+    child_dynamics_allowed = mode.get("child_dynamics_allowed")
+    if child_dynamics_allowed not in (False, True):
+        raise ValueError(
+            "Fractal reaggregation child_dynamics_allowed must be boolean"
+        )
     if mode.get("country_graph_child_activation") is not False:
         raise ValueError(
             "v0.23 must not activate L2 children in CountryGraph"
@@ -406,10 +409,11 @@ def _validate_children(
                 f"Fractal collapse child {child.node_id} metadata "
                 "aggregation rule mismatch"
             )
-        if child.metadata.get("fractal_child_dynamics_active") is not False:
+        dynamics_flag = child.metadata.get("fractal_child_dynamics_active")
+        if dynamics_flag not in (False, True):
             raise ValueError(
-                f"Fractal collapse child {child.node_id} dynamics must "
-                "remain disabled in v0.24"
+                f"Fractal collapse child {child.node_id} must expose "
+                "fractal_child_dynamics_active as boolean"
             )
 
         legacy_generation_one = (

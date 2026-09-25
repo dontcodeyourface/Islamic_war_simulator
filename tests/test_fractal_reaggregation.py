@@ -573,3 +573,73 @@ def test_collapse_rejects_invalid_action_and_rule() -> None:
             config=config,
             manifest=manifest,
         )
+
+
+def test_collapse_accepts_autonomous_child_dynamics_and_uses_live_state() -> None:
+    logger.info(
+        "test_collapse_accepts_autonomous_child_dynamics_and_uses_live_state"
+    )
+    (
+        parent,
+        topology,
+        child_store,
+        persistence,
+        action,
+        registry,
+        _,
+        config,
+        manifest,
+    ) = _fixture()
+    states = child_store.state_map()
+    first = states["TST::R1"]
+    changed = EngineState(
+        node_id=first.node_id,
+        day=first.day,
+        physical_stocks={
+            **first.physical_stocks,
+            "population_total": int(
+                first.physical_stocks["population_total"]
+            ) + 4,
+        },
+        latents={
+            **first.latents,
+            "public_order_stress": min(
+                1.0,
+                float(first.latents["public_order_stress"]) + 0.2,
+            ),
+        },
+        regimes=dict(first.regimes),
+        metadata={
+            **first.metadata,
+            "fractal_child_dynamics_active": True,
+        },
+    )
+    autonomous_store = FractalChildStateStore(
+        last_initialized_day=child_store.last_initialized_day,
+        states=tuple(
+            changed if item.node_id == changed.node_id else item
+            for item in child_store.states
+        ),
+    )
+
+    parent_after, _, store_after, _, _, audit, trace = _collapse(
+        parent=parent,
+        topology=topology,
+        child_store=autonomous_store,
+        persistence=persistence,
+        action=action,
+        registry=registry,
+        config=config,
+        manifest=manifest,
+    )
+
+    assert parent_after.physical_stocks["population_total"] == 105
+    assert dict(audit.additive_child_sums)["population_total"] == 105
+    assert parent_after.latents["public_order_stress"] > parent.latents[
+        "public_order_stress"
+    ]
+    assert audit.conserved is True
+    assert store_after.states == ()
+    assert "fractal_reaggregation_audit" in [
+        item["record_type"] for item in trace.records
+    ]
