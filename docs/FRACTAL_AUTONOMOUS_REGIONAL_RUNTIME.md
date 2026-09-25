@@ -463,15 +463,24 @@ Requirements:
 - no double application of a causal effect;
 - identical manifest + seeds -> identical run.
 
-### v0.34+ — recursive L2 -> L3 and deeper levels
+### v0.34a — recursive topology and lineage — IMPLEMENTED
 
-Only after autonomous L2 execution is validated should the same interfaces be generalized to:
+The first recursive increment generalizes adjacent topology materialization from L1 -> L2 to L2 -> L3 while preserving the existing L1/L2 wrapper.
 
-- L3 metro/logistics area;
-- L4 actor network;
-- L5 event cluster.
+Implemented by [FRACTAL_RECURSIVE_TOPOLOGY_V0.34A.md](FRACTAL_RECURSIVE_TOPOLOGY_V0.34A.md):
 
-The recursive architecture should reuse runtime authority, lineage, conservation, graph projection and aggregation contracts rather than introducing a separate engine per level.
+- one canonical L0..L5 level order;
+- adjacent-only refinement;
+- stable catalog identity separated from runtime lineage identity;
+- collision-safe descendants beneath generation-N parents;
+- generation-N+1 child re-refinement;
+- explicit deferral of L4/L5 activation.
+
+### v0.34b+ — recursive runtime authority and deeper levels
+
+Next, the runtime authority interfaces must be generalized so active L3 children replace their refined L2 parent for delegated regionalizable dynamics. The same authority, conservation, graph projection and aggregation contracts must be reused rather than introducing a separate engine per level.
+
+Only after L3 runtime validation should materialization/runtime activation continue to L4 actor networks and L5 event clusters.
 
 ## 14. Validation requirements
 

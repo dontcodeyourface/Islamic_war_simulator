@@ -1,6 +1,6 @@
 schema_version: "1.0"
-status: "implementation-v0.24"
-purpose: "Commit L1->L2 materialization with immutable generational topology lineage."
+status: "implementation-v0.34a"
+purpose: "Commit adjacent recursive fractal materialization with immutable generational topology lineage."
 
 mode:
   expansion_commit_allowed: true
@@ -8,6 +8,17 @@ mode:
   engine_state_child_activation: false
   country_graph_child_activation: false
   explicit_catalog_required: true
+
+recursive:
+  enabled: true
+  adjacent_levels_only: true
+  allowed_expansions:
+    L1_COUNTRY: "L2_REGION"
+    L2_REGION: "L3_METRO_OR_LOGISTICS_AREA"
+  deferred_expansions:
+    L3_METRO_OR_LOGISTICS_AREA: "L4_ACTOR_NETWORK"
+    L4_ACTOR_NETWORK: "L5_EVENT_CLUSTER"
+  runtime_authority_generalization: "v0.34b"
 
 catalog_constraints:
   min_children: 2

@@ -274,3 +274,169 @@ def allocate_lineage_generation(
     return tuple(
         sorted(allocations, key=lambda item: item.catalog_child_id)
     )
+
+
+
+def _recursive_runtime_base_id(
+    *,
+    runtime_parent_node_id: str,
+    catalog_parent_node_id: str,
+    catalog_child_id: str,
+) -> str:
+    logger.info(
+        "_recursive_runtime_base_id runtime_parent=%s catalog_parent=%s child=%s",
+        runtime_parent_node_id,
+        catalog_parent_node_id,
+        catalog_child_id,
+    )
+    prefix = f"{catalog_parent_node_id}::"
+    if not catalog_child_id.startswith(prefix):
+        raise ValueError(
+            f"Catalog child {catalog_child_id} is not namespaced by stable "
+            f"catalog parent {catalog_parent_node_id}::"
+        )
+    relative = catalog_child_id[len(prefix):]
+    if not relative:
+        raise ValueError(f"Invalid recursive catalog child ID {catalog_child_id}")
+    return f"{runtime_parent_node_id}::{relative}"
+
+
+def allocate_recursive_lineage_generation(
+    *,
+    runtime_parent_node_id: str,
+    catalog_parent_node_id: str,
+    catalog_child_ids: tuple[str, ...],
+    topology: "FractalTopologyState",
+    materialization_config: dict[str, Any],
+) -> tuple[FractalLineageAllocation, ...]:
+    """Allocate child runtime IDs beneath a possibly generated parent lineage.
+
+    Catalog identity remains anchored to the stable parent catalog ID while
+    runtime identity is anchored to the active parent runtime ID. This prevents
+    collisions when an ancestor is re-refined as generation N+1.
+    """
+    logger.info(
+        "allocate_recursive_lineage_generation runtime_parent=%s "
+        "catalog_parent=%s children=%s",
+        runtime_parent_node_id,
+        catalog_parent_node_id,
+        len(catalog_child_ids),
+    )
+    policy = validate_lifecycle_config(materialization_config)
+    current_catalog_ids = _validate_catalog_child_ids(
+        parent_node_id=catalog_parent_node_id,
+        catalog_child_ids=catalog_child_ids,
+    )
+    parent_history = tuple(
+        item
+        for item in topology.nodes
+        if item.parent_node_id == runtime_parent_node_id
+    )
+    if any(item.active for item in parent_history):
+        raise ValueError(
+            f"Fractal lifecycle parent {runtime_parent_node_id} already has "
+            "active topology lineage"
+        )
+
+    history_by_catalog: dict[str, list[Any]] = {}
+    runtime_ids = {str(item.node_id) for item in topology.nodes}
+    for node in parent_history:
+        catalog_id = _catalog_identity(node)
+        history_by_catalog.setdefault(catalog_id, []).append(node)
+        generation = int(getattr(node, "lineage_generation", 1))
+        if generation < 1:
+            raise ValueError(
+                f"Topology node {node.node_id} has invalid lineage generation"
+            )
+        base_runtime_id = _recursive_runtime_base_id(
+            runtime_parent_node_id=runtime_parent_node_id,
+            catalog_parent_node_id=catalog_parent_node_id,
+            catalog_child_id=catalog_id,
+        )
+        expected_runtime = (
+            base_runtime_id
+            if generation == 1
+            else f"{base_runtime_id}::g{generation}"
+        )
+        if node.node_id != expected_runtime:
+            raise ValueError(
+                f"Topology node {node.node_id} runtime ID does not match "
+                f"recursive catalog={catalog_id} generation={generation}"
+            )
+        if node.de_refinement_day is None:
+            raise ValueError(
+                f"Inactive topology node {node.node_id} requires "
+                "de_refinement_day before a new generation"
+            )
+        lineage_policy_id = getattr(node, "lineage_policy_id", None)
+        if (
+            lineage_policy_id is not None
+            and lineage_policy_id != policy["policy_id"]
+        ):
+            raise ValueError(
+                f"Topology node {node.node_id} has incompatible lineage "
+                "policy ID"
+            )
+
+    historical_catalog_ids = tuple(sorted(history_by_catalog))
+    if historical_catalog_ids and historical_catalog_ids != current_catalog_ids:
+        raise ValueError(
+            "Fractal recursive catalog child set changed across generations: "
+            f"history={list(historical_catalog_ids)} "
+            f"current={list(current_catalog_ids)}"
+        )
+
+    generation_sets: dict[str, tuple[int, ...]] = {}
+    for catalog_id, nodes in sorted(history_by_catalog.items()):
+        generations = tuple(
+            sorted(int(getattr(node, "lineage_generation", 1)) for node in nodes)
+        )
+        if len(generations) != len(set(generations)):
+            raise ValueError(
+                f"Duplicate lineage generation for catalog child {catalog_id}"
+            )
+        expected = tuple(range(1, max(generations) + 1))
+        if generations != expected:
+            raise ValueError(
+                f"Non-contiguous lineage history for {catalog_id}: "
+                f"{list(generations)}"
+            )
+        generation_sets[catalog_id] = generations
+
+    if generation_sets:
+        observed_sets = set(generation_sets.values())
+        if len(observed_sets) != 1:
+            raise ValueError(
+                "Fractal recursive sibling lineage history is inconsistent"
+            )
+        next_generation = max(next(iter(observed_sets))) + 1
+    else:
+        next_generation = policy["generation_starts_at"]
+
+    allocations: list[FractalLineageAllocation] = []
+    for catalog_id in current_catalog_ids:
+        base_runtime_id = _recursive_runtime_base_id(
+            runtime_parent_node_id=runtime_parent_node_id,
+            catalog_parent_node_id=catalog_parent_node_id,
+            catalog_child_id=catalog_id,
+        )
+        runtime_id = (
+            base_runtime_id
+            if next_generation == 1
+            else f"{base_runtime_id}::g{next_generation}"
+        )
+        if runtime_id in runtime_ids:
+            raise ValueError(
+                f"Fractal lifecycle runtime node ID already exists: {runtime_id}"
+            )
+        allocations.append(
+            FractalLineageAllocation(
+                catalog_child_id=catalog_id,
+                runtime_node_id=runtime_id,
+                lineage_generation=next_generation,
+                lineage_policy_id=policy["policy_id"],
+            )
+        )
+    return tuple(
+        sorted(allocations, key=lambda item: item.catalog_child_id)
+    )
