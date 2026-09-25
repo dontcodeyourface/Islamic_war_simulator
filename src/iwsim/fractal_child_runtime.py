@@ -181,6 +181,7 @@ def execute_autonomous_l2_dynamics(
     reciprocal_radicalization_config: dict[str, Any] | None = None,
     enable_security_chain_dynamics: bool = False,
     security_chain_config: dict[str, Any] | None = None,
+    external_proposals: tuple[DeltaProposal, ...] | list[DeltaProposal] = (),
 ) -> FractalChildDynamicsResult:
     """Resolve the v0.26 safe endogenous modules on active L2 children.
 
@@ -210,8 +211,10 @@ def execute_autonomous_l2_dynamics(
             enabled_modules=(),
         )
 
-    proposals: list[DeltaProposal] = []
+    proposals: list[DeltaProposal] = list(external_proposals)
     enabled_modules: list[str] = []
+    if external_proposals:
+        enabled_modules.append("external_event_spillover_proposals")
 
     if enable_recovery:
         if recovery_config is None:
