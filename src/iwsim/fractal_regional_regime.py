@@ -45,6 +45,27 @@ from .trace import TraceLedger
 logger = logging.getLogger(__name__)
 
 
+def _index_persistence(
+    *,
+    items: tuple[Any, ...],
+    kind: str,
+) -> dict[str, Any]:
+    logger.info(
+        "_index_persistence kind=%s items=%s",
+        kind,
+        len(items),
+    )
+    node_ids = [str(item.node_id) for item in items]
+    if len(node_ids) != len(set(node_ids)):
+        raise ValueError(
+            f"Duplicate regional {kind} persistence node IDs"
+        )
+    return {
+        str(item.node_id): item
+        for item in items
+    }
+
+
 @dataclass(frozen=True)
 class FractalRegionalRegimeStore:
     last_committed_day: int
@@ -97,20 +118,20 @@ class FractalRegionalRegimeStore:
             "FractalRegionalRegimeStore.phase_map nodes=%s",
             len(self.phase_persistence),
         )
-        return {
-            item.node_id: item
-            for item in self.phase_persistence
-        }
+        return _index_persistence(
+            items=self.phase_persistence,
+            kind="phase",
+        )
 
     def security_map(self) -> dict[str, SecurityRegimePersistenceState]:
         logger.info(
             "FractalRegionalRegimeStore.security_map nodes=%s",
             len(self.security_persistence),
         )
-        return {
-            item.node_id: item
-            for item in self.security_persistence
-        }
+        return _index_persistence(
+            items=self.security_persistence,
+            kind="security",
+        )
 
     def recovery_map(
         self,
@@ -119,10 +140,10 @@ class FractalRegionalRegimeStore:
             "FractalRegionalRegimeStore.recovery_map nodes=%s",
             len(self.security_recovery_persistence),
         )
-        return {
-            item.node_id: item
-            for item in self.security_recovery_persistence
-        }
+        return _index_persistence(
+            items=self.security_recovery_persistence,
+            kind="security_recovery",
+        )
 
 
 @dataclass(frozen=True)
