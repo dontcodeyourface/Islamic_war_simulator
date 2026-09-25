@@ -65,7 +65,7 @@ class FractalRuntimePlan:
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
-            "FractalRuntimePlan.to_dict day=%s refined=%s active_l2=%s",
+            "FractalRuntimePlan.to_dict day=%s refined=%s active_dynamic=%s",
             self.day,
             len(self.refined_parent_ids),
             len(self.active_regional_node_ids),
@@ -223,6 +223,8 @@ def _validate_runtime_config(
         "coarse_l1",
         "refined_l1_parent",
         "active_l2",
+        "active_l3",
+        "refined_child_parent",
         "inactive_lineage",
     }
     if set(statuses) != required_statuses:
@@ -232,8 +234,39 @@ def _validate_runtime_config(
             f"actual={sorted(statuses)}"
         )
 
+    recursive = runtime_config.get("recursive_runtime")
+    if not isinstance(recursive, dict):
+        raise ValueError("Fractal runtime requires recursive_runtime policy")
+    if (
+        recursive.get(
+            "deepest_active_descendant_owns_regionalizable_state"
+        )
+        is not True
+    ):
+        raise ValueError(
+            "Recursive runtime requires deepest-active authority"
+        )
+    if recursive.get(
+        "refined_child_parent_executes_delegated_dynamics"
+    ) is not False:
+        raise ValueError(
+            "Refined child parents must not duplicate delegated dynamics"
+        )
+    supported_dynamic_levels = tuple(
+        str(item)
+        for item in recursive.get("supported_dynamic_levels", [])
+    )
+    if supported_dynamic_levels != (
+        "L2_REGION",
+        "L3_METRO_OR_LOGISTICS_AREA",
+    ):
+        raise ValueError(
+            "v0.34b requires L2/L3 supported dynamic levels"
+        )
+
     return {
         "policy_id": policy_id,
+        "supported_dynamic_levels": supported_dynamic_levels,
         "autonomous_child_dynamics_allowed": bool(
             mode.get("autonomous_child_dynamics_allowed", False)
         ),
@@ -277,9 +310,10 @@ def _validate_active_child_state(
         raise ValueError(
             f"Fractal child {state.node_id} parent metadata mismatch"
         )
-    if state.metadata.get("fractal_level") != "L2_REGION":
+    if state.metadata.get("fractal_level") != topology_node.level:
         raise ValueError(
-            f"Fractal child {state.node_id} requires L2_REGION metadata"
+            f"Fractal child {state.node_id} level metadata mismatch: "
+            f"{state.metadata.get('fractal_level')} != {topology_node.level}"
         )
 
     runtime_id = state.metadata.get("fractal_runtime_node_id")
@@ -345,11 +379,9 @@ def build_fractal_runtime_plan(
         )
 
     parent_ids = set(parent_states)
-    topology_parent_ids = {
-        item.parent_node_id
-        for item in topology.nodes
-    }
-    unknown_parents = topology_parent_ids - parent_ids
+    topology_ids = {item.node_id for item in topology.nodes}
+    topology_parent_ids = {item.parent_node_id for item in topology.nodes}
+    unknown_parents = topology_parent_ids - parent_ids - topology_ids
     if unknown_parents:
         raise ValueError(
             "Fractal runtime topology contains unknown parents: "
@@ -369,9 +401,9 @@ def build_fractal_runtime_plan(
         )
     )
     child_states = child_store.state_map()
-
     active_ids = set(active_topology)
     child_ids = set(child_states)
+
     if child_ids != active_ids:
         raise ValueError(
             "Fractal runtime active child-state coverage mismatch: "
@@ -387,14 +419,25 @@ def build_fractal_runtime_plan(
 
     for child_id in sorted(active_ids):
         node = active_topology[child_id]
-        if node.level != "L2_REGION":
+        if (
+            node.parent_node_id in topology_ids
+            and node.parent_node_id not in active_ids
+        ):
             raise ValueError(
-                f"v0.25 active child {child_id} must be L2_REGION"
+                f"Active fractal node {child_id} has inactive topology parent "
+                f"{node.parent_node_id}"
             )
         _validate_active_child_state(
             state=child_states[child_id],
             topology_node=node,
         )
+
+    active_parent_node_ids = {
+        item.parent_node_id
+        for item in active_topology.values()
+        if item.parent_node_id in active_ids
+    }
+    leaf_ids = active_ids - active_parent_node_ids
 
     nodes: list[FractalRuntimeAuthorityNode] = []
     refined_parents: list[str] = []
@@ -429,29 +472,56 @@ def build_fractal_runtime_plan(
                 authority_scope="NATIONAL_ONLY",
                 owns_regionalizable_state=False,
                 owns_national_only_state=True,
-                execution_status=(
-                    policy["statuses"]["refined_l1_parent"]
-                ),
+                execution_status=policy["statuses"]["refined_l1_parent"],
             )
         )
-        for child in children:
-            active_regional_ids.append(child.node_id)
-            catalog_id = (
-                child.catalog_child_id
-                if child.catalog_child_id is not None
-                else child.node_id
+
+    for node_id in sorted(active_ids):
+        item = active_topology[node_id]
+        catalog_id = (
+            item.catalog_child_id
+            if item.catalog_child_id is not None
+            else item.node_id
+        )
+        if node_id in leaf_ids:
+            if item.level not in policy["supported_dynamic_levels"]:
+                raise ValueError(
+                    f"Fractal runtime level {item.level} is not enabled "
+                    f"for autonomous dynamics"
+                )
+            status_key = (
+                "active_l2"
+                if item.level == "L2_REGION"
+                else "active_l3"
             )
+            active_regional_ids.append(node_id)
             nodes.append(
                 FractalRuntimeAuthorityNode(
-                    runtime_node_id=child.node_id,
-                    parent_node_id=parent_id,
-                    level="L2_REGION",
+                    runtime_node_id=node_id,
+                    parent_node_id=item.parent_node_id,
+                    level=item.level,
                     catalog_node_id=catalog_id,
-                    lineage_generation=child.lineage_generation,
+                    lineage_generation=item.lineage_generation,
                     authority_scope="REGIONALIZABLE",
                     owns_regionalizable_state=True,
                     owns_national_only_state=False,
-                    execution_status=policy["statuses"]["active_l2"],
+                    execution_status=policy["statuses"][status_key],
+                )
+            )
+        else:
+            nodes.append(
+                FractalRuntimeAuthorityNode(
+                    runtime_node_id=node_id,
+                    parent_node_id=item.parent_node_id,
+                    level=item.level,
+                    catalog_node_id=catalog_id,
+                    lineage_generation=item.lineage_generation,
+                    authority_scope="PARENT_CONTEXT",
+                    owns_regionalizable_state=False,
+                    owns_national_only_state=False,
+                    execution_status=policy["statuses"][
+                        "refined_child_parent"
+                    ],
                 )
             )
 
@@ -464,9 +534,7 @@ def build_fractal_runtime_plan(
         autonomous_child_dynamics_allowed=(
             policy["autonomous_child_dynamics_allowed"]
         ),
-        nodes=tuple(
-            sorted(nodes, key=lambda item: item.runtime_node_id)
-        ),
+        nodes=tuple(sorted(nodes, key=lambda item: item.runtime_node_id)),
         refined_parent_ids=tuple(sorted(refined_parents)),
         active_regional_node_ids=tuple(sorted(active_regional_ids)),
         inactive_lineage_node_ids=inactive_lineage_ids,
@@ -479,14 +547,13 @@ def build_fractal_runtime_plan(
     )
     logger.info(
         "build_fractal_runtime_plan complete day=%s plan_hash=%s "
-        "refined=%s active_l2=%s",
+        "refined_l1=%s active_dynamic=%s",
         day,
         plan.plan_hash(),
         len(plan.refined_parent_ids),
         len(plan.active_regional_node_ids),
     )
     return plan
-
 
 def assert_beginning_of_day_runtime_supported(
     *,
