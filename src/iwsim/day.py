@@ -1644,6 +1644,89 @@ def _evaluate_fractal_refinements(
     )
 
 
+def _catalog_parent_id_for_action(
+    *,
+    action: FractalRefinementActionProposal,
+    topology: FractalTopologyState,
+) -> str:
+    logger.info(
+        "_catalog_parent_id_for_action node=%s from=%s to=%s",
+        action.node_id,
+        action.from_level,
+        action.to_level,
+    )
+    if action.from_level == "L1_COUNTRY":
+        return action.node_id
+    candidates = [
+        item
+        for item in topology.nodes
+        if item.node_id == action.node_id and item.active
+    ]
+    if len(candidates) != 1:
+        raise ValueError(
+            f"Recursive refinement parent {action.node_id} must resolve "
+            "to exactly one active topology node"
+        )
+    node = candidates[0]
+    if node.level != action.from_level:
+        raise ValueError(
+            f"Recursive refinement parent {action.node_id} level "
+            f"{node.level} != {action.from_level}"
+        )
+    return (
+        node.catalog_child_id
+        if node.catalog_child_id is not None
+        else node.node_id
+    )
+
+
+def _filter_catalog_blocked_recursive_expansions(
+    *,
+    actions: tuple[FractalRefinementActionProposal, ...],
+    topology: FractalTopologyState,
+    region_catalog: dict[str, Any],
+    trace: TraceLedger,
+) -> tuple[FractalRefinementActionProposal, ...]:
+    logger.info(
+        "_filter_catalog_blocked_recursive_expansions actions=%s",
+        len(actions),
+    )
+    parents = region_catalog.get("parents")
+    if not isinstance(parents, dict):
+        raise ValueError("Fractal region catalog parents must be a mapping")
+
+    allowed: list[FractalRefinementActionProposal] = []
+    for action in actions:
+        if action.action != "EXPAND":
+            allowed.append(action)
+            continue
+        if action.from_level == "L1_COUNTRY":
+            allowed.append(action)
+            continue
+
+        catalog_parent_id = _catalog_parent_id_for_action(
+            action=action,
+            topology=topology,
+        )
+        if catalog_parent_id not in parents:
+            trace.append(
+                "fractal_refinement_blocked_missing_catalog",
+                action_id=action.action_id,
+                node_id=action.node_id,
+                catalog_parent_id=catalog_parent_id,
+                day=action.day,
+                action=action.action,
+                from_level=action.from_level,
+                to_level=action.to_level,
+                reason="explicit_child_catalog_required",
+                apply_status="BLOCKED_NOT_APPLIED",
+            )
+            continue
+        allowed.append(action)
+
+    return tuple(sorted(allowed, key=lambda item: item.action_id))
+
+
 def _commit_fractal_materializations(
     *,
     day: int,
@@ -3516,6 +3599,23 @@ def run_day_transaction(
         for item in effective_late_actions
         if item.action == "EXPAND"
     )
+    if recursive_expansion_actions:
+        if fractal_topology_out is None:
+            raise RuntimeError(
+                "Recursive expansion requires committed fractal topology"
+            )
+        if fractal_region_catalog is None:
+            raise ValueError(
+                "Recursive expansion requires explicit fractal region catalog"
+            )
+        recursive_expansion_actions = (
+            _filter_catalog_blocked_recursive_expansions(
+                actions=recursive_expansion_actions,
+                topology=fractal_topology_out,
+                region_catalog=fractal_region_catalog,
+                trace=staged_trace,
+            )
+        )
     recursive_collapse_actions = tuple(
         item
         for item in effective_late_actions
