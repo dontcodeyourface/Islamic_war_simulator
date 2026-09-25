@@ -50,6 +50,11 @@ from .fractal_regional_regime import (
     bootstrap_or_validate_regional_regime_store,
     execute_regional_regime_runtime,
 )
+from .fractal_graph_projection import (
+    FractalProjectedGraph,
+    build_fractal_projected_graph,
+    trace_fractal_projected_graph,
+)
 from .fractal_runtime import (
     FractalRuntimePlan,
     assert_beginning_of_day_runtime_supported,
@@ -200,6 +205,8 @@ class DayTransactionResult:
     fractal_child_dynamics_proposals: tuple[DeltaProposal, ...]
     fractal_child_dynamics_resolutions: tuple[ResolutionRecord, ...]
     fractal_regional_regime_result: FractalRegionalRegimeResult | None
+    fractal_projected_graph_before: FractalProjectedGraph | None
+    fractal_projected_graph_after: FractalProjectedGraph | None
 
     def to_dict(self) -> dict[str, Any]:
         logger.info(
@@ -353,6 +360,16 @@ class DayTransactionResult:
             "fractal_regional_regime_result": (
                 self.fractal_regional_regime_result.to_dict()
                 if self.fractal_regional_regime_result is not None
+                else None
+            ),
+            "fractal_projected_graph_before": (
+                self.fractal_projected_graph_before.to_dict()
+                if self.fractal_projected_graph_before is not None
+                else None
+            ),
+            "fractal_projected_graph_after": (
+                self.fractal_projected_graph_after.to_dict()
+                if self.fractal_projected_graph_after is not None
                 else None
             ),
         }
@@ -899,6 +916,7 @@ def _transaction_id(
     fractal_reaggregation_inputs: dict[str, Any] | None = None,
     fractal_runtime_inputs: dict[str, Any] | None = None,
     fractal_regional_regime_inputs: dict[str, Any] | None = None,
+    fractal_graph_projection_inputs: dict[str, Any] | None = None,
 ) -> str:
     logger.info(
         "_transaction_id run_id=%s day_from=%s",
@@ -932,6 +950,9 @@ def _transaction_id(
             "fractal_runtime_inputs": fractal_runtime_inputs,
             "fractal_regional_regime_inputs": (
                 fractal_regional_regime_inputs
+            ),
+            "fractal_graph_projection_inputs": (
+                fractal_graph_projection_inputs
             ),
         }
     )
@@ -1782,6 +1803,9 @@ def run_day_transaction(
     fractal_regional_context_flags: (
         dict[str, dict[str, bool]] | None
     ) = None,
+    enable_fractal_graph_projection: bool = False,
+    fractal_graph_projection_config: dict[str, Any] | None = None,
+    fractal_region_graph_catalog: dict[str, Any] | None = None,
 ) -> DayTransactionResult:
     """Execute one atomic synchronous state-changing day."""
     logger.info(
@@ -1817,7 +1841,9 @@ def run_day_transaction(
     fractal_reaggregation_inputs: dict[str, Any] | None = None
     fractal_runtime_inputs: dict[str, Any] | None = None
     fractal_regional_regime_inputs: dict[str, Any] | None = None
+    fractal_graph_projection_inputs: dict[str, Any] | None = None
     fractal_runtime_plan_before: FractalRuntimePlan | None = None
+    fractal_projected_graph_before: FractalProjectedGraph | None = None
     normalized_fractal_regional_regime_store: (
         FractalRegionalRegimeStore | None
     ) = None
@@ -2049,8 +2075,8 @@ def run_day_transaction(
         if fractal_runtime_plan_before.refined_parent_ids:
             if enable_graph_spillover:
                 raise RuntimeError(
-                    "v0.28 active L2 does not yet support multiscale graph "
-                    "spillover; disable graph spillover until v0.29/v0.30"
+                    "v0.29 graph projection does not yet execute multiscale "
+                    "spillover; disable graph spillover until v0.30"
                 )
             if enable_phase_transitions and not enable_fractal_regional_regimes:
                 raise RuntimeError(
@@ -2065,6 +2091,52 @@ def run_day_transaction(
                     "Active L2 security-regime execution requires "
                     "enable_fractal_regional_regimes"
                 )
+
+    if enable_fractal_graph_projection:
+        if not enable_fractal_runtime_plan:
+            raise ValueError(
+                "Fractal graph projection requires runtime planning"
+            )
+        if fractal_graph_projection_config is None:
+            raise ValueError(
+                "Fractal graph projection requires "
+                "fractal_graph_projection_config"
+            )
+        if fractal_region_graph_catalog is None:
+            raise ValueError(
+                "Fractal graph projection requires "
+                "fractal_region_graph_catalog"
+            )
+        if not bool(
+            day_config.get("mode", {}).get(
+                "fractal_graph_projection_allowed",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Fractal graph projection is disabled by the "
+                "day transaction contract"
+            )
+        assert fractal_runtime_plan_before is not None
+        fractal_projected_graph_before = (
+            build_fractal_projected_graph(
+                runtime_plan=fractal_runtime_plan_before,
+                base_graph=graph,
+                projection_config=fractal_graph_projection_config,
+                regional_graph_catalog=fractal_region_graph_catalog,
+            )
+        )
+        fractal_graph_projection_inputs = {
+            "projection_config_hash": canonical_hash(
+                fractal_graph_projection_config
+            ),
+            "regional_graph_catalog_hash": canonical_hash(
+                fractal_region_graph_catalog
+            ),
+            "projected_graph_before_hash": (
+                fractal_projected_graph_before.graph_hash()
+            ),
+        }
 
     if enable_fractal_regional_regimes:
         if not enable_fractal_runtime_plan:
@@ -2441,6 +2513,9 @@ def run_day_transaction(
         fractal_regional_regime_inputs=(
             fractal_regional_regime_inputs
         ),
+        fractal_graph_projection_inputs=(
+            fractal_graph_projection_inputs
+        ),
     )
 
     working_rng = rng.clone()
@@ -2465,6 +2540,12 @@ def run_day_transaction(
     if fractal_runtime_plan_before is not None:
         trace_fractal_runtime_plan(
             plan=fractal_runtime_plan_before,
+            phase="BEGINNING_OF_DAY",
+            trace=staged_trace,
+        )
+    if fractal_projected_graph_before is not None:
+        trace_fractal_projected_graph(
+            graph=fractal_projected_graph_before,
             phase="BEGINNING_OF_DAY",
             trace=staged_trace,
         )
@@ -3098,6 +3179,7 @@ def run_day_transaction(
         fractal_reaggregation_audits = collapse_result.audits
 
     fractal_runtime_plan_after: FractalRuntimePlan | None = None
+    fractal_projected_graph_after: FractalProjectedGraph | None = None
     if enable_fractal_runtime_plan:
         assert fractal_topology_out is not None
         assert fractal_child_state_store_out is not None
@@ -3112,6 +3194,24 @@ def run_day_transaction(
         )
         trace_fractal_runtime_plan(
             plan=fractal_runtime_plan_after,
+            phase="COMMITTED_NEXT_DAY",
+            trace=staged_trace,
+        )
+
+    if enable_fractal_graph_projection:
+        assert fractal_runtime_plan_after is not None
+        assert fractal_graph_projection_config is not None
+        assert fractal_region_graph_catalog is not None
+        fractal_projected_graph_after = (
+            build_fractal_projected_graph(
+                runtime_plan=fractal_runtime_plan_after,
+                base_graph=graph,
+                projection_config=fractal_graph_projection_config,
+                regional_graph_catalog=fractal_region_graph_catalog,
+            )
+        )
+        trace_fractal_projected_graph(
+            graph=fractal_projected_graph_after,
             phase="COMMITTED_NEXT_DAY",
             trace=staged_trace,
         )
@@ -3186,6 +3286,16 @@ def run_day_transaction(
         fractal_runtime_plan_after_hash=(
             fractal_runtime_plan_after.plan_hash()
             if fractal_runtime_plan_after is not None
+            else None
+        ),
+        fractal_projected_graph_before_hash=(
+            fractal_projected_graph_before.graph_hash()
+            if fractal_projected_graph_before is not None
+            else None
+        ),
+        fractal_projected_graph_after_hash=(
+            fractal_projected_graph_after.graph_hash()
+            if fractal_projected_graph_after is not None
             else None
         ),
         fractal_regional_regime_store_hash=(
@@ -3370,5 +3480,11 @@ def run_day_transaction(
         ),
         fractal_regional_regime_result=(
             fractal_regional_regime_result
+        ),
+        fractal_projected_graph_before=(
+            fractal_projected_graph_before
+        ),
+        fractal_projected_graph_after=(
+            fractal_projected_graph_after
         ),
     )
