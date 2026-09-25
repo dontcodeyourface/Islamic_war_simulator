@@ -2649,6 +2649,11 @@ def run_day_transaction(
         resolved_states=resolution.states,
         engine_state_registry=engine_state_registry,
     )
+    l1_advanced_regional_states = {
+        node_id: state
+        for node_id, state in sorted(advanced_states.items())
+        if node_id not in refined_parent_ids
+    }
 
     security_regime_persistence_out: dict[
         str, SecurityRegimePersistenceState
@@ -2663,9 +2668,18 @@ def run_day_transaction(
             security_regime_evaluations,
             security_regime_proposals,
         ) = _evaluate_security_regimes(
-            states=advanced_states,
-            persistence=normalized_security_regime_persistence,
-            context_flags=normalized_security_regime_context_flags,
+            states=l1_advanced_regional_states,
+            persistence={
+                node_id: normalized_security_regime_persistence[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            context_flags={
+                node_id: normalized_security_regime_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             regime_config=security_regime_config,
             parameter_registry=parameter_registry,
             profile=profile,
@@ -2674,15 +2688,15 @@ def run_day_transaction(
         )
 
     security_regime_commits: tuple[SecurityRegimeCommitRecord, ...] = ()
-    security_committed_states = advanced_states
+    security_committed_states = dict(advanced_states)
     if enable_security_regime_commits:
         assert security_regime_transition_config is not None
         (
-            security_committed_states,
+            regional_security_committed_states,
             security_regime_persistence_out,
             security_regime_commits,
         ) = _commit_security_regimes(
-            states=advanced_states,
+            states=l1_advanced_regional_states,
             persistence=security_regime_persistence_out,
             proposals=security_regime_proposals,
             transition_config=security_regime_transition_config,
@@ -2690,6 +2704,33 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        security_committed_states.update(
+            regional_security_committed_states
+        )
+
+    if enable_security_regime_evaluator:
+        for node_id in sorted(refined_parent_ids):
+            current_regime = str(
+                advanced_states[node_id].regimes[
+                    "security_force_regime"
+                ]
+            )
+            security_regime_persistence_out[node_id] = (
+                SecurityRegimePersistenceState(
+                    node_id=node_id,
+                    current_regime=current_regime,
+                    last_evaluated_day=day_to,
+                    streaks=(),
+                )
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="security_force_regime",
+                value=current_regime,
+                reason="active_l2_authority",
+            )
 
     security_regime_recovery_persistence_out: dict[
         str, SecurityRegimeRecoveryPersistenceState
@@ -2708,9 +2749,23 @@ def run_day_transaction(
             security_regime_recovery_evaluations,
             security_regime_recovery_proposals,
         ) = _evaluate_security_regime_recoveries(
-            states=security_committed_states,
-            persistence=normalized_security_regime_recovery_persistence,
-            context_flags=normalized_security_regime_context_flags,
+            states={
+                node_id: security_committed_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            persistence={
+                node_id: normalized_security_regime_recovery_persistence[
+                    node_id
+                ]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            context_flags={
+                node_id: normalized_security_regime_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             recovery_config=security_regime_recovery_config,
             parameter_registry=parameter_registry,
             profile=profile,
@@ -2722,18 +2777,24 @@ def run_day_transaction(
     security_regime_recovery_commits: tuple[
         SecurityRegimeRecoveryCommitRecord, ...
     ] = ()
-    security_recovered_states = security_committed_states
+    security_recovered_states = dict(security_committed_states)
 
     if enable_security_regime_recovery_commits:
         assert security_regime_recovery_transition_config is not None
         (
-            security_recovered_states,
-            security_regime_persistence_out,
+            regional_security_recovered_states,
+            regional_escalation_persistence,
             security_regime_recovery_persistence_out,
             security_regime_recovery_commits,
         ) = _commit_security_regime_recoveries(
-            states=security_committed_states,
-            escalation_persistence=security_regime_persistence_out,
+            states={
+                node_id: security_committed_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            escalation_persistence={
+                node_id: security_regime_persistence_out[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             recovery_persistence=security_regime_recovery_persistence_out,
             proposals=security_regime_recovery_proposals,
             transition_config=security_regime_recovery_transition_config,
@@ -2741,6 +2802,35 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        security_recovered_states.update(
+            regional_security_recovered_states
+        )
+        for node_id, item in regional_escalation_persistence.items():
+            security_regime_persistence_out[node_id] = item
+
+    if enable_security_regime_recovery_evaluator:
+        for node_id in sorted(refined_parent_ids):
+            current_regime = str(
+                security_recovered_states[node_id].regimes[
+                    "security_force_regime"
+                ]
+            )
+            security_regime_recovery_persistence_out[node_id] = (
+                SecurityRegimeRecoveryPersistenceState(
+                    node_id=node_id,
+                    current_regime=current_regime,
+                    last_evaluated_day=day_to,
+                    streaks=(),
+                )
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="security_force_regime_recovery",
+                value=current_regime,
+                reason="active_l2_authority",
+            )
 
     phase_persistence_out: dict[str, PhasePersistenceState] = {}
     phase_evaluations: tuple[PhaseEvaluationResult, ...] = ()
@@ -2752,15 +2842,27 @@ def run_day_transaction(
         assert phase_config is not None
         assert phase_transition_config is not None
         (
-            final_states,
+            regional_phase_states,
             phase_persistence_out,
             phase_evaluations,
             phase_arbitrations,
             phase_commits,
         ) = _evaluate_and_commit_phases(
-            states=security_recovered_states,
-            phase_persistence=normalized_phase_persistence,
-            phase_context_flags=normalized_phase_context_flags,
+            states={
+                node_id: security_recovered_states[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            phase_persistence={
+                node_id: normalized_phase_persistence[node_id]
+                for node_id in sorted(l1_advanced_regional_states)
+            },
+            phase_context_flags={
+                node_id: normalized_phase_context_flags.get(
+                    node_id,
+                    {},
+                )
+                for node_id in sorted(l1_advanced_regional_states)
+            },
             phase_config=phase_config,
             phase_transition_config=phase_transition_config,
             parameter_registry=parameter_registry,
@@ -2769,6 +2871,26 @@ def run_day_transaction(
             manifest=manifest,
             trace=staged_trace,
         )
+        final_states = dict(security_recovered_states)
+        final_states.update(regional_phase_states)
+        for node_id in sorted(refined_parent_ids):
+            current_phase = str(
+                final_states[node_id].regimes["national_phase"]
+            )
+            phase_persistence_out[node_id] = PhasePersistenceState(
+                node_id=node_id,
+                current_phase=current_phase,
+                last_evaluated_day=day_to,
+                streaks=(),
+            )
+            staged_trace.append(
+                "fractal_parent_regime_persistence_suppressed",
+                node_id=node_id,
+                day=day_to,
+                regime_type="national_phase",
+                value=current_phase,
+                reason="active_l2_authority",
+            )
 
     fractal_refinement_persistence_out: dict[
         str, FractalRefinementPersistenceState
