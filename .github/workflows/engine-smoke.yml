@@ -1,6 +1,11 @@
 # Engine infrastructure CI v1 - synchronized - v0.7
 name: engine-smoke
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 on:
   push:
     branches:
@@ -47,6 +52,18 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             exit "$status"
           fi
+      - name: Publish pytest debug tail
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Temporary CI debug for commit ${GITHUB_SHA}"
+            echo '~~~text'
+            tail -n 180 /tmp/pytest.log
+            echo '~~~'
+          } > /tmp/pytest-comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/pytest-comment.md
       - name: Spain smoke replay
         run: |
           iwsim smoke             --repo-root .             --country config/countries/spain.yaml             --seed 42             --days 30             --git-commit "${GITHUB_SHA}"             --out /tmp/iwsim-spain
