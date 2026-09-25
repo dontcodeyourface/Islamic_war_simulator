@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "implementation-v0.26"
+status: "implementation-v0.27"
 purpose: "Atomic synchronous one-day transaction contract."
 
 mode:

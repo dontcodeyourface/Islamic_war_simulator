@@ -306,3 +306,131 @@ def test_calibrated_resolver_fails_closed_while_unpopulated() -> None:
             profile="calibrated_v1",
             trace=TraceLedger(),
         )
+
+
+def test_resolver_records_explicit_multiscale_runtime_provenance() -> None:
+    logger.info(
+        "test_resolver_records_explicit_multiscale_runtime_provenance"
+    )
+    state_registry, parameters, state = _runtime()
+    state.latents["public_order_stress"] = 0.40
+    proposal = _proposal(
+        proposal_id="p-runtime-context",
+        variable="public_order_stress",
+        owner_module="security",
+        value_before=0.40,
+        raw_delta=0.02,
+    )
+    context = {
+        "ESP": {
+            "runtime_level": "L2_REGION",
+            "runtime_parent_node_id": "PARENT",
+            "runtime_authority_scope": "REGIONALIZABLE",
+            "runtime_plan_hash": "plan-test",
+            "runtime_policy_id": "FRACTAL_RUNTIME_AUTHORITY_V1",
+        }
+    }
+    trace = TraceLedger()
+    record = resolve_delta_proposals(
+        states={"ESP": state},
+        proposals=(proposal,),
+        engine_state_registry=state_registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        trace=trace,
+        runtime_context_by_node=context,
+    ).records[0]
+
+    assert record.runtime_level == "L2_REGION"
+    assert record.runtime_parent_node_id == "PARENT"
+    assert record.runtime_authority_scope == "REGIONALIZABLE"
+    assert record.runtime_plan_hash == "plan-test"
+    assert record.runtime_policy_id == "FRACTAL_RUNTIME_AUTHORITY_V1"
+    owner_trace = next(
+        item
+        for item in trace.records
+        if item["record_type"] == "owner_resolution"
+    )
+    assert owner_trace["runtime_level"] == "L2_REGION"
+    assert owner_trace["runtime_plan_hash"] == "plan-test"
+
+
+def test_multiscale_context_participates_in_resolution_identity() -> None:
+    logger.info(
+        "test_multiscale_context_participates_in_resolution_identity"
+    )
+    state_registry, parameters, state = _runtime()
+    state.latents["public_order_stress"] = 0.40
+    proposal = _proposal(
+        proposal_id="p-scale-identity",
+        variable="public_order_stress",
+        owner_module="security",
+        value_before=0.40,
+        raw_delta=0.02,
+    )
+    l1 = {
+        "ESP": {
+            "runtime_level": "L1_COUNTRY",
+            "runtime_parent_node_id": None,
+            "runtime_authority_scope": "FULL",
+            "runtime_plan_hash": "plan-l1",
+            "runtime_policy_id": "FRACTAL_RUNTIME_AUTHORITY_V1",
+        }
+    }
+    l2 = {
+        "ESP": {
+            "runtime_level": "L2_REGION",
+            "runtime_parent_node_id": "PARENT",
+            "runtime_authority_scope": "REGIONALIZABLE",
+            "runtime_plan_hash": "plan-l2",
+            "runtime_policy_id": "FRACTAL_RUNTIME_AUTHORITY_V1",
+        }
+    }
+
+    record_l1 = resolve_delta_proposals(
+        states={"ESP": state},
+        proposals=(proposal,),
+        engine_state_registry=state_registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        trace=TraceLedger(),
+        runtime_context_by_node=l1,
+    ).records[0]
+    record_l2 = resolve_delta_proposals(
+        states={"ESP": state},
+        proposals=(proposal,),
+        engine_state_registry=state_registry,
+        parameter_registry=parameters,
+        profile="synthetic_smoke_v1",
+        trace=TraceLedger(),
+        runtime_context_by_node=l2,
+    ).records[0]
+
+    assert record_l1.resolution_id != record_l2.resolution_id
+
+
+def test_resolver_fails_closed_when_runtime_context_is_incomplete() -> None:
+    logger.info(
+        "test_resolver_fails_closed_when_runtime_context_is_incomplete"
+    )
+    state_registry, parameters, state = _runtime()
+    proposal = _proposal(
+        proposal_id="p-missing-context",
+        variable="public_order_stress",
+        owner_module="security",
+        value_before=state.latents["public_order_stress"],
+        raw_delta=0.01,
+    )
+    with pytest.raises(
+        ValueError,
+        match="Missing runtime resolver context",
+    ):
+        resolve_delta_proposals(
+            states={"ESP": state},
+            proposals=(proposal,),
+            engine_state_registry=state_registry,
+            parameter_registry=parameters,
+            profile="synthetic_smoke_v1",
+            trace=TraceLedger(),
+            runtime_context_by_node={},
+        )

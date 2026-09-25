@@ -7,7 +7,10 @@ from typing import Any
 from .effects import DeltaProposal
 from .extremism import propose_extremist_network_dynamics
 from .fractal_child_state import FractalChildStateStore
-from .fractal_runtime import FractalRuntimePlan
+from .fractal_runtime import (
+    FractalRuntimePlan,
+    build_runtime_resolver_context,
+)
 from .reciprocal import propose_reciprocal_radicalization_effects
 from .recovery import propose_recovery_effects
 from .resolver import ResolutionRecord, resolve_delta_proposals
@@ -196,6 +199,7 @@ def execute_autonomous_l2_dynamics(
         child_store=child_store,
         runtime_plan=runtime_plan,
     )
+    staged_trace = TraceLedger()
 
     if not states:
         return FractalChildDynamicsResult(
@@ -220,7 +224,7 @@ def execute_autonomous_l2_dynamics(
                 engine_state_registry=engine_state_registry,
                 parameter_registry=parameter_registry,
                 profile=profile,
-                trace=trace,
+                trace=staged_trace,
             )
         )
 
@@ -237,7 +241,7 @@ def execute_autonomous_l2_dynamics(
                 engine_state_registry=engine_state_registry,
                 parameter_registry=parameter_registry,
                 profile=profile,
-                trace=trace,
+                trace=staged_trace,
             )
         )
 
@@ -255,7 +259,7 @@ def execute_autonomous_l2_dynamics(
                 engine_state_registry=engine_state_registry,
                 parameter_registry=parameter_registry,
                 profile=profile,
-                trace=trace,
+                trace=staged_trace,
             )
         )
 
@@ -272,7 +276,7 @@ def execute_autonomous_l2_dynamics(
                 engine_state_registry=engine_state_registry,
                 parameter_registry=parameter_registry,
                 profile=profile,
-                trace=trace,
+                trace=staged_trace,
             )
         )
 
@@ -288,13 +292,18 @@ def execute_autonomous_l2_dynamics(
         runtime_plan=runtime_plan,
     )
 
+    runtime_context = build_runtime_resolver_context(
+        plan=runtime_plan,
+        node_ids=set(states),
+    )
     resolution = resolve_delta_proposals(
         states=states,
         proposals=proposal_tuple,
         engine_state_registry=engine_state_registry,
         parameter_registry=parameter_registry,
         profile=profile,
-        trace=trace,
+        trace=staged_trace,
+        runtime_context_by_node=runtime_context,
     )
 
     resolved_states = tuple(
@@ -309,7 +318,7 @@ def execute_autonomous_l2_dynamics(
         states=resolved_states,
     )
 
-    trace.append(
+    staged_trace.append(
         "fractal_child_dynamics_committed",
         day_from=runtime_plan.day,
         day_to=runtime_plan.day + 1,
@@ -323,6 +332,7 @@ def execute_autonomous_l2_dynamics(
         child_store_hash_after=store.store_hash(),
     )
 
+    trace.extend_from(staged_trace)
     return FractalChildDynamicsResult(
         store=store,
         proposals=proposal_tuple,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -264,6 +265,26 @@ def test_v026_safe_modules_only_target_active_l2() -> None:
         "TST::R1",
         "TST::R2",
     }
+    assert all(
+        item.runtime_level == "L2_REGION"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_parent_node_id == "TST"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_authority_scope == "REGIONALIZABLE"
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_plan_hash == plan.plan_hash()
+        for item in result.resolutions
+    )
+    assert all(
+        item.runtime_policy_id == plan.policy_id
+        for item in result.resolutions
+    )
 
 
 def test_v026_rejects_national_only_child_mutation() -> None:
@@ -292,3 +313,45 @@ def test_v026_rejects_national_only_child_mutation() -> None:
             proposals=(proposal,),
             runtime_plan=plan,
         )
+
+
+def test_v027_child_runtime_failure_is_trace_and_state_atomic() -> None:
+    logger.info(
+        "test_v027_child_runtime_failure_is_trace_and_state_atomic"
+    )
+    registry, store, plan = _runtime()
+    before = store.to_dict()
+    trace = TraceLedger()
+    broken = replace(
+        plan,
+        regionalizable_latents=tuple(
+            item
+            for item in plan.regionalizable_latents
+            if item != "communal_fear"
+        ),
+        national_only_latents=tuple(
+            sorted((*plan.national_only_latents, "communal_fear"))
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="national-only latent communal_fear",
+    ):
+        execute_autonomous_l2_dynamics(
+            child_store=store,
+            runtime_plan=broken,
+            engine_state_registry=registry,
+            parameter_registry=load_yaml(
+                ROOT / "config/engine/parameter_registry_v1.yaml"
+            ),
+            profile="synthetic_smoke_v1",
+            trace=trace,
+            enable_recovery=True,
+            recovery_config=load_yaml(
+                ROOT / "config/engine/recovery_v1.yaml"
+            ),
+        )
+
+    assert store.to_dict() == before
+    assert trace.records == []

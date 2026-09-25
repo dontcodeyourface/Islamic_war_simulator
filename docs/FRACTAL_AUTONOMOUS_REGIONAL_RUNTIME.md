@@ -388,9 +388,11 @@ Keep unsupported modules fail-closed.
 
 Implementation detail: [FRACTAL_CHILD_DYNAMICS_V0.26.md](FRACTAL_CHILD_DYNAMICS_V0.26.md).
 
-### v0.27 — multiscale Owner Resolver and transaction atomicity
+### v0.27 — multiscale Owner Resolver and transaction atomicity — IMPLEMENTED
 
 Extend proposal and resolution identity to L2 and validate full transaction rollback across mixed L1/L2 state.
+
+Implementation detail: [FRACTAL_MULTISCALE_RESOLVER_V0.27.md](FRACTAL_MULTISCALE_RESOLVER_V0.27.md).
 
 ### v0.28 — L2 security/phase divergence
 

@@ -48,6 +48,7 @@ from .fractal_runtime import (
     FractalRuntimePlan,
     assert_beginning_of_day_runtime_supported,
     build_fractal_runtime_plan,
+    build_runtime_resolver_context,
     trace_fractal_runtime_plan,
 )
 from .graph import CountryGraph
@@ -2442,6 +2443,14 @@ def run_day_transaction(
         )
     )
 
+    l1_runtime_context = (
+        build_runtime_resolver_context(
+            plan=fractal_runtime_plan_before,
+            node_ids=set(states),
+        )
+        if fractal_runtime_plan_before is not None
+        else None
+    )
     resolution = resolve_delta_proposals(
         states=states,
         proposals=proposals,
@@ -2449,6 +2458,7 @@ def run_day_transaction(
         parameter_registry=parameter_registry,
         profile=profile,
         trace=staged_trace,
+        runtime_context_by_node=l1_runtime_context,
     )
     advanced_states = _advance_resolved_states(
         resolved_states=resolution.states,
