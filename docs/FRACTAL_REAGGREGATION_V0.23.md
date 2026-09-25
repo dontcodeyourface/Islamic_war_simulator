@@ -109,3 +109,19 @@ Re-expanding the same catalog regions after a later stress recurrence requires a
 Collapse is a computational-resolution operation, not a political or military outcome.
 
 No tactical targeting, route planning, weapon selection or operational execution is introduced.
+
+
+## Post-v0.24 dynamic reaggregation requirement
+
+v0.23 closes the topology/initialization-era L2 -> L1 loop, but autonomous L2 execution introduces a stronger requirement.
+
+Once children can evolve independently, collapse must support:
+
+- exact reaggregation of additive stocks;
+- explicit weighted aggregation of intensive variables;
+- explicit null semantics;
+- explicit aggregation of categorical regimes or fail-closed behavior when siblings disagree;
+- preservation of national-only L1 state;
+- immutable closure of the full active lineage generation.
+
+This follow-up is canonical in [FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md](FRACTAL_AUTONOMOUS_REGIONAL_RUNTIME.md) and is planned as the v0.32 dynamic-reaggregation milestone.
